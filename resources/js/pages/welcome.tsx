@@ -15,18 +15,16 @@ export default function Welcome({
             <div className="min-h-screen bg-slate-50 text-slate-900">
                 <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
                     <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-6">
-                        <Link href="/" className="text-lg font-semibold">
-                            VamosPC
-                        </Link>
-
-                        <nav className="flex items-center gap-3 text-sm font-medium">
-                            <Link
-                                href="/gaming-pc"
-                                className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-700 transition hover:bg-slate-100"
-                            >
+                        <div className="flex items-center gap-4">
+                            <Link href="/" className="text-4xl font-bold tracking-tight md:text-5xl">
+                                VamosPC
+                            </Link>
+                            <Link href="/gaming-pc" className="text-sm font-medium">
                                 Gaming PC
                             </Link>
+                        </div>
 
+                        <nav className="flex items-center gap-3 text-sm font-medium">
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
