@@ -14,9 +14,9 @@ class Configuration extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function orderItems(): BelongsTo
+    public function orderItems(): HasMany
     {
-        return $this->BelongsTo(OrderItem::class);
+        return $this->hasMany(OrderItem::class);
     }
 
     public function products(): BelongsToMany

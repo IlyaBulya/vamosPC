@@ -14,9 +14,9 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function orderItems(): BelongsTo
+    public function orderItems(): HasMany
     {
-        return $this->BelongsTo(OrderItem::class);
+        return $this->hasMany(OrderItem::class);
     }
 
     public function configurations(): BelongsToMany
