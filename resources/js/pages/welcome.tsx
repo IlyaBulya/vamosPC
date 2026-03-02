@@ -20,6 +20,13 @@ export default function Welcome({
                         </Link>
 
                         <nav className="flex items-center gap-3 text-sm font-medium">
+                            <Link
+                                href="/gaming-pc"
+                                className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-700 transition hover:bg-slate-100"
+                            >
+                                Gaming PC
+                            </Link>
+
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
