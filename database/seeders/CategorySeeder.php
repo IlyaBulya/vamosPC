@@ -125,6 +125,34 @@ class CategorySeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name' => 'asus',
+                'type' => 'laptop',
+                'description' => 'Asus laptops for gaming, work, and everyday use.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'gigabyte',
+                'type' => 'laptop',
+                'description' => 'Gigabyte laptops focused on performance and gaming.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'lenovo',
+                'type' => 'laptop',
+                'description' => 'Lenovo laptops for business, study, and daily use.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'msi',
+                'type' => 'laptop',
+                'description' => 'MSI laptops built for gaming and high performance.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }
