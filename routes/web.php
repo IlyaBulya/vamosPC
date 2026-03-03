@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Store\AssistanceController;
 use App\Http\Controllers\Store\CatalogController;
 use App\Http\Controllers\Store\CompareController;
@@ -14,6 +15,19 @@ Route::get('/catalog', [CatalogController::class , 'index'])->name('catalog');
 Route::get('/compare', [CompareController::class , 'index'])->name('compare');
 Route::get('/gaming-pc', [GamingPcController::class , 'index'])->name('gaming-pc');
 Route::get('/laptops', [LaptopsController::class , 'index'])->name('laptops');
+
+Route::group([
+    'prefix' => 'category',
+    'as' => 'category.',
+    'controller' => CategoryController::class
+], function () {
+    Route::get('/{type}', 'showType')
+        ->where('type', 'hardware|accessorie|laptop')
+        ->name('type');
+    Route::get('/{type}/{category}', 'showCategory')
+        ->where('type', 'hardware|accessorie|laptop')
+        ->name('item');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
