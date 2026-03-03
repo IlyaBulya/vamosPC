@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import { ChartNoAxesColumnIncreasing } from 'lucide-react';
 import { dashboard, login, register } from '@/routes';
 
 interface StoreLayoutProps {
@@ -36,6 +37,13 @@ export default function StoreLayout({
                     </div>
 
                     <nav className="flex items-center gap-3 text-sm font-medium">
+                        <Link
+                            href="/compare"
+                            className="rounded-md border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
+                        >
+                            <span className="sr-only">Compare</span>
+                            <ChartNoAxesColumnIncreasing className="h-5 w-5" />
+                        </Link>
                         {auth.user ? (
                             <Link
                                 href={dashboard()}
