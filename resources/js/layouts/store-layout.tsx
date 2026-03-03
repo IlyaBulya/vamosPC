@@ -27,6 +27,9 @@ export default function StoreLayout({
                         <Link href="/gaming-pc" className="text-sm font-medium">
                             Gaming PC
                         </Link>
+                        <Link href="/catalog" className="text-sm font-medium">
+                            Catalog
+                        </Link>
                         <Link href="/laptops" className="text-sm font-medium">
                             Laptops
                         </Link>
