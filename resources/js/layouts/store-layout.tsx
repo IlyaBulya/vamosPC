@@ -34,6 +34,12 @@ export default function StoreLayout({
                         <Link href="/laptops" className="text-sm font-medium">
                             Laptops
                         </Link>
+                        <Link
+                            href="/assistance"
+                            className="text-sm font-medium"
+                        >
+                            Assistance
+                        </Link>
                     </div>
 
                     <nav className="flex items-center gap-3 text-sm font-medium">
