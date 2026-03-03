@@ -3,45 +3,95 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CategoryController extends Controller
 {
+    public function hardware(): Response
+    {
+        return $this->renderTypePage('hardware');
+    }
+
+    public function accessories(): Response
+    {
+        return $this->renderTypePage('accessorie');
+    }
+
+    public function notebook(): Response
+    {
+        return $this->renderTypePage('laptop');
+    }
+
     public function showType(string $type): Response
     {
-        $categories = Category::where('type', $type)
-            ->orderBy('name')
-            ->get(['name', 'description'])
-            ->map(fn(Category $category): array => [
-        'name' => $category->name,
-        'description' => $category->description,
-        ])
-            ->values();
-
-        abort_if($categories->isEmpty(), 404);
-
-        return Inertia::render('category/type', [
-            'title' => Str::headline($type),
-            'type' => $type,
-            'categories' => $categories,
-        ]);
+        return $this->renderTypePage($type);
     }
 
     public function showCategory(string $type, string $category): Response
     {
+        $typeConfig = $this->typeConfig($type);
+
         $categoryRecord = Category::where('type', $type)
             ->where('name', $category)
             ->firstOrFail(['name', 'description']);
 
         return Inertia::render('category/item', [
-            'title' => Str::headline($categoryRecord->name),
-            'type' => $type,
+            'title' => $this->headline($categoryRecord->name),
+            'typeLabel' => $typeConfig['label'],
+            'backHref' => $typeConfig['href'],
             'category' => [
                 'name' => $categoryRecord->name,
                 'description' => $categoryRecord->description,
             ],
         ]);
+    }
+
+    private function renderTypePage(string $type): Response
+    {
+        $typeConfig = $this->typeConfig($type);
+
+        $categories = Category::where('type', $type)
+            ->orderBy('name')
+            ->get(['name', 'description'])
+            ->map(fn (Category $category): array => [
+                'name' => $category->name,
+                'description' => $category->description,
+            ])
+            ->values();
+
+        abort_if($categories->isEmpty(), 404);
+
+        return Inertia::render('category/type', [
+            'title' => $typeConfig['label'],
+            'type' => $type,
+            'categories' => $categories,
+        ]);
+    }
+
+    private function typeConfig(string $type): array
+    {
+        return match ($type) {
+            'hardware' => [
+                'label' => 'Hardware',
+                'href' => '/hardware',
+            ],
+            'accessorie' => [
+                'label' => 'Accessories',
+                'href' => '/accessories',
+            ],
+            'laptop' => [
+                'label' => 'Notebook',
+                'href' => '/notebook',
+            ],
+            default => abort(404),
+        };
+    }
+
+    private function headline(string $value): string
+    {
+        return collect(explode('-', $value))
+            ->map(fn (string $part): string => ucfirst($part))
+            ->implode(' ');
     }
 }

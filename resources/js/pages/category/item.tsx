@@ -8,20 +8,15 @@ type CategoryItem = {
 
 interface CategoryItemPageProps {
     title: string;
-    type: string;
+    typeLabel: string;
+    backHref: string;
     category: CategoryItem;
-}
-
-function formatLabel(value: string) {
-    return value
-        .split('-')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
 }
 
 export default function CategoryItemPage({
     title,
-    type,
+    typeLabel,
+    backHref,
     category,
 }: CategoryItemPageProps) {
     return (
@@ -30,10 +25,10 @@ export default function CategoryItemPage({
 
             <StoreLayout>
                 <Link
-                    href={`/category/${type}`}
+                    href={backHref}
                     className="text-sm font-medium text-slate-500 transition hover:text-slate-700"
                 >
-                    Back to {formatLabel(type)}
+                    Back to {typeLabel}
                 </Link>
 
                 <p className="mt-8 text-sm font-medium tracking-[0.2em] text-slate-500 uppercase">
@@ -46,9 +41,7 @@ export default function CategoryItemPage({
                     {category.description ??
                         'No description available for this category yet.'}
                 </p>
-                <p className="mt-6 text-sm text-slate-500">
-                    Type: {formatLabel(type)}
-                </p>
+                <p className="mt-6 text-sm text-slate-500">Type: {typeLabel}</p>
             </StoreLayout>
         </>
     );
