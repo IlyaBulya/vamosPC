@@ -13,7 +13,7 @@ class CatalogController extends Controller
     {
         $categoryCounts = Category::query()
             ->selectRaw('type, COUNT(*) as total')
-            ->whereIn('type', ['hardware', 'accessorie', 'laptop'])
+            ->whereIn('type', ['hardware', 'accessory', 'laptop'])
             ->groupBy('type')
             ->pluck('total', 'type');
 
@@ -23,19 +23,19 @@ class CatalogController extends Controller
                     'title' => 'Hardware',
                     'href' => '/hardware',
                     'description' => 'Core PC components and internal parts.',
-                    'count' => (int) ($categoryCounts['hardware'] ?? 0),
+                    'count' => (int)($categoryCounts['hardware'] ?? 0),
                 ],
                 [
                     'title' => 'Accessories',
                     'href' => '/accessories',
                     'description' => 'Peripherals and setup add-ons for your desk.',
-                    'count' => (int) ($categoryCounts['accessorie'] ?? 0),
+                    'count' => (int)($categoryCounts['accessory'] ?? 0),
                 ],
                 [
                     'title' => 'Notebook',
                     'href' => '/notebook',
                     'description' => 'Laptop brands and notebook-focused categories.',
-                    'count' => (int) ($categoryCounts['laptop'] ?? 0),
+                    'count' => (int)($categoryCounts['laptop'] ?? 0),
                 ],
             ],
         ]);

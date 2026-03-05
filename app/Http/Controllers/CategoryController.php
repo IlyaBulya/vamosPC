@@ -15,7 +15,7 @@ class CategoryController extends Controller
 
     public function accessories(): Response
     {
-        return $this->renderTypePage('accessorie');
+        return $this->renderTypePage('accessory');
     }
 
     public function notebook(): Response
@@ -32,9 +32,21 @@ class CategoryController extends Controller
     {
         $typeConfig = $this->typeConfig($type);
 
-        $categoryRecord = Category::where('type', $type)
+        $categoryRecord = Category::query()
+            ->with([
+            'products' => fn($query) => $query
+        ->orderBy('name')
+        ->select([
+        'category_id',
+        'name',
+        'description',
+        'price_in_cents',
+        'is_component',
+        ]),
+        ])
+            ->where('type', $type)
             ->where('name', $category)
-            ->firstOrFail(['name', 'description']);
+            ->firstOrFail(['id', 'name', 'description']);
 
         return Inertia::render('category/item', [
             'title' => $this->headline($categoryRecord->name),
@@ -43,6 +55,15 @@ class CategoryController extends Controller
             'category' => [
                 'name' => $categoryRecord->name,
                 'description' => $categoryRecord->description,
+                'product_count' => $categoryRecord->products->count(),
+                'products' => $categoryRecord->products
+                ->map(fn($product): array => [
+        'name' => $product->name,
+        'description' => $product->description,
+        'price_in_cents' => $product->price_in_cents,
+        'is_component' => (bool)$product->is_component,
+        ])
+                ->values(),
             ],
         ]);
     }
@@ -51,13 +72,14 @@ class CategoryController extends Controller
     {
         $typeConfig = $this->typeConfig($type);
 
-        $categories = Category::where('type', $type)
+        $categories = Category::query()
+            ->where('type', $type)
             ->orderBy('name')
             ->get(['name', 'description'])
-            ->map(fn (Category $category): array => [
-                'name' => $category->name,
-                'description' => $category->description,
-            ])
+            ->map(fn(Category $category): array => [
+        'name' => $category->name,
+        'description' => $category->description,
+        ])
             ->values();
 
         abort_if($categories->isEmpty(), 404);
@@ -72,26 +94,26 @@ class CategoryController extends Controller
     private function typeConfig(string $type): array
     {
         return match ($type) {
-            'hardware' => [
+                'hardware' => [
                 'label' => 'Hardware',
                 'href' => '/hardware',
             ],
-            'accessorie' => [
+                'accessory' => [
                 'label' => 'Accessories',
                 'href' => '/accessories',
             ],
-            'laptop' => [
+                'laptop' => [
                 'label' => 'Notebook',
                 'href' => '/notebook',
             ],
-            default => abort(404),
-        };
+                default => abort(404),
+            };
     }
 
     private function headline(string $value): string
     {
         return collect(explode('-', $value))
-            ->map(fn (string $part): string => ucfirst($part))
+            ->map(fn(string $part): string => ucfirst($part))
             ->implode(' ');
     }
 }
