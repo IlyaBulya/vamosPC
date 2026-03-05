@@ -20,41 +20,41 @@ const MODEL_LAND_END_PROGRESS = 0.32;
 const HORIZONTAL_LOCK_START_PROGRESS = 0;
 const HORIZONTAL_UNLOCK_THRESHOLD = 0.995;
 const MODEL_SHRINK_START_PROGRESS = 0.3;
-const MODEL_PRESHRINK_DURATION = 0.6;
+const MODEL_PRESHRINK_DURATION = 0.7;
 const MODEL_PRESHRINK_PORTION = 0.42;
 const MODEL_SHRINK_UPWARD_CENTER_RATIO = 0.6;
-const MODEL_FINAL_SCALE_IN_CARD = 0.3;
+const MODEL_FINAL_SCALE_IN_CARD = 0.2;
 const LOCK_POSITION_TOLERANCE = 28;
 const LOCK_COOLDOWN_MS = 160;
 
 const cards: Card[] = [
     {
-        name: 'VELOCITY X',
+        name: 'VAMOS X',
         spec: 'CPU: Intel Core i9-14900K | GPU: NVIDIA GeForce RTX 4090 | RAM: 64GB DDR5-6400MHz',
         price: '$3,499',
     },
     {
-        name: 'AURORA Z',
+        name: 'VAMOS Z',
         spec: 'CPU: AMD Ryzen 9 7950X3D | GPU: AMD Radeon RX 7900 XTX | RAM: 32GB DDR5-6000MHz',
         price: '$2,899',
     },
     {
-        name: 'PHANTOM PRO',
+        name: 'VAMOS PRO',
         spec: 'CPU: Intel Xeon W-3400 Series | GPU: Dual NVIDIA RTX 6000 Ada | RAM: 256GB ECC DDR5',
         price: '$8,999',
     },
     {
-        name: 'NOVA STRIKE',
+        name: 'VAMOS STRIKE',
         spec: 'CPU: Intel Core i7-14700KF | GPU: NVIDIA GeForce RTX 5070 Ti | RAM: 32GB DDR5-6000MHz',
         price: '$2,199',
     },
     {
-        name: 'TITAN FLOW',
+        name: 'VAMOS FLOW',
         spec: 'CPU: AMD Ryzen 7 9800X3D | GPU: NVIDIA GeForce RTX 5080 | RAM: 32GB DDR5-6400MHz',
         price: '$3,099',
     },
     {
-        name: 'CORE EDGE',
+        name: 'VAMOS EDGE',
         spec: 'CPU: AMD Ryzen 5 9600X | GPU: AMD Radeon RX 7800 XT | RAM: 16GB DDR5-5600MHz',
         price: '$1,799',
     },
