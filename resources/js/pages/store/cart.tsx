@@ -1,6 +1,6 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import StoreFooter from '@/components/store-footer';
 import StoreHeader from '@/components/store-header';
 import { Input } from '@/components/ui/input';
@@ -8,52 +8,63 @@ import { Input } from '@/components/ui/input';
 type CartItem = {
     id: number;
     name: string;
-    subtitle?: string;
+    subtitle: string | null;
     availability: 'In stock' | 'Pre-order';
-    notes: string[];
-    unit_price: number;
+    unit_price_in_cents: number;
     qty: number;
+    href: string;
 };
 
-const formatPrice = (value: number): string =>
+const formatPrice = (priceInCents: number): string =>
     new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-    }).format(value);
+        currency: 'EUR',
+        minimumFractionDigits: 2,
+    }).format(priceInCents / 100);
 
 export default function CartPage({ items }: { items: CartItem[] }) {
-    const [cartItems, setCartItems] = useState<CartItem[]>(items);
     const [promoCode, setPromoCode] = useState('');
 
-    const preparedItems = useMemo(
-        () =>
-            cartItems.map((item) => ({
-                ...item,
-                subtotal: item.unit_price * item.qty,
-            })),
-        [cartItems],
-    );
+    const preparedItems = items.map((item) => ({
+        ...item,
+        subtotal_in_cents: item.unit_price_in_cents * item.qty,
+    }));
 
     const totalQty = preparedItems.reduce((sum, item) => sum + item.qty, 0);
-    const totalPrice = preparedItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalInCents = preparedItems.reduce(
+        (sum, item) => sum + item.subtotal_in_cents,
+        0,
+    );
 
-    const updateQty = (id: number, delta: number) => {
-        setCartItems((prev) =>
-            prev.map((item) =>
-                item.id === id
-                    ? { ...item, qty: Math.max(1, item.qty + delta) }
-                    : item,
-            ),
+    const updateQty = (item: CartItem, nextQty: number) => {
+        if (nextQty <= 0) {
+            router.delete(`/cart/items/${item.id}`, {
+                preserveScroll: true,
+            });
+            return;
+        }
+
+        router.patch(
+            `/cart/items/${item.id}`,
+            {
+                quantity: nextQty,
+            },
+            {
+                preserveScroll: true,
+            },
         );
     };
 
-    const removeItem = (id: number) => {
-        setCartItems((prev) => prev.filter((item) => item.id !== id));
+    const removeItem = (item: CartItem) => {
+        router.delete(`/cart/items/${item.id}`, {
+            preserveScroll: true,
+        });
     };
 
     const clearAll = () => {
-        setCartItems([]);
+        router.delete('/cart/items', {
+            preserveScroll: true,
+        });
     };
 
     const availabilityClass = (availability: CartItem['availability']) => {
@@ -81,7 +92,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                         <button
                             type="button"
                             onClick={clearAll}
-                            disabled={!cartItems.length}
+                            disabled={!preparedItems.length}
                             className="text-sm font-medium text-slate-300 transition hover:text-[#9cf5d8] disabled:cursor-not-allowed disabled:text-slate-600"
                         >
                             Clear all
@@ -120,25 +131,16 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                             Photo
                                                         </div>
                                                         <div>
-                                                            <p className="text-xl font-semibold text-white">
+                                                            <Link
+                                                                href={item.href}
+                                                                className="text-xl font-semibold text-white transition hover:text-[#9cf5d8]"
+                                                            >
                                                                 {item.name}
-                                                            </p>
+                                                            </Link>
                                                             {item.subtitle && (
                                                                 <p className="mt-1 text-sm text-slate-300">
                                                                     {item.subtitle}
                                                                 </p>
-                                                            )}
-                                                            {item.notes.length > 0 && (
-                                                                <div className="mt-2 space-y-1">
-                                                                    {item.notes.map((note) => (
-                                                                        <p
-                                                                            key={note}
-                                                                            className="text-sm text-slate-300"
-                                                                        >
-                                                                            + {note}
-                                                                        </p>
-                                                                    ))}
-                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
@@ -152,7 +154,12 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                     <div className="inline-flex items-center rounded-md border border-white/15 bg-[#111821]">
                                                         <button
                                                             type="button"
-                                                            onClick={() => updateQty(item.id, -1)}
+                                                            onClick={() =>
+                                                                updateQty(
+                                                                    item,
+                                                                    item.qty - 1,
+                                                                )
+                                                            }
                                                             className="p-2 text-slate-300 transition hover:text-[#9cf5d8]"
                                                             aria-label="Decrease quantity"
                                                         >
@@ -163,7 +170,12 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                         </span>
                                                         <button
                                                             type="button"
-                                                            onClick={() => updateQty(item.id, 1)}
+                                                            onClick={() =>
+                                                                updateQty(
+                                                                    item,
+                                                                    item.qty + 1,
+                                                                )
+                                                            }
                                                             className="p-2 text-slate-300 transition hover:text-[#9cf5d8]"
                                                             aria-label="Increase quantity"
                                                         >
@@ -172,12 +184,16 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                     </div>
                                                 </td>
                                                 <td className="px-7 py-5 text-right text-2xl font-semibold text-white">
-                                                    {formatPrice(item.subtotal)}
+                                                    {formatPrice(
+                                                        item.subtotal_in_cents,
+                                                    )}
                                                 </td>
                                                 <td className="px-7 py-5 text-right">
                                                     <button
                                                         type="button"
-                                                        onClick={() => removeItem(item.id)}
+                                                        onClick={() =>
+                                                            removeItem(item)
+                                                        }
                                                         className="inline-flex rounded-md p-1.5 text-red-400 transition hover:bg-red-500/10"
                                                         aria-label="Remove item"
                                                     >
@@ -199,14 +215,15 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                 </tbody>
                             </table>
                         </div>
-
                     </section>
 
                     <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
                         <div className="flex max-w-md items-center gap-2">
                             <Input
                                 value={promoCode}
-                                onChange={(event) => setPromoCode(event.target.value)}
+                                onChange={(event) =>
+                                    setPromoCode(event.target.value)
+                                }
                                 placeholder="Promo code"
                                 className="border-white/15 bg-[#111821] text-slate-100 placeholder:text-slate-500"
                             />
@@ -221,10 +238,16 @@ export default function CartPage({ items }: { items: CartItem[] }) {
 
                         <div className="text-left lg:text-right">
                             <p className="text-sm text-slate-400">
-                                Items: <span className="font-semibold text-white">{totalQty}</span>
+                                Items:{' '}
+                                <span className="font-semibold text-white">
+                                    {totalQty}
+                                </span>
                             </p>
                             <p className="mt-1 text-3xl font-black text-white">
-                                Total: <span className="text-[#00bd7d]">{formatPrice(totalPrice)}</span>
+                                Total:{' '}
+                                <span className="text-[#00bd7d]">
+                                    {formatPrice(totalInCents)}
+                                </span>
                             </p>
                             <p className="mt-1 text-sm text-slate-400">
                                 Financing options available at checkout
@@ -253,3 +276,4 @@ export default function CartPage({ items }: { items: CartItem[] }) {
         </>
     );
 }
+

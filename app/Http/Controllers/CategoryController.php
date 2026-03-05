@@ -49,6 +49,8 @@ class CategoryController extends Controller
                         'name',
                         'description',
                         'price_in_cents',
+                        'stock',
+                        'color',
                         'is_component',
                     ]),
             ])
@@ -73,6 +75,8 @@ class CategoryController extends Controller
                         'name' => $product->name,
                         'description' => $product->description,
                         'price_in_cents' => $product->price_in_cents,
+                        'stock' => $product->stock,
+                        'color' => $product->color,
                         'is_component' => (bool) $product->is_component,
                     ])
                     ->values(),

@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Store\AssistanceController;
 use App\Http\Controllers\Store\CartController;
+use App\Http\Controllers\Store\CartItemController;
 use App\Http\Controllers\Store\CatalogController;
 use App\Http\Controllers\Store\CompareController;
 use App\Http\Controllers\Store\GamingPcController;
@@ -14,6 +15,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/assistance', [AssistanceController::class, 'index'])->name('assistance');
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
+Route::post('/cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
+Route::patch('/cart/items/{product}', [CartItemController::class, 'update'])
+    ->whereNumber('product')
+    ->name('cart.items.update');
+Route::delete('/cart/items/{product}', [CartItemController::class, 'destroy'])
+    ->whereNumber('product')
+    ->name('cart.items.destroy');
+Route::delete('/cart/items', [CartItemController::class, 'clear'])->name('cart.items.clear');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('/compare', [CompareController::class, 'index'])->name('compare');
 Route::get('/products/{product}', [ProductController::class, 'legacy'])
