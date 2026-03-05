@@ -359,6 +359,83 @@ class ProductSeeder extends Seeder
                 'price_in_cents' => 21442,
                 'is_component' => false,
             ],
+            [
+                'category' => 'asus',
+                'name' => 'Laptop ASUS V16',
+                'description' => 'Laptop ASUS V16 V3607VM-RP010 Intel Core 7 240H/32GB/1TB SSD/RTX 5060/16"',
+                'price_in_cents' => 116900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'asus',
+                'name' => 'Laptop ASUS V16',
+                'description' => 'Laptop ASUS V16 V3607VU-RP099 Intel Core 7 240H/16GB/512GB SSD/RTX 4050/16"',
+                'price_in_cents' => 105900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'asus',
+                'name' => 'Laptop ASUS V16',
+                'description' => 'Laptop ASUS V16 V3607VU-RP148 Intel Core 5 210H/16GB/512GB SSD/RTX 4050/16"',
+                'price_in_cents' => 103900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'gigabyte',
+                'name' => 'GIGABYTE Gaming A16',
+                'description' => 'GIGABYTE Gaming A16 Laptop 16" Intel Core i7-13620H 16GB 1TB SSD RTX 5060 8GB Dolby Atmos',
+                'price_in_cents' => 109900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'gigabyte',
+                'name' => 'GIGABYTE Gaming A16',
+                'description' => 'GIGABYTE Gaming A16 Laptop 16" Intel Core i7-13620H 16GB 1TB SSD RTX 5050 8GB Dolby Atmos',
+                'price_in_cents' => 104900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'gigabyte',
+                'name' => 'Gigabyte G5',
+                'description' => 'Gigabyte G5 MF5-52PT354SD Laptop Intel Core i5-13500H/16GB/1TB SSD/RTX 4050/15.6" (PT)',
+                'price_in_cents' => 99900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'lenovo',
+                'name' => 'Laptop Lenovo LOQ',
+                'description' => 'Laptop Lenovo LOQ Essential 15IRX11 15.6" Intel Core i5-13450HX 16GB 512GB SSD RTX 5050 FreeDOS',
+                'price_in_cents' => 79900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'lenovo',
+                'name' => 'Laptop Lenovo LOQ',
+                'description' => "Laptop Lenovo LOQ Essential 15IRX11-284 Intel Core i7-13650HX/16GB/512GB SSD/RTX 5050/15.6'' (PT)",
+                'price_in_cents' => 89999,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'msi',
+                'name' => 'Laptop MSI Cyborg 15',
+                'description' => 'Laptop MSI Cyborg 15 B2RWFKG-201XES Intel Core 7 240H 32GB DDR5 1TB SSD RTX 5060 15.6" FHD RGB',
+                'price_in_cents' => 129900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'msi',
+                'name' => 'MSI Vector 16',
+                'description' => 'MSI Vector 16 HX AI A2XWHG-097XES Intel Core Ultra 7 255HX 32GB 1TB SSD RTX 5070 Ti 16" Laptop',
+                'price_in_cents' => 189900,
+                'is_component' => false,
+            ],
+            [
+                'category' => 'msi',
+                'name' => 'Laptop MSI Cyborg',
+                'description' => 'Laptop MSI Cyborg A15 AI B2HWFKG-094XES 15.6" AMD Ryzen 9 270 64GB 1TB SSD RTX 5060 8GB Translucent Black',
+                'price_in_cents' => 145900,
+                'is_component' => false,
+            ],
         ];
 
         $categorySlugs = array_values(array_unique(array_column($products, 'category')));
@@ -370,20 +447,20 @@ class ProductSeeder extends Seeder
         $missingCategories = array_diff($categorySlugs, array_keys($categoryIds));
         if ($missingCategories !== []) {
             throw new RuntimeException(
-                'Missing categories for ProductSeeder: ' . implode(', ', $missingCategories)
-                );
+                'Missing categories for ProductSeeder: '.implode(', ', $missingCategories)
+            );
         }
 
         DB::table('products')->insert(array_map(
-        fn(array $product): array => [
-        'category_id' => $categoryIds[$product['category']],
-        'name' => $product['name'],
-        'description' => $product['description'],
-        'price_in_cents' => $product['price_in_cents'],
-        'is_component' => $product['is_component'],
-        'created_at' => $now,
-        'updated_at' => $now,
-        ],
+            fn (array $product): array => [
+                'category_id' => $categoryIds[$product['category']],
+                'name' => $product['name'],
+                'description' => $product['description'],
+                'price_in_cents' => $product['price_in_cents'],
+                'is_component' => $product['is_component'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
             $products
         ));
     }
