@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import StoreHeader from '@/components/store-header';
+import StoreFooter from '@/components/store-footer';
 
 interface StoreLayoutProps {
     children: ReactNode;
@@ -17,6 +18,8 @@ export default function StoreLayout({
             <main className="mx-auto w-full max-w-6xl px-4 py-24 md:px-6">
                 {children}
             </main>
+
+            <StoreFooter />
         </div>
     );
 }

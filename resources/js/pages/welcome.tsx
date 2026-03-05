@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import StoreFooter from '@/components/store-footer';
 import StoreHeader from '@/components/store-header';
 import { useEffect, useRef, useState } from 'react';
 
@@ -522,29 +523,7 @@ export default function Welcome({
 
                 </div>
 
-                <footer className="relative z-20 mt-6 border-t border-white/10 bg-[#050b16]/90">
-                    <div className="mx-auto flex w-full max-w-[1540px] flex-col gap-4 px-4 py-7 text-sm text-slate-300 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-12">
-                        <p className="text-slate-400">
-                            © {new Date().getFullYear()} VamosPC. Built in
-                            Barcelona.
-                        </p>
-                        <div className="flex items-center gap-6">
-                            <Link
-                                href="/"
-                                className="transition hover:text-[#00bd7d]"
-                            >
-                                Home
-                            </Link>
-                            <Link
-                                href="/gaming-pc"
-                                className="transition hover:text-[#00bd7d]"
-                            >
-                                Gaming PC
-                            </Link>
-                            <span className="text-slate-500">Support</span>
-                        </div>
-                    </div>
-                </footer>
+                <StoreFooter className="mt-6" />
 
                 <div className="pointer-events-none fixed inset-0 z-40">
                     <div
