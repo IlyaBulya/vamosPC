@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Store\AssistanceController;
 use App\Http\Controllers\Store\CatalogController;
@@ -25,6 +26,13 @@ Route::redirect('/catalog/laptop/{category}', '/laptops/{category}', 301);
 Route::redirect('/notebook', '/laptops', 301);
 Route::redirect('/category/{type}', '/catalog/{type}', 301);
 Route::redirect('/category/{type}/{category}', '/catalog/{type}/{category}', 301);
+
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])
+        ->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
+        ->name('auth.google.callback');
+});
 
 Route::group([
     'prefix' => 'catalog',
