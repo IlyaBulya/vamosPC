@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChartNoAxesColumnIncreasing } from 'lucide-react';
+import { ChartNoAxesColumnIncreasing, ShoppingCart, User } from 'lucide-react';
 import { login, register } from '@/routes';
 
 type StoreHeaderProps = {
@@ -83,16 +83,30 @@ export default function StoreHeader({ canRegister = true }: StoreHeaderProps) {
                     </Link>
 
                     {isLoggedIn ? (
-                        <Link
-                            href="/account"
-                            className={`rounded-full border px-4 py-2 transition ${
-                                isActivePath(currentPath, '/account')
-                                    ? 'border-[#00bd7d]/65 bg-[#00bd7d]/12 text-[#00bd7d] shadow-[0_0_20px_rgba(0,189,125,0.45)]'
-                                    : 'border-white/15 text-slate-200 hover:border-white/35 hover:text-white'
-                            }`}
-                        >
-                            Account
-                        </Link>
+                        <>
+                            <Link
+                                href="/cart"
+                                className={`rounded-full border p-2 transition ${
+                                    isActivePath(currentPath, '/cart')
+                                        ? 'border-[#00bd7d]/65 bg-[#00bd7d]/12 text-[#00bd7d] shadow-[0_0_20px_rgba(0,189,125,0.45)]'
+                                        : 'border-white/15 text-slate-200 hover:border-white/35 hover:text-white'
+                                }`}
+                            >
+                                <span className="sr-only">Cart</span>
+                                <ShoppingCart className="h-5 w-5" />
+                            </Link>
+                            <Link
+                                href="/account"
+                                className={`rounded-full border p-2 transition ${
+                                    isActivePath(currentPath, '/account')
+                                        ? 'border-[#00bd7d]/65 bg-[#00bd7d]/12 text-[#00bd7d] shadow-[0_0_20px_rgba(0,189,125,0.45)]'
+                                        : 'border-white/15 text-slate-200 hover:border-white/35 hover:text-white'
+                                }`}
+                            >
+                                <span className="sr-only">Account</span>
+                                <User className="h-5 w-5" />
+                            </Link>
+                        </>
                     ) : (
                         <>
                             <Link
