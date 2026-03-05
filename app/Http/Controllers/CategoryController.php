@@ -18,9 +18,14 @@ class CategoryController extends Controller
         return $this->renderTypePage('accessory');
     }
 
-    public function notebook(): Response
+    public function laptop(): Response
     {
         return $this->renderTypePage('laptop');
+    }
+
+    public function laptopCategory(string $category): Response
+    {
+        return $this->showCategory('laptop', $category);
     }
 
     public function showType(string $type): Response
@@ -96,15 +101,15 @@ class CategoryController extends Controller
         return match ($type) {
                 'hardware' => [
                 'label' => 'Hardware',
-                'href' => '/hardware',
+                'href' => '/catalog/hardware',
             ],
                 'accessory' => [
                 'label' => 'Accessories',
-                'href' => '/accessories',
+                'href' => '/catalog/accessories',
             ],
                 'laptop' => [
-                'label' => 'Notebook',
-                'href' => '/notebook',
+                'label' => 'Laptops',
+                'href' => '/laptops',
             ],
                 default => abort(404),
             };

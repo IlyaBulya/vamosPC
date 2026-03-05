@@ -24,6 +24,8 @@ export default function CategoryTypePage({
     type,
     categories,
 }: CategoryTypePageProps) {
+    const itemBasePath = type === 'laptop' ? '/laptops' : `/catalog/${type}`;
+
     return (
         <>
             <Head title={title} />
@@ -43,7 +45,7 @@ export default function CategoryTypePage({
                     {categories.map((category) => (
                         <Link
                             key={category.name}
-                            href={`/category/${type}/${category.name}`}
+                            href={`${itemBasePath}/${category.name}`}
                             className="rounded-xl border border-slate-200 bg-white p-6 transition hover:border-slate-300 hover:bg-slate-100"
                         >
                             <h2 className="text-xl font-semibold text-slate-900">

@@ -21,20 +21,20 @@ class CatalogController extends Controller
             'types' => [
                 [
                     'title' => 'Hardware',
-                    'href' => '/hardware',
+                    'href' => '/catalog/hardware',
                     'description' => 'Core PC components and internal parts.',
                     'count' => (int)($categoryCounts['hardware'] ?? 0),
                 ],
                 [
                     'title' => 'Accessories',
-                    'href' => '/accessories',
+                    'href' => '/catalog/accessories',
                     'description' => 'Peripherals and setup add-ons for your desk.',
                     'count' => (int)($categoryCounts['accessory'] ?? 0),
                 ],
                 [
-                    'title' => 'Notebook',
-                    'href' => '/notebook',
-                    'description' => 'Laptop brands and notebook-focused categories.',
+                    'title' => 'Laptops',
+                    'href' => '/laptops',
+                    'description' => 'Brands and categories of Laptops.',
                     'count' => (int)($categoryCounts['laptop'] ?? 0),
                 ],
             ],
