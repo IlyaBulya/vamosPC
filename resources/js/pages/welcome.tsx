@@ -450,7 +450,7 @@ export default function Welcome({
                                 >
                                     <div
                                         ref={cardsRailRef}
-                                        className="flex gap-5 will-change-transform"
+                                        className="flex h-full items-start gap-5 will-change-transform"
                                         style={{
                                             transform: `translate3d(${cardsTranslateX}px, 0, 0)`,
                                         }}
@@ -458,7 +458,7 @@ export default function Welcome({
                                 {cards.map((card, index) => (
                                     <article
                                         key={card.name}
-                                        className={`w-[86vw] max-w-[420px] shrink-0 rounded-2xl border bg-[#0a1019]/95 p-4 shadow-[0_12px_36px_rgba(0,0,0,0.5)] sm:w-[72vw] md:w-[58vw] lg:w-auto lg:max-w-none lg:basis-[calc((100%-2.5rem)/3)] ${
+                                        className={`flex h-[calc(100%-20px)] w-[86vw] max-w-[420px] shrink-0 flex-col rounded-2xl border bg-[#0a1019]/95 p-4 shadow-[0_12px_36px_rgba(0,0,0,0.5)] sm:w-[72vw] md:w-[58vw] lg:w-auto lg:max-w-none lg:basis-[calc((100%-2.5rem)/3)] ${
                                             index === MODEL_TARGET_INDEX
                                                 ? 'border-[#00bd7d]/70 shadow-[0_0_28px_rgba(0,189,125,0.35)]'
                                                 : 'border-white/12'
@@ -498,7 +498,7 @@ export default function Welcome({
                                             {card.spec}
                                         </p>
 
-                                        <div className="mt-4 border-t border-white/15 pt-4 text-center">
+                                        <div className="mt-auto border-t border-white/15 pt-4 text-center">
                                             <p className="text-2xl uppercase tracking-wide text-[#00bd7d]">
                                                 STARTING AT{' '}
                                                 <span className="font-bold text-[#00bd7d]">
