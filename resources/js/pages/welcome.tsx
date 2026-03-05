@@ -1,5 +1,5 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login } from '@/routes';
+import { Head, Link } from '@inertiajs/react';
+import StoreHeader from '@/components/store-header';
 import { useEffect, useRef, useState } from 'react';
 
 type ModelFrame = {
@@ -67,7 +67,6 @@ export default function Welcome({
 }: {
     canRegister?: boolean;
 }) {
-    const { auth } = usePage().props;
     const scrollTrackRef = useRef<HTMLDivElement | null>(null);
     const modelAnchorRef = useRef<HTMLDivElement | null>(null);
     const targetCardRef = useRef<HTMLDivElement | null>(null);
@@ -375,61 +374,7 @@ export default function Welcome({
                 <div className="pointer-events-none absolute -right-24 top-[14%] h-96 w-96 rounded-full bg-[#00bd7d]/20 blur-3xl" />
                 <div className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl" />
 
-                <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050b16]/95">
-                    <div className="flex h-16 w-full items-center justify-between px-4 sm:px-8 lg:px-16">
-                        <Link href="/" className="inline-flex items-center gap-0">
-                            <span className="text-[2.65rem] font-black tracking-[-0.015em] text-[#00bd7d]">
-                                VAMOS
-                            </span>
-                            <img
-                                src="/images/VamosLogo.png"
-                                alt="VamosPC"
-                                className="h-12 w-auto object-contain"
-                            />
-                        </Link>
-
-                        <nav className="hidden items-center gap-10 text-base text-slate-300 md:flex">
-                            <Link href="/" className="font-medium text-[#00bd7d]">
-                                Home
-                            </Link>
-                            <Link
-                                href="/gaming-pc"
-                                className="transition hover:text-[#00bd7d]"
-                            >
-                                Build Your PC
-                            </Link>
-                            <span className="cursor-default text-slate-400">About</span>
-                            <span className="cursor-default text-slate-400">Support</span>
-                        </nav>
-
-                        <Link
-                            href={auth.user ? dashboard() : login()}
-                            aria-label={auth.user || canRegister ? 'Open account' : 'Log in'}
-                            className="rounded-full border border-white/15 p-2 text-slate-300 transition hover:border-[#00bd7d] hover:text-[#00bd7d]"
-                        >
-                            <svg
-                                className="h-5 w-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    d="M20 21C20 17.6863 16.866 15 13 15H11C7.13401 15 4 17.6863 4 21"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                    strokeLinecap="round"
-                                />
-                                <circle
-                                    cx="12"
-                                    cy="8"
-                                    r="4"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                />
-                            </svg>
-                        </Link>
-                    </div>
-                </header>
+                <StoreHeader canRegister={canRegister} />
 
                 <div ref={scrollTrackRef} className="relative">
                     <main className="sticky top-16 z-10 h-[calc(100vh-64px)] w-full">
