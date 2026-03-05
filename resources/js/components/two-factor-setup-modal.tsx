@@ -25,13 +25,13 @@ import { confirm } from '@/routes/two-factor';
 
 function GridScanIcon() {
     return (
-        <div className="mb-3 rounded-full border border-border bg-card p-0.5 shadow-sm">
-            <div className="relative overflow-hidden rounded-full border border-border bg-muted p-2.5">
+        <div className="mb-3 rounded-full border border-[#00bd7d]/50 bg-[#00bd7d]/12 p-0.5 shadow-[0_0_16px_rgba(0,189,125,0.35)]">
+            <div className="relative overflow-hidden rounded-full border border-[#00bd7d]/40 bg-[#08101c] p-2.5">
                 <div className="absolute inset-0 grid grid-cols-5 opacity-50">
                     {Array.from({ length: 5 }, (_, i) => (
                         <div
                             key={`col-${i + 1}`}
-                            className="border-r border-border last:border-r-0"
+                            className="border-r border-[#00bd7d]/20 last:border-r-0"
                         />
                     ))}
                 </div>
@@ -39,11 +39,11 @@ function GridScanIcon() {
                     {Array.from({ length: 5 }, (_, i) => (
                         <div
                             key={`row-${i + 1}`}
-                            className="border-b border-border last:border-b-0"
+                            className="border-b border-[#00bd7d]/20 last:border-b-0"
                         />
                     ))}
                 </div>
-                <ScanLine className="relative z-20 size-6 text-foreground" />
+                <ScanLine className="relative z-20 size-6 text-[#9cf5d8]" />
             </div>
         </div>
     );
@@ -73,11 +73,11 @@ function TwoFactorSetupStep({
             ) : (
                 <>
                     <div className="mx-auto flex max-w-md overflow-hidden">
-                        <div className="mx-auto aspect-square w-64 rounded-lg border border-border">
+                        <div className="mx-auto aspect-square w-64 rounded-2xl border border-white/15 bg-[#0a1322]">
                             <div className="z-10 flex h-full w-full items-center justify-center p-5">
                                 {qrCodeSvg ? (
                                     <div
-                                        className="aspect-square w-full rounded-lg bg-white p-2 [&_svg]:size-full"
+                                        className="aspect-square w-full rounded-xl bg-white p-2 [&_svg]:size-full"
                                         dangerouslySetInnerHTML={{
                                             __html: qrCodeSvg,
                                         }}
@@ -96,22 +96,25 @@ function TwoFactorSetupStep({
                     </div>
 
                     <div className="flex w-full space-x-5">
-                        <Button className="w-full" onClick={onNextStep}>
+                        <Button
+                            className="w-full bg-[#00bd7d] text-[#04120d] hover:bg-[#18d99a]"
+                            onClick={onNextStep}
+                        >
                             {buttonText}
                         </Button>
                     </div>
 
                     <div className="relative flex w-full items-center justify-center">
-                        <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
-                        <span className="relative bg-card px-2 py-1">
+                        <div className="absolute inset-0 top-1/2 h-px w-full bg-white/10" />
+                        <span className="relative bg-[#08101c] px-2 py-1 text-xs uppercase tracking-[0.14em] text-slate-400">
                             or, enter the code manually
                         </span>
                     </div>
 
                     <div className="flex w-full space-x-2">
-                        <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-border">
+                        <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-white/15 bg-[#050d1a]">
                             {!manualSetupKey ? (
-                                <div className="flex h-full w-full items-center justify-center bg-muted p-3">
+                                <div className="flex h-full w-full items-center justify-center p-3">
                                     <Spinner />
                                 </div>
                             ) : (
@@ -120,11 +123,12 @@ function TwoFactorSetupStep({
                                         type="text"
                                         readOnly
                                         value={manualSetupKey}
-                                        className="h-full w-full bg-background p-3 text-foreground outline-none"
+                                        className="h-full w-full bg-transparent p-3 font-mono text-sm text-slate-200 outline-none"
                                     />
                                     <button
+                                        type="button"
                                         onClick={() => copy(manualSetupKey)}
-                                        className="border-l border-border px-3 hover:bg-muted"
+                                        className="border-l border-white/15 px-3 text-slate-300 transition hover:bg-white/10 hover:text-[#9cf5d8]"
                                     >
                                         <IconComponent className="w-4" />
                                     </button>
@@ -181,14 +185,16 @@ function TwoFactorVerificationStep({
                                 onChange={setCode}
                                 disabled={processing}
                                 pattern={REGEXP_ONLY_DIGITS}
+                                containerClassName="justify-center"
                             >
-                                <InputOTPGroup>
+                                <InputOTPGroup className="gap-2">
                                     {Array.from(
                                         { length: OTP_MAX_LENGTH },
                                         (_, index) => (
                                             <InputOTPSlot
                                                 key={index}
                                                 index={index}
+                                                className="h-11 w-11 rounded-md border border-white/20 bg-[#050d1a] text-base text-slate-100 first:rounded-md first:border-l"
                                             />
                                         ),
                                     )}
@@ -205,7 +211,7 @@ function TwoFactorVerificationStep({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="flex-1"
+                                className="flex-1 border-white/20 bg-transparent text-slate-200 hover:bg-white/10 hover:text-white"
                                 onClick={onBack}
                                 disabled={processing}
                             >
@@ -213,7 +219,7 @@ function TwoFactorVerificationStep({
                             </Button>
                             <Button
                                 type="submit"
-                                className="flex-1"
+                                className="flex-1 bg-[#00bd7d] text-[#04120d] hover:bg-[#18d99a]"
                                 disabled={
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
@@ -316,11 +322,13 @@ export default function TwoFactorSetupModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="border border-white/15 bg-[#08101c] text-slate-100 sm:max-w-md">
                 <DialogHeader className="flex items-center justify-center">
                     <GridScanIcon />
-                    <DialogTitle>{modalConfig.title}</DialogTitle>
-                    <DialogDescription className="text-center">
+                    <DialogTitle className="text-center text-xl font-bold text-white">
+                        {modalConfig.title}
+                    </DialogTitle>
+                    <DialogDescription className="text-center text-slate-300">
                         {modalConfig.description}
                     </DialogDescription>
                 </DialogHeader>
