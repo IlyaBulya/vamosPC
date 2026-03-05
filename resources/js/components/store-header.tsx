@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChartNoAxesColumnIncreasing } from 'lucide-react';
-import { dashboard, login, register } from '@/routes';
+import { login, register } from '@/routes';
 
 type StoreHeaderProps = {
     canRegister?: boolean;
@@ -84,14 +84,14 @@ export default function StoreHeader({ canRegister = true }: StoreHeaderProps) {
 
                     {isLoggedIn ? (
                         <Link
-                            href={dashboard()}
+                            href="/account"
                             className={`rounded-full border px-4 py-2 transition ${
-                                isActivePath(currentPath, '/dashboard')
+                                isActivePath(currentPath, '/account')
                                     ? 'border-[#00bd7d]/65 bg-[#00bd7d]/12 text-[#00bd7d] shadow-[0_0_20px_rgba(0,189,125,0.45)]'
                                     : 'border-white/15 text-slate-200 hover:border-white/35 hover:text-white'
                             }`}
                         >
-                            Dashboard
+                            Account
                         </Link>
                     ) : (
                         <>
