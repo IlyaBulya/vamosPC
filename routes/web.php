@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Store\AssistanceController;
 use App\Http\Controllers\Store\CatalogController;
@@ -18,6 +19,13 @@ Route::get('/hardware', [CategoryController::class, 'hardware'])->name('hardware
 Route::get('/laptops', [LaptopsController::class, 'index'])->name('laptops');
 Route::get('/accessories', [CategoryController::class, 'accessories'])->name('accessories');
 Route::get('/notebook', [CategoryController::class, 'notebook'])->name('notebook');
+
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])
+        ->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
+        ->name('auth.google.callback');
+});
 
 Route::group([
     'prefix' => 'category',
