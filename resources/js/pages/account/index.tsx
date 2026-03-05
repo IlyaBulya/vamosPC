@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import StoreFooter from '@/components/store-footer';
 import StoreHeader from '@/components/store-header';
 import { Box, Lock, Package, ShieldCheck } from 'lucide-react';
+import { logout } from '@/routes';
 
 type AuthUser = {
     id: number;
@@ -66,6 +67,7 @@ export default function AccountPage() {
                                 </p>
                             </div>
                         </div>
+
                     </section>
 
                     <section className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -141,6 +143,13 @@ export default function AccountPage() {
                                     className="rounded-full border border-[#00bd7d]/55 bg-[#00bd7d]/15 px-4 py-2 text-sm text-[#9cf5d8] transition hover:bg-[#00bd7d]/25"
                                 >
                                     Two-Factor Auth
+                                </Link>
+                                <Link
+                                    href={logout()}
+                                    as="button"
+                                    className="rounded-full border border-red-500/70 bg-red-500/15 px-4 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/25 hover:text-red-200"
+                                >
+                                    Sign out
                                 </Link>
                             </div>
                         </article>
