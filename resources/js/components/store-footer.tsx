@@ -49,7 +49,7 @@ const trustItems = [
 export default function StoreFooter({ className = '' }: StoreFooterProps) {
     return (
         <footer
-            className={`relative z-20 border-t border-white/10 bg-[#050b16]/90 ${className}`.trim()}
+            className={`relative z-20 border-t border-white/10 bg-[#050b16] ${className}`.trim()}
         >
             <div className="mx-auto w-full max-w-[1540px] px-4 py-8 sm:px-8 lg:px-12">
                 <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr_1fr]">

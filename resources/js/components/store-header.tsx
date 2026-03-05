@@ -36,7 +36,7 @@ export default function StoreHeader({ canRegister = true }: StoreHeaderProps) {
     const isLoggedIn = Boolean(page.props.auth?.user);
 
     return (
-        <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050b16]/95 backdrop-blur">
+        <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050b16] backdrop-blur">
             <div className="flex h-16 w-full items-center justify-between px-4 sm:px-8 lg:px-16">
                 <Link href="/" className="inline-flex items-center gap-0">
                     <span className="text-[2.65rem] font-black tracking-[-0.015em] text-[#00bd7d]">
