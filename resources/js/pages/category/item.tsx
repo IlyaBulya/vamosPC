@@ -2,6 +2,8 @@ import { Head, Link } from '@inertiajs/react';
 import StoreLayout from '@/layouts/store-layout';
 
 type ProductItem = {
+    id: number;
+    slug: string;
     name: string;
     description: string | null;
     price_in_cents: number;
@@ -10,7 +12,9 @@ type ProductItem = {
 
 type CategoryItem = {
     name: string;
+    type: string;
     description: string | null;
+    route_slug: string;
     product_count: number;
     products: ProductItem[];
 };
@@ -36,6 +40,11 @@ export default function CategoryItemPage({
     backHref,
     category,
 }: CategoryItemPageProps) {
+    const productBasePath =
+        category.type === 'laptop'
+            ? `/laptops/${category.route_slug}`
+            : `/catalog/${category.route_slug}`;
+
     return (
         <>
             <Head title={title} />
@@ -65,13 +74,16 @@ export default function CategoryItemPage({
                     <ul className="mt-6 space-y-3">
                         {category.products.map((product) => (
                             <li
-                                key={`${category.name}-${product.name}-${product.price_in_cents}`}
+                                key={product.id}
                                 className="rounded-lg border border-slate-200 bg-white p-4"
                             >
                                 <div className="flex items-start justify-between gap-3">
-                                    <h2 className="text-base font-semibold text-slate-900">
+                                    <Link
+                                        href={`${productBasePath}/${product.slug}`}
+                                        className="text-base font-semibold text-slate-900 transition hover:text-slate-700"
+                                    >
                                         {product.name}
-                                    </h2>
+                                    </Link>
                                     <span className="shrink-0 text-sm font-semibold text-slate-700">
                                         {formatPrice(product.price_in_cents)}
                                     </span>
@@ -80,6 +92,12 @@ export default function CategoryItemPage({
                                     {product.description ??
                                         'No description available.'}
                                 </p>
+                                <Link
+                                    href={`${productBasePath}/${product.slug}`}
+                                    className="mt-3 inline-flex text-sm font-medium text-slate-700 transition hover:text-slate-900"
+                                >
+                                    View product
+                                </Link>
                             </li>
                         ))}
                     </ul>

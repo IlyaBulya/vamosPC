@@ -14,7 +14,7 @@ class GoogleAuthController extends Controller
 {
     public function redirect(): RedirectResponse
     {
-        if (!$this->isGoogleConfigured()) {
+        if (! $this->isGoogleConfigured()) {
             return redirect()
                 ->route('login')
                 ->with('status', 'Google sign-in is not configured yet.');
@@ -25,7 +25,7 @@ class GoogleAuthController extends Controller
 
     public function callback(): RedirectResponse
     {
-        if (!$this->isGoogleConfigured()) {
+        if (! $this->isGoogleConfigured()) {
             return redirect()
                 ->route('login')
                 ->with('status', 'Google sign-in is not configured yet.');
@@ -41,7 +41,7 @@ class GoogleAuthController extends Controller
 
         $email = $googleUser->getEmail();
 
-        if (!$email) {
+        if (! $email) {
             return redirect()
                 ->route('login')
                 ->with('status', 'Google account has no email address.');

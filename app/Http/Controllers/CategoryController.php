@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -39,19 +41,20 @@ class CategoryController extends Controller
 
         $categoryRecord = Category::query()
             ->with([
-            'products' => fn($query) => $query
-        ->orderBy('name')
-        ->select([
-        'category_id',
-        'name',
-        'description',
-        'price_in_cents',
-        'is_component',
-        ]),
-        ])
+                'products' => fn ($query) => $query
+                    ->orderBy('name')
+                    ->select([
+                        'id',
+                        'category_id',
+                        'name',
+                        'description',
+                        'price_in_cents',
+                        'is_component',
+                    ]),
+            ])
             ->where('type', $type)
             ->where('name', $category)
-            ->firstOrFail(['id', 'name', 'description']);
+            ->firstOrFail(['id', 'name', 'description', 'type']);
 
         return Inertia::render('category/item', [
             'title' => $this->headline($categoryRecord->name),
@@ -59,16 +62,20 @@ class CategoryController extends Controller
             'backHref' => $typeConfig['href'],
             'category' => [
                 'name' => $categoryRecord->name,
+                'type' => $categoryRecord->type,
                 'description' => $categoryRecord->description,
+                'route_slug' => $this->categoryRouteSlug($categoryRecord),
                 'product_count' => $categoryRecord->products->count(),
                 'products' => $categoryRecord->products
-                ->map(fn($product): array => [
-        'name' => $product->name,
-        'description' => $product->description,
-        'price_in_cents' => $product->price_in_cents,
-        'is_component' => (bool)$product->is_component,
-        ])
-                ->values(),
+                    ->map(fn (Product $product): array => [
+                        'id' => $product->id,
+                        'slug' => $this->productRouteSlug($product),
+                        'name' => $product->name,
+                        'description' => $product->description,
+                        'price_in_cents' => $product->price_in_cents,
+                        'is_component' => (bool) $product->is_component,
+                    ])
+                    ->values(),
             ],
         ]);
     }
@@ -81,10 +88,10 @@ class CategoryController extends Controller
             ->where('type', $type)
             ->orderBy('name')
             ->get(['name', 'description'])
-            ->map(fn(Category $category): array => [
-        'name' => $category->name,
-        'description' => $category->description,
-        ])
+            ->map(fn (Category $category): array => [
+                'name' => $category->name,
+                'description' => $category->description,
+            ])
             ->values();
 
         abort_if($categories->isEmpty(), 404);
@@ -99,26 +106,40 @@ class CategoryController extends Controller
     private function typeConfig(string $type): array
     {
         return match ($type) {
-                'hardware' => [
+            'hardware' => [
                 'label' => 'Hardware',
                 'href' => '/catalog/hardware',
             ],
-                'accessory' => [
+            'accessory' => [
                 'label' => 'Accessories',
                 'href' => '/catalog/accessories',
             ],
-                'laptop' => [
+            'laptop' => [
                 'label' => 'Laptops',
                 'href' => '/laptops',
             ],
-                default => abort(404),
-            };
+            default => abort(404),
+        };
     }
 
     private function headline(string $value): string
     {
         return collect(explode('-', $value))
-            ->map(fn(string $part): string => ucfirst($part))
+            ->map(fn (string $part): string => ucfirst($part))
             ->implode(' ');
+    }
+
+    private function categoryRouteSlug(Category $category): string
+    {
+        if ($category->type === 'laptop') {
+            return Str::slug($category->name);
+        }
+
+        return Str::slug(Str::plural(str_replace('-', ' ', $category->name)));
+    }
+
+    private function productRouteSlug(Product $product): string
+    {
+        return Str::slug($product->description ?: $product->name);
     }
 }
