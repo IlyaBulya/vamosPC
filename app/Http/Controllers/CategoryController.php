@@ -144,6 +144,6 @@ class CategoryController extends Controller
 
     private function productRouteSlug(Product $product): string
     {
-        return Str::slug($product->description ?: $product->name);
+        return Str::slug($product->name).'-'.$product->id;
     }
 }

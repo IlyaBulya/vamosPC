@@ -236,7 +236,7 @@ export default function CategoryItemPage({
                                                     onClick={() =>
                                                         addToCart(product.id)
                                                     }
-                                                    className="inline-flex items-center gap-1 rounded-full bg-[#b6ff37] px-4 py-2 text-sm font-semibold text-[#111] transition hover:bg-[#c6ff59]"
+                                                    className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
                                                 >
                                                     <ShoppingCart className="h-4 w-4" />
                                                     Buy

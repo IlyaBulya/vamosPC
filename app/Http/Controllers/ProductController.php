@@ -51,7 +51,10 @@ class ProductController extends Controller
         $product = Product::query()
             ->where('category_id', $category->id)
             ->get(['id', 'category_id', 'name', 'description', 'price_in_cents', 'is_component'])
-            ->first(fn(Product $item): bool => $this->productRouteSlug($item) === $productSlug);
+            ->first(
+                fn(Product $item): bool => $this->productRouteSlug($item) === $productSlug
+                    || $this->legacyProductRouteSlug($item) === $productSlug
+            );
         abort_if($product === null, 404);
 
         $typeLabel = match ($category->type) {
@@ -111,6 +114,11 @@ class ProductController extends Controller
     }
 
     private function productRouteSlug(Product $product): string
+    {
+        return Str::slug($product->name).'-'.$product->id;
+    }
+
+    private function legacyProductRouteSlug(Product $product): string
     {
         return Str::slug($product->description ?: $product->name);
     }
