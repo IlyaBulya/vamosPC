@@ -11,9 +11,47 @@ type AuthUser = {
     email: string;
 };
 
+type AccountStats = {
+    orders_count: number;
+    configurations_count: number;
+    security_level: string;
+};
+
+type AccountOrder = {
+    id: number;
+    status: string;
+    total_in_cents: number;
+    items_count: number;
+    created_at: string | null;
+};
+
+type SavedConfiguration = {
+    id: number;
+    name: string;
+    description: string | null;
+    price_in_cents: number;
+    components_count: number;
+    base_product_name: string | null;
+    created_at: string | null;
+};
+
+function formatPrice(priceInCents: number) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2,
+    }).format(priceInCents / 100);
+}
+
 export default function AccountPage() {
-    const page = usePage<{ auth: { user: AuthUser | null } }>();
+    const page = usePage<{
+        auth: { user: AuthUser | null };
+        stats: AccountStats;
+        orders: AccountOrder[];
+        configurations: SavedConfiguration[];
+    }>();
     const user = page.props.auth.user;
+    const { stats, orders, configurations } = page.props;
 
     return (
         <>
@@ -36,11 +74,14 @@ export default function AccountPage() {
                             labelClassName="text-[#9cf5d8]"
                             valueClassName="text-sm text-slate-200"
                         />
-                        <InfoCard label="Orders" value="0" />
-                        <InfoCard label="Saved Configs" value="0" />
+                        <InfoCard label="Orders" value={stats.orders_count} />
+                        <InfoCard
+                            label="Saved Configs"
+                            value={stats.configurations_count}
+                        />
                         <InfoCard
                             label="Security Level"
-                            value="Basic"
+                            value={stats.security_level}
                             valueClassName="text-2xl font-bold text-[#00bd7d]"
                         />
                     </div>
@@ -75,9 +116,42 @@ export default function AccountPage() {
                         <p className="mt-3 text-sm text-slate-300">
                             Review your latest purchases and order status.
                         </p>
-                        <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
-                            No orders yet. Your future purchases will appear here.
-                        </div>
+                        {orders.length ? (
+                            <div className="mt-5 space-y-3">
+                                {orders.map((order) => (
+                                    <div
+                                        key={order.id}
+                                        className="rounded-2xl border border-white/10 bg-[#0b1321] p-4"
+                                    >
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-white">
+                                                    Order #{order.id}
+                                                </p>
+                                                <p className="mt-1 text-sm text-slate-400">
+                                                    {order.items_count} items
+                                                    {order.created_at
+                                                        ? ` • ${order.created_at}`
+                                                        : ''}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9cf5d8]">
+                                                    {order.status}
+                                                </p>
+                                                <p className="mt-1 text-lg font-bold text-white">
+                                                    {formatPrice(order.total_in_cents)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
+                                No orders yet. Your future purchases will appear here.
+                            </div>
+                        )}
                     </article>
 
                     <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6">
@@ -92,9 +166,47 @@ export default function AccountPage() {
                         <p className="mt-3 text-sm text-slate-300">
                             Keep your favorite builds and continue editing anytime.
                         </p>
-                        <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
-                            No saved configurations yet.
-                        </div>
+                        {configurations.length ? (
+                            <div className="mt-5 space-y-3">
+                                {configurations.map((configuration) => (
+                                    <div
+                                        key={configuration.id}
+                                        className="rounded-2xl border border-white/10 bg-[#0b1321] p-4"
+                                    >
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-white">
+                                                    {configuration.name}
+                                                </p>
+                                                <p className="mt-1 text-sm text-slate-400">
+                                                    {configuration.base_product_name
+                                                        ? `Base: ${configuration.base_product_name}`
+                                                        : 'Base product not available'}
+                                                </p>
+                                                <p className="mt-1 text-sm text-slate-400">
+                                                    {configuration.components_count} components
+                                                    {configuration.created_at
+                                                        ? ` • ${configuration.created_at}`
+                                                        : ''}
+                                                </p>
+                                                {configuration.description ? (
+                                                    <p className="mt-2 text-sm text-slate-300">
+                                                        {configuration.description}
+                                                    </p>
+                                                ) : null}
+                                            </div>
+                                            <p className="text-lg font-bold text-[#00bd7d]">
+                                                {formatPrice(configuration.price_in_cents)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
+                                No saved configurations yet.
+                            </div>
+                        )}
                     </article>
 
                     <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6">

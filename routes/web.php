@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Store\AssistanceController;
+use App\Http\Controllers\Store\AccountController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CartItemController;
 use App\Http\Controllers\Store\CatalogController;
@@ -65,7 +66,7 @@ Route::group([
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::inertia('account', 'account/index')->name('account');
+    Route::get('/account', [AccountController::class, 'index'])->name('account');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::post('/configurations', [ConfigurationController::class, 'store'])
         ->name('configurations.store');
