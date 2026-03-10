@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus, ShoppingCart, SlidersHorizontal } from 'lucide-react';
 import FeaturePill from '@/components/store/feature-pill';
 import PageHero from '@/components/store/page-hero';
@@ -14,6 +14,8 @@ type ProductItem = {
     stock: number;
     color: string | null;
     is_component: boolean;
+    can_be_base_product: boolean;
+    is_sellable: boolean;
 };
 
 type CategoryItem = {
@@ -31,6 +33,12 @@ interface CategoryItemPageProps {
     backHref: string;
     category: CategoryItem;
 }
+
+type AuthUser = {
+    id: number;
+    name: string;
+    email: string;
+};
 
 const filterGroups = [
     'Store',
@@ -73,6 +81,8 @@ export default function CategoryItemPage({
     backHref,
     category,
 }: CategoryItemPageProps) {
+    const page = usePage<{ auth: { user: AuthUser | null } }>();
+    const user = page.props.auth.user;
     const productBasePath =
         category.type === 'laptop'
             ? `/laptops/${category.route_slug}`
@@ -153,7 +163,37 @@ export default function CategoryItemPage({
                                                 : 'Pre-order'
                                         }
                                         color={product.color}
-                                        onAddToCart={() => addToCart(product.id)}
+                                        action={
+                                            product.can_be_base_product
+                                                ? user
+                                                    ? {
+                                                          label: 'Configure',
+                                                          kind: 'configure',
+                                                          onClick: () =>
+                                                              router.post(
+                                                                  '/configurations',
+                                                                  {
+                                                                      product_id:
+                                                                          product.id,
+                                                                  },
+                                                                  {
+                                                                      preserveScroll:
+                                                                          true,
+                                                                  },
+                                                              ),
+                                                      }
+                                                    : {
+                                                          label: 'Configure',
+                                                          kind: 'configure',
+                                                          href: '/login',
+                                                      }
+                                                : {
+                                                      label: 'Buy',
+                                                      kind: 'buy',
+                                                      onClick: () =>
+                                                          addToCart(product.id),
+                                                  }
+                                        }
                                     />
                                 );
                             })}

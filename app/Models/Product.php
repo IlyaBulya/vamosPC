@@ -20,6 +20,9 @@ class Product extends Model
         'stock',
         'color',
         'is_component',
+        'can_be_base_product',
+        'is_sellable',
+        'is_available_for_configuration',
     ];
 
     /**
@@ -32,6 +35,9 @@ class Product extends Model
             'price_in_cents' => 'integer',
             'stock' => 'integer',
             'is_component' => 'boolean',
+            'can_be_base_product' => 'boolean',
+            'is_sellable' => 'boolean',
+            'is_available_for_configuration' => 'boolean',
         ];
     }
 

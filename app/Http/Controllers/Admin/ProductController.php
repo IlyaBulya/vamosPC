@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,6 +29,9 @@ class ProductController extends Controller
                 'stock' => (int) $product->stock,
                 'color' => $product->color,
                 'is_component' => (bool) $product->is_component,
+                'can_be_base_product' => (bool) $product->can_be_base_product,
+                'is_sellable' => (bool) $product->is_sellable,
+                'is_available_for_configuration' => (bool) $product->is_available_for_configuration,
                 'order_items_count' => (int) $product->order_items_count,
                 'configurations_count' => (int) $product->configurations_count,
                 'base_configurations_count' => (int) $product->base_configurations_count,
@@ -72,6 +76,9 @@ class ProductController extends Controller
                 'stock' => (int) $product->stock,
                 'color' => $product->color,
                 'is_component' => (bool) $product->is_component,
+                'can_be_base_product' => (bool) $product->can_be_base_product,
+                'is_sellable' => (bool) $product->is_sellable,
+                'is_available_for_configuration' => (bool) $product->is_available_for_configuration,
             ],
             'categories' => $this->categories(),
         ]);
@@ -134,12 +141,24 @@ class ProductController extends Controller
             'stock' => ['required', 'integer', 'min:0'],
             'color' => ['nullable', 'string', 'max:255'],
             'is_component' => ['required', 'boolean'],
+            'can_be_base_product' => ['required', 'boolean'],
+            'is_sellable' => ['required', 'boolean'],
+            'is_available_for_configuration' => ['required', 'boolean'],
         ]);
 
         $data['category_id'] = (int) $data['category_id'];
         $data['price_in_cents'] = (int) $data['price_in_cents'];
         $data['stock'] = (int) $data['stock'];
         $data['is_component'] = (bool) $data['is_component'];
+        $data['can_be_base_product'] = (bool) $data['can_be_base_product'];
+        $data['is_sellable'] = (bool) $data['is_sellable'];
+        $data['is_available_for_configuration'] = (bool) $data['is_available_for_configuration'];
+
+        if ($data['is_component'] && $data['can_be_base_product']) {
+            throw ValidationException::withMessages([
+                'can_be_base_product' => 'Components cannot be used as base products.',
+            ]);
+        }
 
         return $data;
     }

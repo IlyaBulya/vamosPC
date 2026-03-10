@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ConfigurationController extends Controller
 {
@@ -25,22 +26,27 @@ class ConfigurationController extends Controller
         ]);
 
         $baseProduct = Product::query()->findOrFail((int) $data['product_id']);
-        abort_if($baseProduct->is_component, 422, 'Components cannot be used as a base product.');
+        if (! $baseProduct->can_be_base_product) {
+            throw ValidationException::withMessages([
+                'product_id' => 'This product cannot be used as a base configuration.',
+            ]);
+        }
 
         $selectedProductIds = $this->selectedProductIds($data['product_ids'] ?? []);
+        $allowedProductIds = $this->allowedConfigurationProductIds($selectedProductIds);
 
-        DB::transaction(function () use ($baseProduct, $data, $selectedProductIds, $user): void {
+        DB::transaction(function () use ($allowedProductIds, $baseProduct, $data, $user): void {
             $configuration = Configuration::query()->create([
                 'user_id' => $user->id,
                 'product_id' => $baseProduct->id,
                 'name' => $data['name'] ?? "{$baseProduct->name} Configuration",
                 'description' => $data['description'] ?? $baseProduct->description,
                 'image' => null,
-                'price' => $this->resolvedPrice($baseProduct, $selectedProductIds),
+                'price' => $this->resolvedPrice($baseProduct, $allowedProductIds),
             ]);
 
-            if ($selectedProductIds !== []) {
-                $configuration->products()->sync($selectedProductIds);
+            if ($allowedProductIds !== []) {
+                $configuration->products()->sync($allowedProductIds);
             }
         });
 
@@ -58,10 +64,11 @@ class ConfigurationController extends Controller
         ]);
 
         $selectedProductIds = $this->selectedProductIds($data['product_ids']);
+        $allowedProductIds = $this->allowedConfigurationProductIds($selectedProductIds);
 
-        $configuration->products()->sync($selectedProductIds);
+        $configuration->products()->sync($allowedProductIds);
         $configuration->update([
-            'price' => $this->resolvedPrice($configuration->baseProduct, $selectedProductIds),
+            'price' => $this->resolvedPrice($configuration->baseProduct, $allowedProductIds),
         ]);
 
         return back()->with('status', 'Configuration products updated.');
@@ -86,6 +93,28 @@ class ConfigurationController extends Controller
             ->all();
 
         return $ids;
+    }
+
+    /**
+     * @param  list<int>  $selectedProductIds
+     * @return list<int>
+     */
+    private function allowedConfigurationProductIds(array $selectedProductIds): array
+    {
+        $allowedProductIds = Product::query()
+            ->whereIn('id', $selectedProductIds)
+            ->where('is_available_for_configuration', true)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if (count($allowedProductIds) !== count($selectedProductIds)) {
+            throw ValidationException::withMessages([
+                'product_ids' => 'Some selected products cannot be used in configurations.',
+            ]);
+        }
+
+        return $allowedProductIds;
     }
 
     /**

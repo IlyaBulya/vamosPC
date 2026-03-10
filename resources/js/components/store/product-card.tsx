@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ShoppingCart } from 'lucide-react';
+import { Settings2, ShoppingCart } from 'lucide-react';
 import ProductMediaBlock from '@/components/store/product-media-block';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,17 @@ type ProductCardProps = {
     note?: string;
     availability: 'In stock' | 'Pre-order';
     color?: string | null;
-    onAddToCart: () => void;
+    action:
+        | {
+              label: string;
+              onClick: () => void;
+              kind: 'buy' | 'configure';
+          }
+        | {
+              label: string;
+              href: string;
+              kind: 'buy' | 'configure';
+          };
     className?: string;
 };
 
@@ -23,7 +33,7 @@ export default function ProductCard({
     note,
     availability,
     color,
-    onAddToCart,
+    action,
     className,
 }: ProductCardProps) {
     const inStock = availability === 'In stock';
@@ -79,14 +89,32 @@ export default function ProductCard({
                     {note ? <p className="mt-1 text-xs text-slate-400">{note}</p> : null}
                 </div>
 
-                <button
-                    type="button"
-                    onClick={onAddToCart}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
-                >
-                    <ShoppingCart className="h-4 w-4" />
-                    Buy
-                </button>
+                {'href' in action ? (
+                    <Link
+                        href={action.href}
+                        className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
+                    >
+                        {action.kind === 'configure' ? (
+                            <Settings2 className="h-4 w-4" />
+                        ) : (
+                            <ShoppingCart className="h-4 w-4" />
+                        )}
+                        {action.label}
+                    </Link>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={action.onClick}
+                        className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
+                    >
+                        {action.kind === 'configure' ? (
+                            <Settings2 className="h-4 w-4" />
+                        ) : (
+                            <ShoppingCart className="h-4 w-4" />
+                        )}
+                        {action.label}
+                    </button>
+                )}
             </div>
         </article>
     );

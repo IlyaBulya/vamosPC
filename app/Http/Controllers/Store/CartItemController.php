@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Support\CartSession;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CartItemController extends Controller
 {
@@ -27,6 +28,13 @@ class CartItemController extends Controller
         $items = CartSession::all($request);
 
         if ($productId > 0) {
+            $product = Product::query()->findOrFail($productId);
+            if (! $product->is_sellable) {
+                throw ValidationException::withMessages([
+                    'product_id' => 'This product is not available for direct purchase.',
+                ]);
+            }
+
             $lineKey = CartSession::lineKey('product', $productId);
             $items[$lineKey] = [
                 'type' => 'product',

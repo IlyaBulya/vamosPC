@@ -35,6 +35,7 @@ class CheckoutController extends Controller
             ->all();
 
         $products = Product::query()
+            ->where('is_sellable', true)
             ->whereIn('id', $productIds)
             ->get(['id', 'price_in_cents'])
             ->keyBy('id');

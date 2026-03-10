@@ -11,6 +11,8 @@ type ProductDetails = {
     description: string | null;
     price_in_cents: number;
     is_component: boolean;
+    can_be_base_product: boolean;
+    is_sellable: boolean;
 };
 
 type ProductCategory = {
@@ -152,14 +154,16 @@ export default function ProductShowPage({
                         </div>
 
                         <div className="mt-6 flex flex-col gap-3">
-                            <button
-                                type="button"
-                                onClick={addToCart}
-                                className="rounded-xl bg-[#00bd7d] px-5 py-3 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.5)] transition hover:bg-[#18d99a]"
-                            >
-                                Add to Cart
-                            </button>
-                            {!product.is_component &&
+                            {product.is_sellable ? (
+                                <button
+                                    type="button"
+                                    onClick={addToCart}
+                                    className="rounded-xl bg-[#00bd7d] px-5 py-3 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.5)] transition hover:bg-[#18d99a]"
+                                >
+                                    Add to Cart
+                                </button>
+                            ) : null}
+                            {product.can_be_base_product &&
                                 (user ? (
                                     <button
                                         type="button"
@@ -176,6 +180,11 @@ export default function ProductShowPage({
                                         Log in to Configure
                                     </Link>
                                 ))}
+                            {!product.is_sellable && !product.can_be_base_product ? (
+                                <div className="rounded-xl border border-white/15 bg-[#0b1321] px-5 py-3 text-sm text-slate-300">
+                                    This item is not available for direct purchase.
+                                </div>
+                            ) : null}
                             <Link
                                 href="/cart"
                                 className="rounded-xl border border-white/20 px-5 py-3 text-center text-sm font-semibold text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"

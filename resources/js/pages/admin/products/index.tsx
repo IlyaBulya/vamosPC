@@ -10,6 +10,9 @@ type ProductRow = {
     stock: number;
     color: string | null;
     is_component: boolean;
+    can_be_base_product: boolean;
+    is_sellable: boolean;
+    is_available_for_configuration: boolean;
     order_items_count: number;
     configurations_count: number;
     base_configurations_count: number;
@@ -63,6 +66,7 @@ export default function AdminProductsPage({
                                     <th className="px-5 py-4 font-medium">Price</th>
                                     <th className="px-5 py-4 font-medium">Stock</th>
                                     <th className="px-5 py-4 font-medium">Mode</th>
+                                    <th className="px-5 py-4 font-medium">Flags</th>
                                     <th className="px-5 py-4 font-medium">Usage</th>
                                     <th className="px-5 py-4 text-right font-medium">Actions</th>
                                 </tr>
@@ -105,6 +109,24 @@ export default function AdminProductsPage({
                                                 </span>
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
+                                                <p>
+                                                    Base:{' '}
+                                                    {product.can_be_base_product
+                                                        ? 'Yes'
+                                                        : 'No'}
+                                                </p>
+                                                <p>
+                                                    Sellable:{' '}
+                                                    {product.is_sellable ? 'Yes' : 'No'}
+                                                </p>
+                                                <p>
+                                                    Config:{' '}
+                                                    {product.is_available_for_configuration
+                                                        ? 'Yes'
+                                                        : 'No'}
+                                                </p>
+                                            </td>
+                                            <td className="px-5 py-4 text-slate-300">
                                                 <p>Orders: {product.order_items_count}</p>
                                                 <p>Pivot: {product.configurations_count}</p>
                                                 <p>
@@ -134,7 +156,7 @@ export default function AdminProductsPage({
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={8}
+                                            colSpan={9}
                                             className="px-5 py-10 text-center text-slate-400"
                                         >
                                             No products found.

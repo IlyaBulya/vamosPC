@@ -20,6 +20,9 @@ type ProductFormData = {
     stock: string;
     color: string;
     is_component: boolean;
+    can_be_base_product: boolean;
+    is_sellable: boolean;
+    is_available_for_configuration: boolean;
 };
 
 type ProductValue = {
@@ -31,6 +34,9 @@ type ProductValue = {
     stock: number;
     color: string | null;
     is_component: boolean;
+    can_be_base_product: boolean;
+    is_sellable: boolean;
+    is_available_for_configuration: boolean;
 };
 
 export default function AdminProductFormPage({
@@ -50,6 +56,10 @@ export default function AdminProductFormPage({
         stock: product ? String(product.stock) : '0',
         color: product?.color ?? '',
         is_component: product?.is_component ?? false,
+        can_be_base_product: product?.can_be_base_product ?? false,
+        is_sellable: product?.is_sellable ?? true,
+        is_available_for_configuration:
+            product?.is_available_for_configuration ?? false,
     });
 
     const submit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -201,6 +211,66 @@ export default function AdminProductFormPage({
                             <Label htmlFor="is_component" className="text-slate-200">
                                 Save as component
                             </Label>
+                        </div>
+
+                        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1321] px-4 py-3">
+                            <Checkbox
+                                id="can_be_base_product"
+                                checked={form.data.can_be_base_product}
+                                onCheckedChange={(checked) =>
+                                    form.setData(
+                                        'can_be_base_product',
+                                        checked === true,
+                                    )
+                                }
+                            />
+                            <Label
+                                htmlFor="can_be_base_product"
+                                className="text-slate-200"
+                            >
+                                Can be used as base product
+                            </Label>
+                        </div>
+
+                        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1321] px-4 py-3">
+                            <Checkbox
+                                id="is_sellable"
+                                checked={form.data.is_sellable}
+                                onCheckedChange={(checked) =>
+                                    form.setData('is_sellable', checked === true)
+                                }
+                            />
+                            <Label htmlFor="is_sellable" className="text-slate-200">
+                                Available for direct sale
+                            </Label>
+                        </div>
+
+                        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1321] px-4 py-3 md:col-span-2">
+                            <Checkbox
+                                id="is_available_for_configuration"
+                                checked={form.data.is_available_for_configuration}
+                                onCheckedChange={(checked) =>
+                                    form.setData(
+                                        'is_available_for_configuration',
+                                        checked === true,
+                                    )
+                                }
+                            />
+                            <Label
+                                htmlFor="is_available_for_configuration"
+                                className="text-slate-200"
+                            >
+                                Available inside custom configurations
+                            </Label>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1321] px-4 py-4 text-sm text-slate-400">
+                        Use these flags to control product behavior:
+                        <div className="mt-3 space-y-1">
+                            <p>`Can be used as base product` = show Configure for ready-made PCs.</p>
+                            <p>`Available for direct sale` = can be bought as a normal product.</p>
+                            <p>`Available inside custom configurations` = can be attached through `configuration_product`.</p>
                         </div>
                     </div>
 

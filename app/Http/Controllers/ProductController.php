@@ -50,7 +50,20 @@ class ProductController extends Controller
 
         $product = Product::query()
             ->where('category_id', $category->id)
-            ->get(['id', 'category_id', 'name', 'description', 'price_in_cents', 'is_component'])
+            ->where(function ($query) {
+                $query->where('is_sellable', true)
+                    ->orWhere('can_be_base_product', true);
+            })
+            ->get([
+                'id',
+                'category_id',
+                'name',
+                'description',
+                'price_in_cents',
+                'is_component',
+                'can_be_base_product',
+                'is_sellable',
+            ])
             ->first(
                 fn(Product $item): bool => $this->productRouteSlug($item) === $productSlug
                     || $this->legacyProductRouteSlug($item) === $productSlug
@@ -81,7 +94,9 @@ class ProductController extends Controller
                 'name' => $product->name,
                 'description' => $product->description,
                 'price_in_cents' => $product->price_in_cents,
-                'is_component' => (bool)$product->is_component,
+                'is_component' => (bool) $product->is_component,
+                'can_be_base_product' => (bool) $product->can_be_base_product,
+                'is_sellable' => (bool) $product->is_sellable,
             ],
             'category' => [
                 'name' => $category->name,
