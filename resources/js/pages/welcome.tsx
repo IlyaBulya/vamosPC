@@ -1,7 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import StoreFooter from '@/components/store-footer';
-import StoreHeader from '@/components/store-header';
 import { useEffect, useRef, useState } from 'react';
+import BuildCard from '@/components/store/build-card';
+import FeaturePill from '@/components/store/feature-pill';
+import ProductMediaBlock from '@/components/store/product-media-block';
+import StoreLayout from '@/layouts/store-layout';
 
 type ModelFrame = {
     x: number;
@@ -370,12 +372,14 @@ export default function Welcome({
         <>
             <Head title="Welcome to VamosPC" />
 
-            <div className="relative min-h-screen w-full overflow-x-hidden bg-[#030712] text-slate-100">
+            <StoreLayout
+                canRegister={canRegister}
+                contentClassName="relative max-w-none px-0 py-0"
+                footerClassName="mt-6"
+            >
                 <div className="pointer-events-none absolute -left-20 top-[18%] h-72 w-72 rounded-full bg-[#00bd7d]/25 blur-3xl" />
                 <div className="pointer-events-none absolute -right-24 top-[14%] h-96 w-96 rounded-full bg-[#00bd7d]/20 blur-3xl" />
                 <div className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl" />
-
-                <StoreHeader canRegister={canRegister} />
 
                 <div ref={scrollTrackRef} className="relative">
                     <main className="sticky top-16 z-10 h-[calc(100vh-64px)] w-full">
@@ -413,13 +417,12 @@ export default function Welcome({
                                 <div className="mt-8 flex flex-wrap gap-3">
                                     {['Fast Build', 'Warranty', 'Stress Tested'].map(
                                         (item) => (
-                                            <span
+                                            <FeaturePill
                                                 key={item}
-                                                className="inline-flex items-center gap-2 rounded-full border border-[#00bd7d]/40 bg-[#00bd7d]/10 px-4 py-2 text-lg text-[#9cf5d8]"
+                                                className="text-lg"
                                             >
-                                                <span className="h-2.5 w-2.5 rounded-full bg-[#00bd7d]" />
                                                 {item}
-                                            </span>
+                                            </FeaturePill>
                                         ),
                                     )}
                                 </div>
@@ -455,66 +458,70 @@ export default function Welcome({
                                             transform: `translate3d(${cardsTranslateX}px, 0, 0)`,
                                         }}
                                     >
-                                {cards.map((card, index) => (
-                                    <article
-                                        key={card.name}
-                                        className={`flex h-[calc(100%-20px)] w-[86vw] max-w-[420px] shrink-0 flex-col rounded-2xl border bg-[#0a1019]/95 p-4 shadow-[0_12px_36px_rgba(0,0,0,0.5)] sm:w-[72vw] md:w-[58vw] lg:w-auto lg:max-w-none lg:basis-[calc((100%-2.5rem)/3)] ${
-                                            index === MODEL_TARGET_INDEX
-                                                ? 'border-[#00bd7d]/70 shadow-[0_0_28px_rgba(0,189,125,0.35)]'
-                                                : 'border-white/12'
-                                        }`}
-                                    >
-                                        <div
-                                            ref={
-                                                index === MODEL_TARGET_INDEX
-                                                    ? targetCardRef
-                                                    : undefined
-                                            }
-                                            className="relative aspect-square w-full overflow-hidden rounded-xl border border-white/15 bg-[#0b1320]"
-                                        >
-                                            <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8]/75">
-                                                {index === MODEL_TARGET_INDEX
-                                                    ? 'Waiting for Model'
-                                                    : 'PC Image Placeholder'}
-                                            </div>
+                                        {cards.map((card, index) => (
+                                            <BuildCard
+                                                key={card.name}
+                                                title={card.name}
+                                                description={card.spec}
+                                                titleClassName="text-5xl leading-none text-white"
+                                                className={`flex h-[calc(100%-20px)] w-[86vw] max-w-[420px] shrink-0 sm:w-[72vw] md:w-[58vw] lg:w-auto lg:max-w-none lg:basis-[calc((100%-2.5rem)/3)] ${
+                                                    index === MODEL_TARGET_INDEX
+                                                        ? 'border-[#00bd7d]/70 shadow-[0_0_28px_rgba(0,189,125,0.35)]'
+                                                        : 'border-white/12'
+                                                }`}
+                                                media={
+                                                    <div
+                                                        ref={
+                                                            index === MODEL_TARGET_INDEX
+                                                                ? targetCardRef
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        <ProductMediaBlock
+                                                            aspectClassName="aspect-square overflow-hidden rounded-xl border border-white/15 bg-[#0b1320]"
+                                                        >
+                                                            <>
+                                                                <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8]/75">
+                                                                    {index ===
+                                                                    MODEL_TARGET_INDEX
+                                                                        ? 'Waiting for Model'
+                                                                        : 'PC Image Placeholder'}
+                                                                </div>
 
-                                            {index === MODEL_TARGET_INDEX && (
-                                                <div
-                                                    className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-[#00bd7d]/70 bg-[#07121f]/82 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8] transition-opacity duration-200"
-                                                    style={{
-                                                        opacity: landingProgress,
-                                                    }}
-                                                >
-                                                    3D Model Inserted
-                                                </div>
-                                            )}
-                                        </div>
+                                                                {index ===
+                                                                    MODEL_TARGET_INDEX && (
+                                                                    <div
+                                                                        className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-[#00bd7d]/70 bg-[#07121f]/82 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8] transition-opacity duration-200"
+                                                                        style={{
+                                                                            opacity: landingProgress,
+                                                                        }}
+                                                                    >
+                                                                        3D Model Inserted
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        </ProductMediaBlock>
+                                                    </div>
+                                                }
+                                                footer={
+                                                    <div className="border-t border-white/15 pt-4 text-center">
+                                                        <p className="text-2xl uppercase tracking-wide text-[#00bd7d]">
+                                                            STARTING AT{' '}
+                                                            <span className="font-bold text-[#00bd7d]">
+                                                                {card.price}
+                                                            </span>
+                                                        </p>
 
-                                        <h3 className="mt-4 text-5xl font-black leading-none text-white">
-                                            {card.name}
-                                        </h3>
-
-                                        <p className="mt-3 min-h-[72px] text-sm leading-relaxed text-slate-300">
-                                            {card.spec}
-                                        </p>
-
-                                        <div className="mt-auto border-t border-white/15 pt-4 text-center">
-                                            <p className="text-2xl uppercase tracking-wide text-[#00bd7d]">
-                                                STARTING AT{' '}
-                                                <span className="font-bold text-[#00bd7d]">
-                                                    {card.price}
-                                                </span>
-                                            </p>
-
-                                            <button
-                                                type="button"
-                                                className="mt-4 w-full rounded-xl bg-[#00bd7d] px-7 py-3 text-base font-semibold text-[#04120d] transition hover:bg-[#18d99a]"
-                                            >
-                                                CONFIGURE
-                                            </button>
-                                        </div>
-                                    </article>
-                                ))}
+                                                        <button
+                                                            type="button"
+                                                            className="mt-4 w-full rounded-xl bg-[#00bd7d] px-7 py-3 text-base font-semibold text-[#04120d] transition hover:bg-[#18d99a]"
+                                                        >
+                                                            CONFIGURE
+                                                        </button>
+                                                    </div>
+                                                }
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -522,8 +529,6 @@ export default function Welcome({
                     </section>
 
                 </div>
-
-                <StoreFooter className="mt-6" />
 
                 <div className="pointer-events-none fixed inset-0 z-40">
                     <div
@@ -542,7 +547,7 @@ export default function Welcome({
                         </div>
                     </div>
                 </div>
-            </div>
+            </StoreLayout>
         </>
     );
 }

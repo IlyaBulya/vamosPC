@@ -1,7 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Box, Laptop, Tag } from 'lucide-react';
-import StoreFooter from '@/components/store-footer';
-import StoreHeader from '@/components/store-header';
+import { Box, Laptop, Tag } from 'lucide-react';
+import BackLinkRow from '@/components/store/back-link-row';
+import InfoCard from '@/components/store/info-card';
+import ProductMediaBlock from '@/components/store/product-media-block';
+import StoreLayout from '@/layouts/store-layout';
 
 type ProductDetails = {
     id: number;
@@ -59,115 +61,93 @@ export default function ProductShowPage({
         <>
             <Head title={product.name} />
 
-            <div className="relative min-h-screen overflow-x-hidden bg-[#030712] text-slate-100">
-                <div className="pointer-events-none absolute -left-16 top-20 h-72 w-72 rounded-full bg-[#00bd7d]/20 blur-3xl" />
-                <div className="pointer-events-none absolute right-0 top-44 h-80 w-80 rounded-full bg-[#00bd7d]/15 blur-3xl" />
+            <StoreLayout footerClassName="mt-6">
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <BackLinkRow
+                        href={navigation.back_to_type_href}
+                        label={`Back to ${category.type_label}`}
+                    />
+                    <span className="text-slate-500">/</span>
+                    <Link
+                        href={navigation.back_to_category_href}
+                        className="font-medium text-slate-300 transition hover:text-[#9cf5d8]"
+                    >
+                        {category.label}
+                    </Link>
+                </div>
 
-                <StoreHeader />
+                <section className="mt-5 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+                    <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.45)] sm:p-10">
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#9cf5d8]">
+                            Product
+                        </p>
+                        <h1 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">
+                            {product.name}
+                        </h1>
+                        <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-300 sm:text-lg">
+                            {product.description ??
+                                'No description available for this product yet.'}
+                        </p>
 
-                <main className="mx-auto w-full max-w-[1540px] px-4 py-10 sm:px-8 lg:px-12">
-                    <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <Link
-                            href={navigation.back_to_type_href}
-                            className="inline-flex items-center gap-2 font-medium text-slate-300 transition hover:text-[#9cf5d8]"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to {category.type_label}
-                        </Link>
-                        <span className="text-slate-500">/</span>
-                        <Link
-                            href={navigation.back_to_category_href}
-                            className="font-medium text-slate-300 transition hover:text-[#9cf5d8]"
-                        >
-                            {category.label}
-                        </Link>
-                    </div>
+                        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                            <InfoCard
+                                label="Price"
+                                value={formatPrice(product.price_in_cents)}
+                                valueClassName="text-2xl font-bold text-[#00bd7d]"
+                            />
+                            <InfoCard
+                                label="Category"
+                                value={category.label}
+                                valueClassName="text-lg font-semibold text-white"
+                            />
+                            <InfoCard
+                                label="Type"
+                                value={category.type_label}
+                                valueClassName="text-lg font-semibold text-white"
+                            />
+                        </div>
+                    </article>
 
-                    <section className="mt-5 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                        <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.45)] sm:p-10">
-                            <p className="text-xs uppercase tracking-[0.18em] text-[#9cf5d8]">
-                                Product
-                            </p>
-                            <h1 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">
-                                {product.name}
-                            </h1>
-                            <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-300 sm:text-lg">
-                                {product.description ??
-                                    'No description available for this product yet.'}
-                            </p>
+                    <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6 sm:p-7">
+                        <ProductMediaBlock
+                            className="p-0"
+                            aspectClassName="flex h-56 items-center justify-center rounded-2xl border border-white/15 bg-[#0d1623]"
+                            innerClassName="text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8]/80"
+                        />
 
-                            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                                <div className="rounded-2xl border border-white/10 bg-[#0a1322] p-5">
-                                    <p className="text-xs uppercase tracking-[0.12em] text-slate-400">
-                                        Price
-                                    </p>
-                                    <p className="mt-2 text-2xl font-bold text-[#00bd7d]">
-                                        {formatPrice(product.price_in_cents)}
-                                    </p>
-                                </div>
-                                <div className="rounded-2xl border border-white/10 bg-[#0a1322] p-5">
-                                    <p className="text-xs uppercase tracking-[0.12em] text-slate-400">
-                                        Category
-                                    </p>
-                                    <p className="mt-2 text-lg font-semibold text-white">
-                                        {category.label}
-                                    </p>
-                                </div>
-                                <div className="rounded-2xl border border-white/10 bg-[#0a1322] p-5">
-                                    <p className="text-xs uppercase tracking-[0.12em] text-slate-400">
-                                        Type
-                                    </p>
-                                    <p className="mt-2 text-lg font-semibold text-white">
-                                        {category.type_label}
-                                    </p>
-                                </div>
+                        <div className="mt-5 space-y-3">
+                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                                <Tag className="h-4 w-4 text-[#00bd7d]" />
+                                SKU: #{product.id}
                             </div>
-                        </article>
-
-                        <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6 sm:p-7">
-                            <div className="flex h-56 items-center justify-center rounded-2xl border border-white/15 bg-[#0d1623]">
-                                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8]/80">
-                                    Product Image
-                                </span>
+                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                                <Laptop className="h-4 w-4 text-[#00bd7d]" />
+                                Series: {category.type_label}
                             </div>
-
-                            <div className="mt-5 space-y-3">
-                                <div className="flex items-center gap-2 text-sm text-slate-300">
-                                    <Tag className="h-4 w-4 text-[#00bd7d]" />
-                                    SKU: #{product.id}
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-slate-300">
-                                    <Laptop className="h-4 w-4 text-[#00bd7d]" />
-                                    Series: {category.type_label}
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-slate-300">
-                                    <Box className="h-4 w-4 text-[#00bd7d]" />
-                                    {product.is_component ? 'Component item' : 'Complete product'}
-                                </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                                <Box className="h-4 w-4 text-[#00bd7d]" />
+                                {product.is_component ? 'Component item' : 'Complete product'}
                             </div>
+                        </div>
 
-                            <div className="mt-6 flex flex-col gap-3">
-                                <button
-                                    type="button"
-                                    onClick={addToCart}
-                                    className="rounded-xl bg-[#00bd7d] px-5 py-3 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.5)] transition hover:bg-[#18d99a]"
-                                >
-                                    Add to Cart
-                                </button>
-                                <Link
-                                    href="/cart"
-                                    className="rounded-xl border border-white/20 px-5 py-3 text-center text-sm font-semibold text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
-                                >
-                                    Open Cart
-                                </Link>
-                            </div>
-                        </aside>
-                    </section>
-                </main>
-
-                <StoreFooter className="mt-6" />
-            </div>
+                        <div className="mt-6 flex flex-col gap-3">
+                            <button
+                                type="button"
+                                onClick={addToCart}
+                                className="rounded-xl bg-[#00bd7d] px-5 py-3 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.5)] transition hover:bg-[#18d99a]"
+                            >
+                                Add to Cart
+                            </button>
+                            <Link
+                                href="/cart"
+                                className="rounded-xl border border-white/20 px-5 py-3 text-center text-sm font-semibold text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
+                            >
+                                Open Cart
+                            </Link>
+                        </div>
+                    </aside>
+                </section>
+            </StoreLayout>
         </>
     );
 }
-
