@@ -8,6 +8,7 @@ use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CartItemController;
 use App\Http\Controllers\Store\CatalogController;
 use App\Http\Controllers\Store\CompareController;
+use App\Http\Controllers\Store\ConfigurationController;
 use App\Http\Controllers\Store\GamingPcController;
 use App\Http\Controllers\Store\HomeController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,11 @@ Route::group([
 
 Route::middleware(['auth'])->group(function () {
     Route::inertia('account', 'account/index')->name('account');
+    Route::post('/configurations', [ConfigurationController::class, 'store'])
+        ->name('configurations.store');
+    Route::put('/configurations/{configuration}/products', [ConfigurationController::class, 'syncProducts'])
+        ->whereNumber('configuration')
+        ->name('configurations.products.sync');
 });
 
 require __DIR__.'/settings.php';

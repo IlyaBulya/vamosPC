@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Box, Laptop, Tag } from 'lucide-react';
 import BackLinkRow from '@/components/store/back-link-row';
 import InfoCard from '@/components/store/info-card';
@@ -31,6 +31,12 @@ interface ProductShowPageProps {
     navigation: ProductNavigation;
 }
 
+type AuthUser = {
+    id: number;
+    name: string;
+    email: string;
+};
+
 function formatPrice(priceInCents: number) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -44,12 +50,27 @@ export default function ProductShowPage({
     category,
     navigation,
 }: ProductShowPageProps) {
+    const page = usePage<{ auth: { user: AuthUser | null } }>();
+    const user = page.props.auth.user;
+
     const addToCart = () => {
         router.post(
             '/cart/items',
             {
                 product_id: product.id,
                 quantity: 1,
+            },
+            {
+                preserveScroll: true,
+            },
+        );
+    };
+
+    const startConfiguration = () => {
+        router.post(
+            '/configurations',
+            {
+                product_id: product.id,
             },
             {
                 preserveScroll: true,
@@ -138,6 +159,23 @@ export default function ProductShowPage({
                             >
                                 Add to Cart
                             </button>
+                            {!product.is_component &&
+                                (user ? (
+                                    <button
+                                        type="button"
+                                        onClick={startConfiguration}
+                                        className="rounded-xl border border-[#00bd7d]/55 bg-[#00bd7d]/10 px-5 py-3 text-sm font-semibold text-[#9cf5d8] transition hover:bg-[#00bd7d]/20"
+                                    >
+                                        Start Configuration
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href="/login"
+                                        className="rounded-xl border border-[#00bd7d]/55 bg-[#00bd7d]/10 px-5 py-3 text-center text-sm font-semibold text-[#9cf5d8] transition hover:bg-[#00bd7d]/20"
+                                    >
+                                        Log in to Configure
+                                    </Link>
+                                ))}
                             <Link
                                 href="/cart"
                                 className="rounded-xl border border-white/20 px-5 py-3 text-center text-sm font-semibold text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
