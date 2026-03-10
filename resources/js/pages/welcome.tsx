@@ -442,10 +442,12 @@ export default function Welcome({
                         className="relative z-20 mt-[118vh] h-[calc(100vh-64px)]"
                     >
                         <div className="sticky top-16 h-[calc(100vh-64px)]">
-                            <div className="mx-auto flex h-full w-full max-w-[1540px] flex-col px-4 pt-3 sm:px-8 lg:px-12">
-                                <p className="text-center text-xs uppercase tracking-[0.22em] text-slate-400">
-                                    THE PINNACLE OF CUSTOM GAMING RIGS. BUILT FOR YOU.
-                                </p>
+                            <div className="flex h-full w-full flex-col pt-3">
+                                <div className="px-4 sm:px-8 lg:px-12">
+                                    <p className="text-center text-xs uppercase tracking-[0.22em] text-slate-400">
+                                        THE PINNACLE OF CUSTOM GAMING RIGS. BUILT FOR YOU.
+                                    </p>
+                                </div>
 
                                 <div
                                     ref={cardsViewportRef}
