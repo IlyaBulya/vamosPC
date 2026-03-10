@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,12 @@ type CartItem = {
     href: string;
 };
 
+type AuthUser = {
+    id: number;
+    name: string;
+    email: string;
+};
+
 const formatPrice = (priceInCents: number): string =>
     new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -24,6 +30,8 @@ const formatPrice = (priceInCents: number): string =>
     }).format(priceInCents / 100);
 
 export default function CartPage({ items }: { items: CartItem[] }) {
+    const page = usePage<{ auth: { user: AuthUser | null } }>();
+    const user = page.props.auth.user;
     const [promoCode, setPromoCode] = useState('');
 
     const preparedItems = items.map((item) => ({
@@ -66,6 +74,16 @@ export default function CartPage({ items }: { items: CartItem[] }) {
         router.delete('/cart/items', {
             preserveScroll: true,
         });
+    };
+
+    const checkout = () => {
+        router.post(
+            '/checkout',
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     const availabilityClass = (availability: CartItem['availability']) => {
@@ -263,12 +281,23 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                 </div>
 
                 <div className="mt-8 flex flex-col items-center gap-3">
-                    <button
-                        type="button"
-                        className="min-w-[280px] rounded-full bg-[#00bd7d] px-8 py-3 font-semibold text-[#04120d] shadow-[0_0_24px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
-                    >
-                        Proceed to Checkout
-                    </button>
+                    {user ? (
+                        <button
+                            type="button"
+                            onClick={checkout}
+                            disabled={!preparedItems.length}
+                            className="min-w-[280px] rounded-full bg-[#00bd7d] px-8 py-3 font-semibold text-[#04120d] shadow-[0_0_24px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a] disabled:cursor-not-allowed disabled:bg-[#0d5a43] disabled:text-[#7fdabc] disabled:shadow-none"
+                        >
+                            Proceed to Checkout
+                        </button>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="min-w-[280px] rounded-full bg-[#00bd7d] px-8 py-3 text-center font-semibold text-[#04120d] shadow-[0_0_24px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
+                        >
+                            Log in to Checkout
+                        </Link>
+                    )}
                     <Link
                         href="/catalog"
                         className="text-sm text-slate-300 transition hover:text-[#9cf5d8]"

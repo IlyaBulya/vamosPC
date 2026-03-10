@@ -7,6 +7,7 @@ use App\Http\Controllers\Store\AssistanceController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CartItemController;
 use App\Http\Controllers\Store\CatalogController;
+use App\Http\Controllers\Store\CheckoutController;
 use App\Http\Controllers\Store\CompareController;
 use App\Http\Controllers\Store\ConfigurationController;
 use App\Http\Controllers\Store\GamingPcController;
@@ -65,6 +66,7 @@ Route::group([
 
 Route::middleware(['auth'])->group(function () {
     Route::inertia('account', 'account/index')->name('account');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::post('/configurations', [ConfigurationController::class, 'store'])
         ->name('configurations.store');
     Route::put('/configurations/{configuration}/products', [ConfigurationController::class, 'syncProducts'])

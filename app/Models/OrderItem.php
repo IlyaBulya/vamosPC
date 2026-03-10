@@ -9,6 +9,31 @@ class OrderItem extends Model
 {
     protected $table = 'orderitems';
 
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'order_id',
+        'product_id',
+        'configuration_id',
+        'qty',
+        'price',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'order_id' => 'integer',
+            'product_id' => 'integer',
+            'configuration_id' => 'integer',
+            'qty' => 'integer',
+            'price' => 'integer',
+        ];
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
