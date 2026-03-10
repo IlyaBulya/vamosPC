@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Configuration;
 use App\Models\Product;
+use App\Support\CartSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -14,47 +16,81 @@ class CartController extends Controller
 {
     public function index(Request $request): Response
     {
-        /** @var array<int|string, int|string> $rawItems */
-        $rawItems = (array) $request->session()->get('cart.items', []);
-
-        $cartItems = collect($rawItems)
-            ->mapWithKeys(
-                fn ($qty, $productId): array => [(int) $productId => max((int) $qty, 1)],
-            )
-            ->filter(fn (int $qty, int $productId): bool => $productId > 0 && $qty > 0);
+        $cartItems = collect(CartSession::all($request));
 
         $products = Product::query()
             ->with('category:id,name,type')
-            ->whereIn('id', $cartItems->keys()->all())
+            ->whereIn(
+                'id',
+                $cartItems
+                    ->filter(fn (array $line): bool => $line['type'] === 'product')
+                    ->pluck('id')
+                    ->all(),
+            )
             ->get(['id', 'category_id', 'name', 'description', 'price_in_cents', 'stock'])
             ->keyBy('id');
 
+        $configurations = Configuration::query()
+            ->with(['baseProduct.category:id,name,type'])
+            ->whereIn(
+                'id',
+                $cartItems
+                    ->filter(fn (array $line): bool => $line['type'] === 'configuration')
+                    ->pluck('id')
+                    ->all(),
+            )
+            ->get(['id', 'product_id', 'name', 'description', 'price'])
+            ->keyBy('id');
+
         $items = $cartItems
-            ->map(function (int $qty, int $productId) use ($products): ?array {
-                /** @var Product|null $product */
-                $product = $products->get($productId);
-                if (!$product) {
+            ->map(function (array $line, string $lineKey) use ($configurations, $products): ?array {
+                if ($line['type'] === 'product') {
+                    /** @var Product|null $product */
+                    $product = $products->get($line['id']);
+                    if (! $product || ! $product->category) {
+                        return null;
+                    }
+
+                    $categorySlug = $this->categoryRouteSlug($product->category);
+                    $productSlug = $this->productRouteSlug($product);
+                    $href = $product->category->type === 'laptop'
+                        ? "/laptops/{$categorySlug}/{$productSlug}"
+                        : "/catalog/{$categorySlug}/{$productSlug}";
+
+                    return [
+                        'line_key' => $lineKey,
+                        'id' => $product->id,
+                        'kind' => 'product',
+                        'name' => $product->name,
+                        'subtitle' => $product->description,
+                        'availability' => $product->stock > 0 ? 'In stock' : 'Pre-order',
+                        'unit_price_in_cents' => (int) $product->price_in_cents,
+                        'qty' => (int) $line['quantity'],
+                        'href' => $href,
+                    ];
+                }
+
+                /** @var Configuration|null $configuration */
+                $configuration = $configurations->get($line['id']);
+                if (! $configuration || ! $configuration->baseProduct || ! $configuration->baseProduct->category) {
                     return null;
                 }
 
-                $category = $product->category;
-                if (!$category) {
-                    return null;
-                }
-
-                $categorySlug = $this->categoryRouteSlug($category);
-                $productSlug = $this->productRouteSlug($product);
-                $href = $category->type === 'laptop'
+                $categorySlug = $this->categoryRouteSlug($configuration->baseProduct->category);
+                $productSlug = $this->productRouteSlug($configuration->baseProduct);
+                $href = $configuration->baseProduct->category->type === 'laptop'
                     ? "/laptops/{$categorySlug}/{$productSlug}"
                     : "/catalog/{$categorySlug}/{$productSlug}";
 
                 return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'subtitle' => $product->description,
-                    'availability' => $product->stock > 0 ? 'In stock' : 'Pre-order',
-                    'unit_price_in_cents' => (int) $product->price_in_cents,
-                    'qty' => $qty,
+                    'line_key' => $lineKey,
+                    'id' => $configuration->id,
+                    'kind' => 'configuration',
+                    'name' => $configuration->name,
+                    'subtitle' => $configuration->description ?: "Based on {$configuration->baseProduct->name}",
+                    'availability' => 'Custom build',
+                    'unit_price_in_cents' => (int) $configuration->price,
+                    'qty' => (int) $line['quantity'],
                     'href' => $href,
                 ];
             })
@@ -62,9 +98,15 @@ class CartController extends Controller
             ->values();
 
         $normalizedItems = $items
-            ->mapWithKeys(fn (array $item): array => [$item['id'] => $item['qty']])
+            ->mapWithKeys(fn (array $item): array => [
+                $item['line_key'] => [
+                    'type' => $item['kind'],
+                    'id' => $item['id'],
+                    'quantity' => $item['qty'],
+                ],
+            ])
             ->all();
-        $request->session()->put('cart.items', $normalizedItems);
+        CartSession::put($request, $normalizedItems);
 
         return Inertia::render('store/cart', [
             'items' => $items,
