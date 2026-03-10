@@ -59,6 +59,8 @@ class Product extends Model
     public function configurations(): BelongsToMany
     {
         return $this->belongsToMany(Configuration::class, 'configuration_product')
-            ->withTimestamps();
+            ->withPivot(['category_id', 'qty', 'position'])
+            ->withTimestamps()
+            ->orderByPivot('position');
     }
 }

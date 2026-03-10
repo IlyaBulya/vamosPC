@@ -38,6 +38,9 @@ Route::get('/products/{product}', [ProductController::class, 'legacy'])
     ->whereNumber('product')
     ->name('products.legacy');
 Route::get('/gaming-pc', [GamingPcController::class, 'index'])->name('gaming-pc');
+Route::get('/gaming-pc/configurator/{build}', [GamingPcController::class, 'configurator'])
+    ->where('build', '[a-z0-9-]+')
+    ->name('gaming-pc.configurator');
 Route::get('/catalog/hardware', [CategoryController::class, 'hardware'])->name('hardware');
 Route::redirect('/hardware', '/catalog/hardware', 301);
 Route::get('/laptops', [CategoryController::class, 'laptop'])->name('laptops');

@@ -5,6 +5,13 @@ import PageHero from '@/components/store/page-hero';
 import ProductMediaBlock from '@/components/store/product-media-block';
 import StoreLayout from '@/layouts/store-layout';
 
+type BuildCardItem = {
+    slug: string;
+    name: string;
+    specs: string;
+    price_label: string;
+};
+
 const highlights = [
     {
         title: 'Performance Tuned',
@@ -23,25 +30,11 @@ const highlights = [
     },
 ];
 
-const buildCards = [
-    {
-        name: 'Starter Core',
-        specs: 'Intel Core i5 / RTX 4060 / 16GB RAM / 1TB SSD',
-        price: 'from EUR 1,299',
-    },
-    {
-        name: 'Performance X',
-        specs: 'AMD Ryzen 7 / RTX 5070 / 32GB RAM / 2TB SSD',
-        price: 'from EUR 2,199',
-    },
-    {
-        name: 'Ultra Apex',
-        specs: 'Intel Core i9 / RTX 5090 / 64GB RAM / 4TB SSD',
-        price: 'from EUR 3,999',
-    },
-];
+interface GamingPcPageProps {
+    builds: BuildCardItem[];
+}
 
-export default function GamingPcPage() {
+export default function GamingPcPage({ builds }: GamingPcPageProps) {
     return (
         <>
             <Head title="Gaming PC" />
@@ -55,7 +48,7 @@ export default function GamingPcPage() {
                         </span>
                     }
                     title="Custom desktop builds engineered for high FPS and stability."
-                    description="Pick your base configuration, fine-tune components, and get a stress-tested system assembled in Barcelona."
+                    description="Pick a demo base build, fine-tune real components from the database, and preview how the configurator flow will feel before ready-made PCs are added."
                     actions={
                         <>
                             <Link
@@ -92,7 +85,7 @@ export default function GamingPcPage() {
                 </PageHero>
 
                 <section className="mt-7 grid gap-5 lg:grid-cols-3">
-                    {buildCards.map((build) => (
+                    {builds.map((build) => (
                         <BuildCard
                             key={build.name}
                             title={build.name}
@@ -102,10 +95,10 @@ export default function GamingPcPage() {
                             footer={
                                 <>
                                     <p className="text-xl font-bold text-[#9cf5d8]">
-                                        {build.price}
+                                        {build.price_label}
                                     </p>
                                     <Link
-                                        href="/catalog/hardware"
+                                        href={`/gaming-pc/configurator/${build.slug}`}
                                         className="mt-5 inline-flex items-center rounded-full border border-[#00bd7d]/50 bg-[#00bd7d]/10 px-4 py-2 text-sm font-semibold text-[#9cf5d8] transition hover:bg-[#00bd7d]/20"
                                     >
                                         Configure Build
