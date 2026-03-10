@@ -1,4 +1,4 @@
-app/Support/CartSession.php<?php
+<?php
 
 namespace App\Support;
 
