@@ -6,6 +6,7 @@ import {
     ShieldCheck,
     Wrench,
 } from 'lucide-react';
+import { useState } from 'react';
 import PageHero from '@/components/store/page-hero';
 import StoreLayout from '@/layouts/store-layout';
 
@@ -43,6 +44,8 @@ const faqItems = [
 ];
 
 export default function AssistancePage() {
+    const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
     return (
         <>
             <Head title="Assistance" />
@@ -96,19 +99,45 @@ export default function AssistancePage() {
                     <div className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6 sm:p-7">
                         <h2 className="text-2xl font-black text-white">FAQ</h2>
                         <div className="mt-4 space-y-3">
-                            {faqItems.map((item) => (
-                                <details
-                                    key={item.question}
-                                    className="rounded-2xl border border-white/10 bg-[#0d1623]/90 p-4"
-                                >
-                                    <summary className="cursor-pointer list-none text-sm font-semibold text-white">
-                                        {item.question}
-                                    </summary>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                                        {item.answer}
-                                    </p>
-                                </details>
-                            ))}
+                            {faqItems.map((item, index) => {
+                                const isOpen = openFaqIndex === index;
+                                const answerId = `faq-answer-${index}`;
+
+                                return (
+                                    <button
+                                        type="button"
+                                        key={item.question}
+                                        onClick={() =>
+                                            setOpenFaqIndex(isOpen ? null : index)
+                                        }
+                                        aria-expanded={isOpen}
+                                        aria-controls={answerId}
+                                        className="w-full cursor-pointer rounded-2xl border border-white/10 bg-[#0d1623]/90 p-4 text-left transition hover:border-[#00bd7d]/45"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <h3 className="text-sm font-semibold text-white">
+                                                {item.question}
+                                            </h3>
+                                            <span
+                                                aria-hidden="true"
+                                                className={`mt-0.5 text-lg leading-none text-[#00bd7d] transition-transform ${
+                                                    isOpen ? 'rotate-45' : ''
+                                                }`}
+                                            >
+                                                +
+                                            </span>
+                                        </div>
+                                        {isOpen ? (
+                                            <p
+                                                id={answerId}
+                                                className="mt-2 text-sm leading-relaxed text-slate-300"
+                                            >
+                                                {item.answer}
+                                            </p>
+                                        ) : null}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
