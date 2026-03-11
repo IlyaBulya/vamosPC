@@ -5,23 +5,26 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\CompareSession;
+use App\Support\DemoGamingBuilds;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class GamingPcController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('store/gaming-pc', [
-            'builds' => $this->demoBuilds(),
+            'builds' => DemoGamingBuilds::all(),
+            'compareSlugs' => CompareSession::all($request),
         ]);
     }
 
     public function configurator(string $build): Response
     {
-        $selectedBuild = collect($this->demoBuilds())
-            ->firstWhere('slug', $build);
+        $selectedBuild = DemoGamingBuilds::find($build);
 
         abort_unless(is_array($selectedBuild), 404);
 
@@ -68,35 +71,5 @@ class GamingPcController extends Controller
             'build' => $selectedBuild,
             'sections' => $sections,
         ]);
-    }
-
-    /**
-     * @return list<array{slug:string, name:string, specs:string, price_label:string, base_price_in_cents:int}>
-     */
-    private function demoBuilds(): array
-    {
-        return [
-            [
-                'slug' => 'starter-core',
-                'name' => 'Starter Core',
-                'specs' => 'Intel Core i5 / RTX 4060 / 16GB RAM / 1TB SSD',
-                'price_label' => 'from EUR 1,299',
-                'base_price_in_cents' => 129900,
-            ],
-            [
-                'slug' => 'performance-x',
-                'name' => 'Performance X',
-                'specs' => 'AMD Ryzen 7 / RTX 5070 / 32GB RAM / 2TB SSD',
-                'price_label' => 'from EUR 2,199',
-                'base_price_in_cents' => 219900,
-            ],
-            [
-                'slug' => 'ultra-apex',
-                'name' => 'Ultra Apex',
-                'specs' => 'Intel Core i9 / RTX 5090 / 64GB RAM / 4TB SSD',
-                'price_label' => 'from EUR 3,999',
-                'base_price_in_cents' => 399900,
-            ],
-        ];
     }
 }

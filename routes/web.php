@@ -16,6 +16,7 @@ use App\Http\Controllers\Store\CartItemController;
 use App\Http\Controllers\Store\CatalogController;
 use App\Http\Controllers\Store\CheckoutController;
 use App\Http\Controllers\Store\CompareController;
+use App\Http\Controllers\Store\CompareItemController;
 use App\Http\Controllers\Store\ConfigurationController;
 use App\Http\Controllers\Store\GamingPcController;
 use App\Http\Controllers\Store\HomeController;
@@ -34,6 +35,11 @@ Route::delete('/cart/items/{lineKey}', [CartItemController::class, 'destroy'])
 Route::delete('/cart/items', [CartItemController::class, 'clear'])->name('cart.items.clear');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('/compare', [CompareController::class, 'index'])->name('compare');
+Route::post('/compare/items', [CompareItemController::class, 'store'])->name('compare.items.store');
+Route::delete('/compare/items/{build}', [CompareItemController::class, 'destroy'])
+    ->where('build', '[a-z0-9-]+')
+    ->name('compare.items.destroy');
+Route::delete('/compare/items', [CompareItemController::class, 'clear'])->name('compare.items.clear');
 Route::get('/products/{product}', [ProductController::class, 'legacy'])
     ->whereNumber('product')
     ->name('products.legacy');
