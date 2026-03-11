@@ -99,7 +99,7 @@ class CategoryController extends Controller
                 'max:255',
                 Rule::unique('categories', 'name')->ignore($category?->id),
             ],
-            'type' => ['required', 'string', Rule::in(['hardware', 'accessory', 'laptop'])],
+            'type' => ['required', 'string', Rule::in(['hardware', 'accessory', 'laptop', 'gaming-pc'])],
             'description' => ['nullable', 'string'],
         ]);
     }

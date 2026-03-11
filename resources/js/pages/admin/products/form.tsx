@@ -268,6 +268,7 @@ export default function AdminProductFormPage({
                     <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1321] px-4 py-4 text-sm text-slate-400">
                         Use these flags to control product behavior:
                         <div className="mt-3 space-y-1">
+                            <p>`Category = gaming-pc` = use for ready-made desktop builds.</p>
                             <p>`Can be used as base product` = show Configure for ready-made PCs.</p>
                             <p>`Available for direct sale` = can be bought as a normal product.</p>
                             <p>`Available inside custom configurations` = can be attached through `configuration_product`.</p>

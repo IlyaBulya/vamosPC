@@ -14,7 +14,7 @@ type CategoryValue = {
 
 type CategoryFormData = {
     name: string;
-    type: 'hardware' | 'accessory' | 'laptop';
+    type: 'hardware' | 'accessory' | 'laptop' | 'gaming-pc';
     description: string;
 };
 
@@ -99,6 +99,7 @@ export default function AdminCategoryFormPage({
                                 <option value="hardware">hardware</option>
                                 <option value="accessory">accessory</option>
                                 <option value="laptop">laptop</option>
+                                <option value="gaming-pc">gaming-pc</option>
                             </select>
                             <InputError message={form.errors.type} />
                         </div>
