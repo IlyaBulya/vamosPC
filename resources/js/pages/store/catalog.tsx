@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, Cpu, Laptop, Mouse } from 'lucide-react';
-import PageHero from '@/components/store/page-hero';
+import { ChevronRight, Cpu, Gamepad2, Laptop, Mouse } from 'lucide-react';
 import FeaturePill from '@/components/store/feature-pill';
+import PageHero from '@/components/store/page-hero';
 import StoreLayout from '@/layouts/store-layout';
 
 type CatalogType = {
@@ -12,13 +12,14 @@ type CatalogType = {
 };
 
 const iconByTitle = {
+    'Gaming PCs': Gamepad2,
     Hardware: Cpu,
     Accessories: Mouse,
     Laptops: Laptop,
 } as const;
 
 export default function CatalogPage({ types }: { types: CatalogType[] }) {
-    const totalCategories = types.reduce((sum, type) => sum + type.count, 0);
+    const totalEntries = types.reduce((sum, type) => sum + type.count, 0);
 
     return (
         <>
@@ -28,16 +29,16 @@ export default function CatalogPage({ types }: { types: CatalogType[] }) {
                 <PageHero
                     eyebrow="Store Catalog"
                     title="Choose Your Category"
-                    description="Browse the main catalog sections and jump into hardware, accessories, or laptop categories."
+                    description="Browse gaming PC configurations, hardware, accessories, and laptop categories."
                     meta={
                         <FeaturePill>
-                            <span className="font-semibold">{totalCategories}</span>
-                            categories available
+                            <span className="font-semibold">{totalEntries}</span>
+                            items available
                         </FeaturePill>
                     }
                 />
 
-                <section className="mt-6 grid gap-5 lg:grid-cols-3">
+                <section className="mt-6 grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
                     {types.map((type) => {
                         const Icon =
                             iconByTitle[type.title as keyof typeof iconByTitle] ?? Cpu;

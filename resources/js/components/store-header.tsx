@@ -7,6 +7,7 @@ type StoreHeaderProps = {
 };
 
 const storeNavItems = [
+    { href: '/gaming-pcs', label: 'Gaming PCs' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/laptops', label: 'Laptops' },
     { href: '/assistance', label: 'Assistance' },

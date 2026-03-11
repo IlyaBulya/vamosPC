@@ -315,7 +315,7 @@ export default function AdminConfigurationFormPage({
                                     ) : (
                                         <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
                                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_18%,rgba(0,189,125,0.25),transparent_42%)]" />
-                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(182,255,55,0.14),transparent_48%)]" />
+                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(0,189,125,0.14),transparent_48%)]" />
                                             <Monitor className="relative h-16 w-16 text-slate-500" />
                                         </div>
                                     )}
@@ -323,7 +323,7 @@ export default function AdminConfigurationFormPage({
                             </div>
 
                             <div className="mt-4 flex items-center justify-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-400">
-                                <span className="h-3 w-3 rounded-full border border-white/50 bg-[#b6ff37] shadow-[0_0_12px_rgba(182,255,55,0.8)]" />
+                                <span className="h-3 w-3 rounded-full border border-white/50 bg-[#00bd7d] shadow-[0_0_12px_rgba(0,189,125,0.8)]" />
                                 Build Ready
                             </div>
 
@@ -347,7 +347,7 @@ export default function AdminConfigurationFormPage({
 
                             <button
                                 type="button"
-                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#b6ff37] px-4 py-3 text-sm font-bold text-[#0a1305]"
+                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#00bd7d] px-4 py-3 text-sm font-bold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)]"
                             >
                                 <ShoppingCart className="h-4 w-4" />
                                 Configure & Buy
@@ -355,7 +355,7 @@ export default function AdminConfigurationFormPage({
 
                             <button
                                 type="button"
-                                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#b6ff37]/80 px-4 py-3 text-sm font-semibold text-[#cfff76]"
+                                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#00bd7d]/80 px-4 py-3 text-sm font-semibold text-[#9cf5d8]"
                             >
                                 More Details
                             </button>
@@ -399,4 +399,3 @@ export default function AdminConfigurationFormPage({
         </>
     );
 }
-

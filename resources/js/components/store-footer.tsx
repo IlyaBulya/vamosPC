@@ -16,6 +16,7 @@ type StoreFooterProps = {
 };
 
 const quickLinks = [
+    { href: '/gaming-pcs', label: 'Gaming PCs' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/laptops', label: 'Laptops' },
     { href: '/assistance', label: 'Assistance' },

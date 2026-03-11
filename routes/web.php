@@ -15,6 +15,7 @@ use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CartItemController;
 use App\Http\Controllers\Store\CatalogController;
 use App\Http\Controllers\Store\CheckoutController;
+use App\Http\Controllers\Store\GamingPcController;
 use App\Http\Controllers\Store\HomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,7 @@ Route::delete('/cart/items/{lineKey}', [CartItemController::class, 'destroy'])
     ->name('cart.items.destroy');
 Route::delete('/cart/items', [CartItemController::class, 'clear'])->name('cart.items.clear');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+Route::get('/gaming-pcs', [GamingPcController::class, 'index'])->name('gaming-pcs');
 Route::get('/products/{product}', [ProductController::class, 'legacy'])
     ->whereNumber('product')
     ->name('products.legacy');
