@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
+use App\Support\CartOrder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,9 +15,12 @@ class AccountController extends Controller
         $user = $request->user();
         abort_unless($user !== null, 403);
 
-        $user->loadCount(['orders']);
+        $user->loadCount([
+            'orders as completed_orders_count' => fn ($query) => $query->where('status', '!=', CartOrder::STATUS),
+        ]);
 
         $orders = $user->orders()
+            ->where('status', '!=', CartOrder::STATUS)
             ->with('items:id,order_id,qty')
             ->latest()
             ->take(6)
@@ -32,7 +36,7 @@ class AccountController extends Controller
 
         return Inertia::render('account/index', [
             'stats' => [
-                'orders_count' => (int) $user->orders_count,
+                'orders_count' => (int) $user->completed_orders_count,
                 'security_level' => $user->two_factor_confirmed_at ? 'Advanced' : 'Basic',
             ],
             'orders' => $orders,

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\CartSession;
+use App\Support\CartOrder;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -47,7 +47,9 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn (): ?string => $request->session()->get('error'),
             ],
             'cart' => [
-                'count' => CartSession::count($request),
+                'count' => fn (): int => $request->user() !== null
+                    ? CartOrder::countForUser($request->user())
+                    : 0,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

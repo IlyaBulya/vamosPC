@@ -13,10 +13,13 @@ return new class extends Migration {
         Schema::create('orderitems', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedBigInteger('configuration_id')->nullable();
             $table->unsignedInteger('qty')->default(1);
             $table->unsignedInteger('price');
             $table->timestamps();
+
+            $table->index(['order_id', 'product_id', 'configuration_id'], 'orderitems_cart_lookup_index');
         });
     }
 

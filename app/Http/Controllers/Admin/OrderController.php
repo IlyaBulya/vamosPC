@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Support\CartOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -24,13 +25,15 @@ class OrderController extends Controller
     public function index(): Response
     {
         $orders = Order::query()
-            ->with(['user:id,name,email', 'items.product:id,name'])
+            ->where('status', '!=', CartOrder::STATUS)
+            ->with(['user:id,name,email', 'items.product:id,name', 'items.configuration:id,name'])
             ->latest()
             ->get()
             ->map(function (Order $order): array {
                 $items = $order->items->map(fn ($item): array => [
                     'id' => $item->id,
-                    'name' => $item->product?->name ?? 'Unknown item',
+                    'name' => $item->product?->name ?? $item->configuration?->name ?? 'Unknown item',
+                    'kind' => $item->configuration_id !== null ? 'Configuration' : 'Product',
                     'qty' => (int) $item->qty,
                     'price_in_cents' => (int) $item->price,
                 ])->values();

@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\CartOrder;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,6 +16,7 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $recentOrders = Order::query()
+            ->where('status', '!=', CartOrder::STATUS)
             ->with('user:id,name,email')
             ->latest()
             ->take(5)
@@ -34,7 +36,7 @@ class DashboardController extends Controller
                 'admins' => User::query()->where('is_admin', true)->count(),
                 'products' => Product::query()->count(),
                 'categories' => Category::query()->count(),
-                'orders' => Order::query()->count(),
+                'orders' => Order::query()->where('status', '!=', CartOrder::STATUS)->count(),
             ],
             'recentOrders' => $recentOrders,
         ]);

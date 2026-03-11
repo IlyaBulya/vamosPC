@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\OrderItem;
 use App\Models\Product;
-use App\Support\CartSession;
+use App\Support\CartOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -15,58 +16,82 @@ class CartController extends Controller
 {
     public function index(Request $request): Response
     {
-        $cartItems = collect(CartSession::all($request));
+        $user = $request->user();
+        abort_unless($user !== null, 403);
 
-        $products = Product::query()
-            ->with('category:id,name,type')
-            ->whereIn(
-                'id',
-                $cartItems
-                    ->filter(fn (array $line): bool => $line['type'] === 'product')
-                    ->pluck('id')
-                    ->all(),
-            )
-            ->get(['id', 'category_id', 'name', 'description', 'price_in_cents', 'stock'])
-            ->keyBy('id');
+        $cartOrder = $user->orders()
+            ->where('status', CartOrder::STATUS)
+            ->with([
+                'items.product:id,category_id,name,description,price_in_cents,stock',
+                'items.product.category:id,name,type',
+                'items.configuration:id,name,description,image,price',
+            ])
+            ->latest('id')
+            ->first();
 
-        $items = $cartItems
-            ->map(function (array $line, string $lineKey) use ($products): ?array {
-                /** @var Product|null $product */
-                $product = $products->get($line['id']);
-                if (! $product || ! $product->category) {
-                    return null;
+        $invalidOrderItemIds = [];
+
+        $items = collect();
+
+        if ($cartOrder !== null) {
+            $items = $cartOrder->items->map(function (OrderItem $orderItem) use (&$invalidOrderItemIds): ?array {
+                if ($orderItem->product !== null) {
+                    $product = $orderItem->product;
+                    $category = $product->category;
+
+                    if ($category === null) {
+                        $invalidOrderItemIds[] = $orderItem->id;
+                        return null;
+                    }
+
+                    $categorySlug = $this->categoryRouteSlug($category);
+                    $productSlug = $this->productRouteSlug($product);
+                    $href = $category->type === 'laptop'
+                        ? "/laptops/{$categorySlug}/{$productSlug}"
+                        : "/catalog/{$categorySlug}/{$productSlug}";
+
+                    return [
+                        'line_key' => (string) $orderItem->id,
+                        'id' => (int) $product->id,
+                        'item_type' => 'product',
+                        'name' => $product->name,
+                        'subtitle' => $product->description,
+                        'availability' => $product->stock > 0 ? 'In stock' : 'Pre-order',
+                        'unit_price_in_cents' => (int) $orderItem->price,
+                        'qty' => (int) $orderItem->qty,
+                        'href' => $href,
+                    ];
                 }
 
-                $categorySlug = $this->categoryRouteSlug($product->category);
-                $productSlug = $this->productRouteSlug($product);
-                $href = $product->category->type === 'laptop'
-                    ? "/laptops/{$categorySlug}/{$productSlug}"
-                    : "/catalog/{$categorySlug}/{$productSlug}";
+                if ($orderItem->configuration !== null) {
+                    $configuration = $orderItem->configuration;
 
-                return [
-                    'line_key' => $lineKey,
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'subtitle' => $product->description,
-                    'availability' => $product->stock > 0 ? 'In stock' : 'Pre-order',
-                    'unit_price_in_cents' => (int) $product->price_in_cents,
-                    'qty' => (int) $line['quantity'],
-                    'href' => $href,
-                ];
-            })
-            ->filter()
-            ->values();
+                    return [
+                        'line_key' => (string) $orderItem->id,
+                        'id' => (int) $configuration->id,
+                        'item_type' => 'configuration',
+                        'name' => $configuration->name,
+                        'subtitle' => $configuration->description,
+                        'availability' => 'In stock',
+                        'unit_price_in_cents' => (int) $orderItem->price,
+                        'qty' => (int) $orderItem->qty,
+                        'href' => '/gaming-pcs',
+                    ];
+                }
 
-        $normalizedItems = $items
-            ->mapWithKeys(fn (array $item): array => [
-                $item['line_key'] => [
-                    'type' => 'product',
-                    'id' => $item['id'],
-                    'quantity' => $item['qty'],
-                ],
-            ])
-            ->all();
-        CartSession::put($request, $normalizedItems);
+                $invalidOrderItemIds[] = $orderItem->id;
+
+                return null;
+            })->filter()->values();
+
+            if ($invalidOrderItemIds !== []) {
+                OrderItem::query()
+                    ->whereIn('id', $invalidOrderItemIds)
+                    ->delete();
+            }
+
+            CartOrder::syncTotal($cartOrder);
+        }
 
         return Inertia::render('store/cart', [
             'items' => $items,

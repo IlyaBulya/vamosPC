@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Product;
-use App\Support\CartSession;
+use App\Support\CartOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,59 +17,58 @@ class CheckoutController extends Controller
         $user = $request->user();
         abort_unless($user !== null, 403);
 
-        $lines = collect(CartSession::all($request));
-        abort_if($lines->isEmpty(), 422, 'Cart is empty.');
+        DB::transaction(function () use ($user): void {
+            /** @var Order|null $order */
+            $order = Order::query()
+                ->where('user_id', $user->id)
+                ->where('status', CartOrder::STATUS)
+                ->with([
+                    'items.product:id,price_in_cents,is_sellable',
+                    'items.configuration:id,price',
+                ])
+                ->orderByDesc('id')
+                ->lockForUpdate()
+                ->first();
 
-        $productIds = $lines
-            ->filter(fn (array $line): bool => $line['type'] === 'product')
-            ->pluck('id')
-            ->map(fn ($id): int => (int) $id)
-            ->all();
+            abort_if($order === null, 422, 'Cart is empty.');
+            abort_if($order->items->isEmpty(), 422, 'Cart is empty.');
 
-        $products = Product::query()
-            ->where('is_sellable', true)
-            ->whereIn('id', $productIds)
-            ->get(['id', 'price_in_cents'])
-            ->keyBy('id');
+            $total = $order->items->sum(function (OrderItem $item): int {
+                if ($item->product_id !== null) {
+                    $product = $item->product;
+                    abort_if($product === null || ! $product->is_sellable, 422, 'Cart contains unavailable products.');
 
-        $items = $lines->map(function (array $line) use ($products): ?array {
-            $product = $products->get($line['id']);
+                    $unitPrice = (int) $product->price_in_cents;
 
-            if (! $product) {
-                return null;
-            }
+                    if ((int) $item->price !== $unitPrice) {
+                        $item->update(['price' => $unitPrice]);
+                    }
 
-            return [
-                'product_id' => (int) $product->id,
-                'qty' => (int) $line['quantity'],
-                'price' => (int) $product->price_in_cents,
-            ];
-        });
+                    return $unitPrice * (int) $item->qty;
+                }
 
-        abort_if($items->contains(null), 422, 'Cart contains invalid items.');
+                if ($item->configuration_id !== null) {
+                    $configuration = $item->configuration;
+                    abort_if($configuration === null, 422, 'Cart contains invalid configurations.');
 
-        /** @var \Illuminate\Support\Collection<int, array{product_id:int, qty:int, price:int}> $resolvedItems */
-        $resolvedItems = $items;
+                    $unitPrice = (int) $configuration->price;
 
-        DB::transaction(function () use ($resolvedItems, $user): void {
-            $order = Order::query()->create([
-                'user_id' => $user->id,
-                'total' => $resolvedItems->sum(fn (array $item): int => $item['price'] * $item['qty']),
+                    if ((int) $item->price !== $unitPrice) {
+                        $item->update(['price' => $unitPrice]);
+                    }
+
+                    return $unitPrice * (int) $item->qty;
+                }
+
+                abort(422, 'Cart contains invalid items.');
+            });
+
+            $order->update([
                 'status' => 'pending',
+                'total' => (int) $total,
                 'discount_in_cents' => 0,
             ]);
-
-            foreach ($resolvedItems as $item) {
-                OrderItem::query()->create([
-                    'order_id' => $order->id,
-                    'product_id' => $item['product_id'],
-                    'qty' => $item['qty'],
-                    'price' => $item['price'],
-                ]);
-            }
         });
-
-        CartSession::forget($request);
 
         return redirect()
             ->route('cart')

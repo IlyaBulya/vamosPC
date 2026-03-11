@@ -21,15 +21,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/assistance', [AssistanceController::class, 'index'])->name('assistance');
-Route::get('/cart', [CartController::class, 'index'])->name('cart');
-Route::post('/cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
-Route::patch('/cart/items/{lineKey}', [CartItemController::class, 'update'])
-    ->where('lineKey', 'product_[0-9]+')
-    ->name('cart.items.update');
-Route::delete('/cart/items/{lineKey}', [CartItemController::class, 'destroy'])
-    ->where('lineKey', 'product_[0-9]+')
-    ->name('cart.items.destroy');
-Route::delete('/cart/items', [CartItemController::class, 'clear'])->name('cart.items.clear');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('/gaming-pcs', [GamingPcController::class, 'index'])->name('gaming-pcs');
 Route::get('/products/{product}', [ProductController::class, 'legacy'])
@@ -69,6 +60,16 @@ Route::group([
 });
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/cart', [CartController::class, 'index'])->name('cart');
+    Route::post('/cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
+    Route::patch('/cart/items/{orderItem}', [CartItemController::class, 'update'])
+        ->whereNumber('orderItem')
+        ->name('cart.items.update');
+    Route::delete('/cart/items/{orderItem}', [CartItemController::class, 'destroy'])
+        ->whereNumber('orderItem')
+        ->name('cart.items.destroy');
+    Route::delete('/cart/items', [CartItemController::class, 'clear'])->name('cart.items.clear');
+
     Route::get('/account', [AccountController::class, 'index'])->name('account');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 });

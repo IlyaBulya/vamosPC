@@ -20,6 +20,7 @@ return new class extends Migration
             $table->unsignedInteger('stock')->default(0);
             $table->string('color')->nullable();
             $table->boolean('is_component')->default(false);
+            $table->boolean('is_sellable')->default(true);
             $table->timestamps();
         });
     }
