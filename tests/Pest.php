@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+use Illuminate\Support\Str;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -44,4 +47,14 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function createUser(array $overrides = [], bool $verified = true): User
+{
+    return User::create(array_merge([
+        'name' => 'Test User',
+        'email' => 'user-'.Str::uuid().'@example.com',
+        'password' => 'password',
+        'email_verified_at' => $verified ? now() : null,
+    ], $overrides));
 }
