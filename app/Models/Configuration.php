@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Configuration extends Model
 {
@@ -31,5 +32,10 @@ class Configuration extends Model
     {
         return $this->belongsToMany(Product::class, 'configuration_product')
             ->withTimestamps();
+    }
+
+    public function userConfigurations(): HasMany
+    {
+        return $this->hasMany(UserConfiguration::class, 'base_configuration_id');
     }
 }
