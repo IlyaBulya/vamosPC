@@ -16,7 +16,7 @@ type StoreFooterProps = {
 };
 
 const quickLinks = [
-    { href: '/gaming-pc', label: 'Gaming PC' },
+    { href: '/gaming-pcs', label: 'Gaming PCs' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/laptops', label: 'Laptops' },
     { href: '/assistance', label: 'Assistance' },
@@ -104,12 +104,6 @@ export default function StoreFooter({ className = '' }: StoreFooterProps) {
                                     {item.label}
                                 </Link>
                             ))}
-                            <Link
-                                href="/compare"
-                                className="text-sm text-slate-300 transition hover:text-[#00bd7d]"
-                            >
-                                Compare
-                            </Link>
                         </nav>
                     </div>
 

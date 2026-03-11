@@ -42,10 +42,7 @@ class CategoryController extends Controller
         $categoryRecord = Category::query()
             ->with([
                 'products' => fn ($query) => $query
-                    ->where(function ($subQuery) {
-                        $subQuery->where('is_sellable', true)
-                            ->orWhere('can_be_base_product', true);
-                    })
+                    ->where('is_sellable', true)
                     ->orderBy('name')
                     ->select([
                         'id',
@@ -56,7 +53,6 @@ class CategoryController extends Controller
                         'stock',
                         'color',
                         'is_component',
-                        'can_be_base_product',
                         'is_sellable',
                     ]),
             ])
@@ -84,7 +80,6 @@ class CategoryController extends Controller
                         'stock' => $product->stock,
                         'color' => $product->color,
                         'is_component' => (bool) $product->is_component,
-                        'can_be_base_product' => (bool) $product->can_be_base_product,
                         'is_sellable' => (bool) $product->is_sellable,
                     ])
                     ->values(),

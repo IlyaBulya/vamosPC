@@ -10,12 +10,8 @@ type ProductRow = {
     stock: number;
     color: string | null;
     is_component: boolean;
-    can_be_base_product: boolean;
     is_sellable: boolean;
-    is_available_for_configuration: boolean;
     order_items_count: number;
-    configurations_count: number;
-    base_configurations_count: number;
 };
 
 function formatPrice(priceInCents: number) {
@@ -110,29 +106,12 @@ export default function AdminProductsPage({
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
                                                 <p>
-                                                    Base:{' '}
-                                                    {product.can_be_base_product
-                                                        ? 'Yes'
-                                                        : 'No'}
-                                                </p>
-                                                <p>
                                                     Sellable:{' '}
                                                     {product.is_sellable ? 'Yes' : 'No'}
-                                                </p>
-                                                <p>
-                                                    Config:{' '}
-                                                    {product.is_available_for_configuration
-                                                        ? 'Yes'
-                                                        : 'No'}
                                                 </p>
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
                                                 <p>Orders: {product.order_items_count}</p>
-                                                <p>Pivot: {product.configurations_count}</p>
-                                                <p>
-                                                    Base builds:{' '}
-                                                    {product.base_configurations_count}
-                                                </p>
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex justify-end gap-2">

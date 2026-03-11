@@ -7,7 +7,6 @@ type DashboardStats = {
     products: number;
     categories: number;
     orders: number;
-    configurations: number;
 };
 
 type RecentOrder = {
@@ -39,7 +38,6 @@ export default function AdminDashboardPage({
         { label: 'Products', value: stats.products },
         { label: 'Categories', value: stats.categories },
         { label: 'Orders', value: stats.orders },
-        { label: 'Configurations', value: stats.configurations },
     ];
 
     return (

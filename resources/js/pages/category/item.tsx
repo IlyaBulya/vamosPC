@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, ShoppingCart, SlidersHorizontal } from 'lucide-react';
 import FeaturePill from '@/components/store/feature-pill';
 import PageHero from '@/components/store/page-hero';
@@ -14,7 +14,6 @@ type ProductItem = {
     stock: number;
     color: string | null;
     is_component: boolean;
-    can_be_base_product: boolean;
     is_sellable: boolean;
 };
 
@@ -33,12 +32,6 @@ interface CategoryItemPageProps {
     backHref: string;
     category: CategoryItem;
 }
-
-type AuthUser = {
-    id: number;
-    name: string;
-    email: string;
-};
 
 const filterGroups = [
     'Store',
@@ -65,7 +58,7 @@ function formatMonthly(priceInCents: number) {
 }
 
 function shortDescription(description: string | null) {
-    const fallback = 'Tuned and tested build for smooth gaming and creative work.';
+    const fallback = 'Tuned and tested product for smooth daily and creative work.';
     const text = (description ?? fallback).trim();
 
     if (text.length <= 96) {
@@ -81,8 +74,6 @@ export default function CategoryItemPage({
     backHref,
     category,
 }: CategoryItemPageProps) {
-    const page = usePage<{ auth: { user: AuthUser | null } }>();
-    const user = page.props.auth.user;
     const productBasePath =
         category.type === 'laptop'
             ? `/laptops/${category.route_slug}`
@@ -164,35 +155,12 @@ export default function CategoryItemPage({
                                         }
                                         color={product.color}
                                         action={
-                                            product.can_be_base_product
-                                                ? user
-                                                    ? {
-                                                          label: 'Configure',
-                                                          kind: 'configure',
-                                                          onClick: () =>
-                                                              router.post(
-                                                                  '/configurations',
-                                                                  {
-                                                                      product_id:
-                                                                          product.id,
-                                                                  },
-                                                                  {
-                                                                      preserveScroll:
-                                                                          true,
-                                                                  },
-                                                              ),
-                                                      }
-                                                    : {
-                                                          label: 'Configure',
-                                                          kind: 'configure',
-                                                          href: '/login',
-                                                      }
-                                                : {
-                                                      label: 'Buy',
-                                                      kind: 'buy',
-                                                      onClick: () =>
-                                                          addToCart(product.id),
-                                                  }
+                                            {
+                                                label: 'Buy',
+                                                kind: 'buy',
+                                                onClick: () =>
+                                                    addToCart(product.id),
+                                            }
                                         }
                                     />
                                 );

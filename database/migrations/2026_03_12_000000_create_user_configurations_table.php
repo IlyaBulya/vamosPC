@@ -11,15 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('configurations', function (Blueprint $table) {
+        Schema::create('user_configurations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('base_configuration_id')
+                ->nullable()
+                ->constrained('configurations')
+                ->nullOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('image')->nullable();
-            $table->unsignedInteger('price');
+            $table->unsignedInteger('price')->default(0);
+            $table->string('status')->default('draft');
+            $table->json('selected_components')->nullable();
+            $table->json('meta')->nullable();
             $table->timestamps();
+
+            $table->index(['user_id', 'status']);
         });
     }
 
@@ -28,6 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('configurations');
+        Schema::dropIfExists('user_configurations');
     }
 };
+

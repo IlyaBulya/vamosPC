@@ -401,10 +401,10 @@ export default function Welcome({
 
                                 <div className="mt-10 flex flex-wrap gap-4">
                                     <Link
-                                        href="/gaming-pc"
+                                        href="/catalog"
                                         className="rounded-full bg-[#00bd7d] px-8 py-3 text-lg font-semibold text-white shadow-[0_0_25px_rgba(0,189,125,0.6)] transition hover:bg-[#02a96f]"
                                     >
-                                        Build Yours Now
+                                        Browse Catalog
                                     </Link>
                                     <button
                                         type="button"

@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    Boxes,
+    Cpu,
     FolderTree,
     LayoutDashboard,
     LogOut,
@@ -11,8 +11,8 @@ import {
     Users,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { logout } from '@/routes';
 import { cn } from '@/lib/utils';
+import { logout } from '@/routes';
 
 type AuthUser = {
     id: number;
@@ -41,9 +41,9 @@ type AdminLayoutProps = {
 const navigation = [
     { title: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { title: 'Products', href: '/admin/products', icon: Package },
+    { title: 'Configurations', href: '/admin/configurations', icon: Cpu },
     { title: 'Categories', href: '/admin/categories', icon: FolderTree },
     { title: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-    { title: 'Configurations', href: '/admin/configurations', icon: Boxes },
     { title: 'Users', href: '/admin/users', icon: Users },
 ];
 

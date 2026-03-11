@@ -5,9 +5,9 @@ import AdminLayout from '@/layouts/admin-layout';
 type OrderItem = {
     id: number;
     name: string;
+    kind: 'Product' | 'Configuration';
     qty: number;
     price_in_cents: number;
-    is_configuration: boolean;
 };
 
 type OrderRow = {
@@ -138,9 +138,7 @@ export default function AdminOrdersPage({
                                                         {item.name}
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-300">
-                                                        {item.is_configuration
-                                                            ? 'Configuration'
-                                                            : 'Product'}
+                                                        {item.kind}
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-300">
                                                         {item.qty}

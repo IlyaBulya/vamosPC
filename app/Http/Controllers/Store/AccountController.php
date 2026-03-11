@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
+use App\Support\CartOrder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,9 +15,12 @@ class AccountController extends Controller
         $user = $request->user();
         abort_unless($user !== null, 403);
 
-        $user->loadCount(['orders', 'configurations']);
+        $user->loadCount([
+            'orders as completed_orders_count' => fn ($query) => $query->where('status', '!=', CartOrder::STATUS),
+        ]);
 
         $orders = $user->orders()
+            ->where('status', '!=', CartOrder::STATUS)
             ->with('items:id,order_id,qty')
             ->latest()
             ->take(6)
@@ -30,31 +34,12 @@ class AccountController extends Controller
             ])
             ->values();
 
-        $configurations = $user->configurations()
-            ->with('baseProduct:id,name')
-            ->withCount('products')
-            ->latest()
-            ->take(6)
-            ->get()
-            ->map(fn ($configuration): array => [
-                'id' => $configuration->id,
-                'name' => (string) $configuration->name,
-                'description' => $configuration->description,
-                'price_in_cents' => (int) $configuration->price,
-                'components_count' => (int) $configuration->products_count,
-                'base_product_name' => $configuration->baseProduct?->name,
-                'created_at' => $configuration->created_at?->toDateString(),
-            ])
-            ->values();
-
         return Inertia::render('account/index', [
             'stats' => [
-                'orders_count' => (int) $user->orders_count,
-                'configurations_count' => (int) $user->configurations_count,
+                'orders_count' => (int) $user->completed_orders_count,
                 'security_level' => $user->two_factor_confirmed_at ? 'Advanced' : 'Basic',
             ],
             'orders' => $orders,
-            'configurations' => $configurations,
         ]);
     }
 }
