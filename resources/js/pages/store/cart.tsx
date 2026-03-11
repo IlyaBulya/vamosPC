@@ -7,10 +7,9 @@ import StoreLayout from '@/layouts/store-layout';
 type CartItem = {
     line_key: string;
     id: number;
-    kind: 'product' | 'configuration';
     name: string;
     subtitle: string | null;
-    availability: 'In stock' | 'Pre-order' | 'Custom build';
+    availability: 'In stock' | 'Pre-order';
     unit_price_in_cents: number;
     qty: number;
     href: string;
@@ -87,10 +86,6 @@ export default function CartPage({ items }: { items: CartItem[] }) {
     };
 
     const availabilityClass = (availability: CartItem['availability']) => {
-        if (availability === 'Custom build') {
-            return 'text-cyan-300';
-        }
-
         return availability === 'In stock' ? 'text-[#9cf5d8]' : 'text-amber-300';
     };
 
@@ -148,9 +143,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                             <td className="px-7 py-5">
                                                 <div className="flex items-start gap-4">
                                                     <div className="flex h-16 w-24 shrink-0 items-center justify-center rounded-md border border-white/15 bg-[#0d1623] text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9cf5d8]/80">
-                                                        {item.kind === 'configuration'
-                                                            ? 'Build'
-                                                            : 'Photo'}
+                                                        Photo
                                                     </div>
                                                     <div>
                                                         <Link
@@ -162,11 +155,6 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                         {item.subtitle && (
                                                             <p className="mt-1 text-sm text-slate-300">
                                                                 {item.subtitle}
-                                                            </p>
-                                                        )}
-                                                        {item.kind === 'configuration' && (
-                                                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">
-                                                                Saved configuration
                                                             </p>
                                                         )}
                                                     </div>

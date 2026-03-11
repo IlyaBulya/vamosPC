@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Support\CartSession;
-use App\Support\CompareSession;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -49,9 +48,6 @@ class HandleInertiaRequests extends Middleware
             ],
             'cart' => [
                 'count' => CartSession::count($request),
-            ],
-            'compare' => [
-                'count' => CompareSession::count($request),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

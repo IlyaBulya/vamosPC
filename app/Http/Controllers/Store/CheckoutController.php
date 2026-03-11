@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
-use App\Models\Configuration;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -28,57 +27,29 @@ class CheckoutController extends Controller
             ->map(fn ($id): int => (int) $id)
             ->all();
 
-        $configurationIds = $lines
-            ->filter(fn (array $line): bool => $line['type'] === 'configuration')
-            ->pluck('id')
-            ->map(fn ($id): int => (int) $id)
-            ->all();
-
         $products = Product::query()
             ->where('is_sellable', true)
             ->whereIn('id', $productIds)
             ->get(['id', 'price_in_cents'])
             ->keyBy('id');
 
-        $configurations = Configuration::query()
-            ->where('user_id', $user->id)
-            ->whereIn('id', $configurationIds)
-            ->get(['id', 'product_id', 'price'])
-            ->keyBy('id');
+        $items = $lines->map(function (array $line) use ($products): ?array {
+            $product = $products->get($line['id']);
 
-        $items = $lines->map(function (array $line) use ($configurations, $products): ?array {
-            if ($line['type'] === 'product') {
-                $product = $products->get($line['id']);
-
-                if (! $product) {
-                    return null;
-                }
-
-                return [
-                    'product_id' => (int) $product->id,
-                    'configuration_id' => null,
-                    'qty' => (int) $line['quantity'],
-                    'price' => (int) $product->price_in_cents,
-                ];
-            }
-
-            $configuration = $configurations->get($line['id']);
-
-            if (! $configuration) {
+            if (! $product) {
                 return null;
             }
 
             return [
-                'product_id' => (int) $configuration->product_id,
-                'configuration_id' => (int) $configuration->id,
+                'product_id' => (int) $product->id,
                 'qty' => (int) $line['quantity'],
-                'price' => (int) $configuration->price,
+                'price' => (int) $product->price_in_cents,
             ];
         });
 
         abort_if($items->contains(null), 422, 'Cart contains invalid items.');
 
-        /** @var \Illuminate\Support\Collection<int, array{product_id:int, configuration_id:int|null, qty:int, price:int}> $resolvedItems */
+        /** @var \Illuminate\Support\Collection<int, array{product_id:int, qty:int, price:int}> $resolvedItems */
         $resolvedItems = $items;
 
         DB::transaction(function () use ($resolvedItems, $user): void {
@@ -93,7 +64,6 @@ class CheckoutController extends Controller
                 OrderItem::query()->create([
                     'order_id' => $order->id,
                     'product_id' => $item['product_id'],
-                    'configuration_id' => $item['configuration_id'],
                     'qty' => $item['qty'],
                     'price' => $item['price'],
                 ]);

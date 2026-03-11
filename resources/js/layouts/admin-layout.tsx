@@ -1,6 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    Boxes,
     FolderTree,
     LayoutDashboard,
     LogOut,
@@ -43,7 +42,6 @@ const navigation = [
     { title: 'Products', href: '/admin/products', icon: Package },
     { title: 'Categories', href: '/admin/categories', icon: FolderTree },
     { title: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-    { title: 'Configurations', href: '/admin/configurations', icon: Boxes },
     { title: 'Users', href: '/admin/users', icon: Users },
 ];
 

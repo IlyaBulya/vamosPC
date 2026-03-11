@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChartNoAxesColumnIncreasing, ShoppingCart, User } from 'lucide-react';
+import { ShoppingCart, User } from 'lucide-react';
 import { login, register } from '@/routes';
 
 type StoreHeaderProps = {
@@ -7,7 +7,6 @@ type StoreHeaderProps = {
 };
 
 const storeNavItems = [
-    { href: '/gaming-pc', label: 'Gaming PC' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/laptops', label: 'Laptops' },
     { href: '/assistance', label: 'Assistance' },
@@ -34,12 +33,10 @@ export default function StoreHeader({ canRegister = true }: StoreHeaderProps) {
     const page = usePage<{
         auth: { user: unknown | null };
         cart?: { count?: number };
-        compare?: { count?: number };
     }>();
     const currentPath = normalizePath(page.url);
     const isLoggedIn = Boolean(page.props.auth?.user);
     const cartCount = Number(page.props.cart?.count ?? 0);
-    const compareCount = Number(page.props.compare?.count ?? 0);
 
     return (
         <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050b16] backdrop-blur">
@@ -76,23 +73,6 @@ export default function StoreHeader({ canRegister = true }: StoreHeaderProps) {
                 </nav>
 
                 <nav className="flex items-center gap-2 text-sm font-medium">
-                    <Link
-                        href="/compare"
-                        className={`relative rounded-full border p-2 transition ${
-                            isActivePath(currentPath, '/compare')
-                                ? 'border-[#00bd7d]/65 bg-[#00bd7d]/12 text-[#00bd7d] shadow-[0_0_20px_rgba(0,189,125,0.45)]'
-                                : 'border-white/15 text-slate-300 hover:border-white/35 hover:text-white'
-                        }`}
-                    >
-                        <span className="sr-only">Compare</span>
-                        <ChartNoAxesColumnIncreasing className="h-5 w-5" />
-                        {compareCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#00bd7d] px-1 text-[11px] font-bold leading-none text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.65)]">
-                                {compareCount > 99 ? '99+' : compareCount}
-                            </span>
-                        )}
-                    </Link>
-
                     <Link
                         href="/cart"
                         className={`relative rounded-full border p-2 transition ${

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Configuration;
 use App\Models\Product;
 use App\Support\CartSession;
 use Illuminate\Http\Request;
@@ -30,66 +29,27 @@ class CartController extends Controller
             ->get(['id', 'category_id', 'name', 'description', 'price_in_cents', 'stock'])
             ->keyBy('id');
 
-        $configurations = Configuration::query()
-            ->with(['baseProduct.category:id,name,type'])
-            ->whereIn(
-                'id',
-                $cartItems
-                    ->filter(fn (array $line): bool => $line['type'] === 'configuration')
-                    ->pluck('id')
-                    ->all(),
-            )
-            ->get(['id', 'product_id', 'name', 'description', 'price'])
-            ->keyBy('id');
-
         $items = $cartItems
-            ->map(function (array $line, string $lineKey) use ($configurations, $products): ?array {
-                if ($line['type'] === 'product') {
-                    /** @var Product|null $product */
-                    $product = $products->get($line['id']);
-                    if (! $product || ! $product->category) {
-                        return null;
-                    }
-
-                    $categorySlug = $this->categoryRouteSlug($product->category);
-                    $productSlug = $this->productRouteSlug($product);
-                    $href = $product->category->type === 'laptop'
-                        ? "/laptops/{$categorySlug}/{$productSlug}"
-                        : "/catalog/{$categorySlug}/{$productSlug}";
-
-                    return [
-                        'line_key' => $lineKey,
-                        'id' => $product->id,
-                        'kind' => 'product',
-                        'name' => $product->name,
-                        'subtitle' => $product->description,
-                        'availability' => $product->stock > 0 ? 'In stock' : 'Pre-order',
-                        'unit_price_in_cents' => (int) $product->price_in_cents,
-                        'qty' => (int) $line['quantity'],
-                        'href' => $href,
-                    ];
-                }
-
-                /** @var Configuration|null $configuration */
-                $configuration = $configurations->get($line['id']);
-                if (! $configuration || ! $configuration->baseProduct || ! $configuration->baseProduct->category) {
+            ->map(function (array $line, string $lineKey) use ($products): ?array {
+                /** @var Product|null $product */
+                $product = $products->get($line['id']);
+                if (! $product || ! $product->category) {
                     return null;
                 }
 
-                $categorySlug = $this->categoryRouteSlug($configuration->baseProduct->category);
-                $productSlug = $this->productRouteSlug($configuration->baseProduct);
-                $href = $configuration->baseProduct->category->type === 'laptop'
+                $categorySlug = $this->categoryRouteSlug($product->category);
+                $productSlug = $this->productRouteSlug($product);
+                $href = $product->category->type === 'laptop'
                     ? "/laptops/{$categorySlug}/{$productSlug}"
                     : "/catalog/{$categorySlug}/{$productSlug}";
 
                 return [
                     'line_key' => $lineKey,
-                    'id' => $configuration->id,
-                    'kind' => 'configuration',
-                    'name' => $configuration->name,
-                    'subtitle' => $configuration->description ?: "Based on {$configuration->baseProduct->name}",
-                    'availability' => 'Custom build',
-                    'unit_price_in_cents' => (int) $configuration->price,
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'subtitle' => $product->description,
+                    'availability' => $product->stock > 0 ? 'In stock' : 'Pre-order',
+                    'unit_price_in_cents' => (int) $product->price_in_cents,
                     'qty' => (int) $line['quantity'],
                     'href' => $href,
                 ];
@@ -100,7 +60,7 @@ class CartController extends Controller
         $normalizedItems = $items
             ->mapWithKeys(fn (array $item): array => [
                 $item['line_key'] => [
-                    'type' => $item['kind'],
+                    'type' => 'product',
                     'id' => $item['id'],
                     'quantity' => $item['qty'],
                 ],

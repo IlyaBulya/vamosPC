@@ -12,7 +12,7 @@ class UserController extends Controller
     public function index(): Response
     {
         $users = User::query()
-            ->withCount(['orders', 'configurations'])
+            ->withCount(['orders'])
             ->latest()
             ->get()
             ->map(fn (User $user): array => [
@@ -21,7 +21,6 @@ class UserController extends Controller
                 'email' => $user->email,
                 'is_admin' => (bool) $user->is_admin,
                 'orders_count' => (int) $user->orders_count,
-                'configurations_count' => (int) $user->configurations_count,
                 'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
                 'created_at' => $user->created_at?->toDateTimeString(),
             ])

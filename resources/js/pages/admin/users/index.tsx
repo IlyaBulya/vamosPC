@@ -7,7 +7,6 @@ type UserRow = {
     email: string;
     is_admin: boolean;
     orders_count: number;
-    configurations_count: number;
     two_factor_enabled: boolean;
     created_at: string | null;
 };
@@ -29,7 +28,6 @@ export default function AdminUsersPage({ users }: { users: UserRow[] }) {
                                     <th className="px-5 py-4 font-medium">User</th>
                                     <th className="px-5 py-4 font-medium">Role</th>
                                     <th className="px-5 py-4 font-medium">Orders</th>
-                                    <th className="px-5 py-4 font-medium">Configurations</th>
                                     <th className="px-5 py-4 font-medium">2FA</th>
                                     <th className="px-5 py-4 font-medium">Created</th>
                                 </tr>
@@ -56,9 +54,6 @@ export default function AdminUsersPage({ users }: { users: UserRow[] }) {
                                                 {user.orders_count}
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
-                                                {user.configurations_count}
-                                            </td>
-                                            <td className="px-5 py-4 text-slate-300">
                                                 {user.two_factor_enabled
                                                     ? 'Enabled'
                                                     : 'Disabled'}
@@ -71,7 +66,7 @@ export default function AdminUsersPage({ users }: { users: UserRow[] }) {
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={6}
+                                            colSpan={5}
                                             className="px-5 py-10 text-center text-slate-400"
                                         >
                                             No users found.

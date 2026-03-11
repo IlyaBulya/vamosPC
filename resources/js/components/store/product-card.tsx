@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Settings2, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import ProductMediaBlock from '@/components/store/product-media-block';
 import { cn } from '@/lib/utils';
 
@@ -15,12 +15,12 @@ type ProductCardProps = {
         | {
               label: string;
               onClick: () => void;
-              kind: 'buy' | 'configure';
+              kind: 'buy';
           }
         | {
               label: string;
               href: string;
-              kind: 'buy' | 'configure';
+              kind: 'buy';
           };
     className?: string;
 };
@@ -94,11 +94,7 @@ export default function ProductCard({
                         href={action.href}
                         className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
                     >
-                        {action.kind === 'configure' ? (
-                            <Settings2 className="h-4 w-4" />
-                        ) : (
-                            <ShoppingCart className="h-4 w-4" />
-                        )}
+                        <ShoppingCart className="h-4 w-4" />
                         {action.label}
                     </Link>
                 ) : (
@@ -107,11 +103,7 @@ export default function ProductCard({
                         onClick={action.onClick}
                         className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
                     >
-                        {action.kind === 'configure' ? (
-                            <Settings2 className="h-4 w-4" />
-                        ) : (
-                            <ShoppingCart className="h-4 w-4" />
-                        )}
+                        <ShoppingCart className="h-4 w-4" />
                         {action.label}
                     </button>
                 )}

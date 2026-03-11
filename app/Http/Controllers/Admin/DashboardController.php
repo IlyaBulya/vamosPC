@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Configuration;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -36,7 +35,6 @@ class DashboardController extends Controller
                 'products' => Product::query()->count(),
                 'categories' => Category::query()->count(),
                 'orders' => Order::query()->count(),
-                'configurations' => Configuration::query()->count(),
             ],
             'recentOrders' => $recentOrders,
         ]);

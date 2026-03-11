@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Box, Lock, Package, ShieldCheck } from 'lucide-react';
+import { Lock, Package, ShieldCheck } from 'lucide-react';
 import InfoCard from '@/components/store/info-card';
 import PageHero from '@/components/store/page-hero';
 import StoreLayout from '@/layouts/store-layout';
@@ -13,7 +13,6 @@ type AuthUser = {
 
 type AccountStats = {
     orders_count: number;
-    configurations_count: number;
     security_level: string;
 };
 
@@ -22,16 +21,6 @@ type AccountOrder = {
     status: string;
     total_in_cents: number;
     items_count: number;
-    created_at: string | null;
-};
-
-type SavedConfiguration = {
-    id: number;
-    name: string;
-    description: string | null;
-    price_in_cents: number;
-    components_count: number;
-    base_product_name: string | null;
     created_at: string | null;
 };
 
@@ -48,10 +37,9 @@ export default function AccountPage() {
         auth: { user: AuthUser | null };
         stats: AccountStats;
         orders: AccountOrder[];
-        configurations: SavedConfiguration[];
     }>();
     const user = page.props.auth.user;
-    const { stats, orders, configurations } = page.props;
+    const { stats, orders } = page.props;
 
     return (
         <>
@@ -64,7 +52,7 @@ export default function AccountPage() {
                 <PageHero
                     eyebrow="Account"
                     title={`Welcome back${user?.name ? `, ${user.name}` : ''}.`}
-                    description="Manage your profile, track orders, and keep your saved configurations ready for checkout."
+                    description="Manage your profile, track orders, and keep your security settings up to date."
                 >
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <InfoCard
@@ -76,8 +64,8 @@ export default function AccountPage() {
                         />
                         <InfoCard label="Orders" value={stats.orders_count} />
                         <InfoCard
-                            label="Saved Configs"
-                            value={stats.configurations_count}
+                            label="Status"
+                            value="Active"
                         />
                         <InfoCard
                             label="Security Level"
@@ -150,61 +138,6 @@ export default function AccountPage() {
                         ) : (
                             <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
                                 No orders yet. Your future purchases will appear here.
-                            </div>
-                        )}
-                    </article>
-
-                    <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6">
-                        <div className="flex items-center gap-3">
-                            <div className="rounded-xl border border-[#00bd7d]/40 bg-[#00bd7d]/10 p-2">
-                                <Box className="h-5 w-5 text-[#00bd7d]" />
-                            </div>
-                            <h2 className="text-xl font-bold text-white">
-                                Saved Configurations
-                            </h2>
-                        </div>
-                        <p className="mt-3 text-sm text-slate-300">
-                            Keep your favorite builds and continue editing anytime.
-                        </p>
-                        {configurations.length ? (
-                            <div className="mt-5 space-y-3">
-                                {configurations.map((configuration) => (
-                                    <div
-                                        key={configuration.id}
-                                        className="rounded-2xl border border-white/10 bg-[#0b1321] p-4"
-                                    >
-                                        <div className="flex flex-wrap items-start justify-between gap-3">
-                                            <div>
-                                                <p className="text-sm font-semibold text-white">
-                                                    {configuration.name}
-                                                </p>
-                                                <p className="mt-1 text-sm text-slate-400">
-                                                    {configuration.base_product_name
-                                                        ? `Base: ${configuration.base_product_name}`
-                                                        : 'Base product not available'}
-                                                </p>
-                                                <p className="mt-1 text-sm text-slate-400">
-                                                    {configuration.components_count} components
-                                                    {configuration.created_at
-                                                        ? ` • ${configuration.created_at}`
-                                                        : ''}
-                                                </p>
-                                                {configuration.description ? (
-                                                    <p className="mt-2 text-sm text-slate-300">
-                                                        {configuration.description}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <p className="text-lg font-bold text-[#00bd7d]">
-                                                {formatPrice(configuration.price_in_cents)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
-                                No saved configurations yet.
                             </div>
                         )}
                     </article>

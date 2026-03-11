@@ -50,10 +50,7 @@ class ProductController extends Controller
 
         $product = Product::query()
             ->where('category_id', $category->id)
-            ->where(function ($query) {
-                $query->where('is_sellable', true)
-                    ->orWhere('can_be_base_product', true);
-            })
+            ->where('is_sellable', true)
             ->get([
                 'id',
                 'category_id',
@@ -61,7 +58,6 @@ class ProductController extends Controller
                 'description',
                 'price_in_cents',
                 'is_component',
-                'can_be_base_product',
                 'is_sellable',
             ])
             ->first(
@@ -95,7 +91,6 @@ class ProductController extends Controller
                 'description' => $product->description,
                 'price_in_cents' => $product->price_in_cents,
                 'is_component' => (bool) $product->is_component,
-                'can_be_base_product' => (bool) $product->can_be_base_product,
                 'is_sellable' => (bool) $product->is_sellable,
             ],
             'category' => [

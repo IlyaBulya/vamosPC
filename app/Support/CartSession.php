@@ -28,7 +28,7 @@ class CartSession
                 $id = (int) ($value['id'] ?? 0);
                 $quantity = (int) ($value['quantity'] ?? 0);
 
-                if (! in_array($type, ['product', 'configuration'], true) || $id <= 0 || $quantity <= 0) {
+                if (! in_array($type, ['product'], true) || $id <= 0 || $quantity <= 0) {
                     continue;
                 }
 
@@ -87,7 +87,7 @@ class CartSession
      */
     public static function parseLineKey(string $lineKey): ?array
     {
-        if (! preg_match('/^(product|configuration)_(\d+)$/', $lineKey, $matches)) {
+        if (! preg_match('/^(product)_(\d+)$/', $lineKey, $matches)) {
             return null;
         }
 

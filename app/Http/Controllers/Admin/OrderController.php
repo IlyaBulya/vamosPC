@@ -24,16 +24,15 @@ class OrderController extends Controller
     public function index(): Response
     {
         $orders = Order::query()
-            ->with(['user:id,name,email', 'items.product:id,name', 'items.configuration:id,name'])
+            ->with(['user:id,name,email', 'items.product:id,name'])
             ->latest()
             ->get()
             ->map(function (Order $order): array {
                 $items = $order->items->map(fn ($item): array => [
                     'id' => $item->id,
-                    'name' => $item->configuration?->name ?? $item->product?->name ?? 'Unknown item',
+                    'name' => $item->product?->name ?? 'Unknown item',
                     'qty' => (int) $item->qty,
                     'price_in_cents' => (int) $item->price,
-                    'is_configuration' => $item->configuration_id !== null,
                 ])->values();
 
                 return [

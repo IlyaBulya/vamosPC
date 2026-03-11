@@ -7,7 +7,6 @@ type OrderItem = {
     name: string;
     qty: number;
     price_in_cents: number;
-    is_configuration: boolean;
 };
 
 type OrderRow = {
@@ -138,9 +137,7 @@ export default function AdminOrdersPage({
                                                         {item.name}
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-300">
-                                                        {item.is_configuration
-                                                            ? 'Configuration'
-                                                            : 'Product'}
+                                                        Product
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-300">
                                                         {item.qty}

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
@@ -20,9 +19,7 @@ class Product extends Model
         'stock',
         'color',
         'is_component',
-        'can_be_base_product',
         'is_sellable',
-        'is_available_for_configuration',
     ];
 
     /**
@@ -35,9 +32,7 @@ class Product extends Model
             'price_in_cents' => 'integer',
             'stock' => 'integer',
             'is_component' => 'boolean',
-            'can_be_base_product' => 'boolean',
             'is_sellable' => 'boolean',
-            'is_available_for_configuration' => 'boolean',
         ];
     }
 
@@ -49,18 +44,5 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
-    }
-
-    public function baseConfigurations(): HasMany
-    {
-        return $this->hasMany(Configuration::class, 'product_id');
-    }
-
-    public function configurations(): BelongsToMany
-    {
-        return $this->belongsToMany(Configuration::class, 'configuration_product')
-            ->withPivot(['category_id', 'qty', 'position'])
-            ->withTimestamps()
-            ->orderByPivot('position');
     }
 }
