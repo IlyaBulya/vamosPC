@@ -17,8 +17,8 @@ class EnsureUserIsAdmin
     {
         $user = $request->user();
 
-        $isHardcodedAdmin = $user !== null && (int) $user->id === 2;
-        $isFlaggedAdmin = $user !== null && (bool) ($user->is_admin ?? false);
+        $isHardcodedAdmin = $user !== null && (int)$user->id === 1;
+        $isFlaggedAdmin = $user !== null && (bool)($user->is_admin ?? false);
 
         abort_unless($isHardcodedAdmin || $isFlaggedAdmin, 403);
 

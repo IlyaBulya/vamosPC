@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,18 +18,16 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class ,
         ]);
 
-        User::factory()->create([
+        DB::table('users')->insert([
             'id' => 1,
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'is_admin' => false,
-        ]);
-
-        User::factory()->create([
-            'id' => 2,
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
+            'name' => 'Nikita Tsekhomskiy',
+            'email' => 'ntsekhomskiy@gmail.com',
+            'email_verified_at' => now(),
+            'password' => '$2y$12$fQ5xW8m3LSablfk2v/qKCeEuQ8B.ZEfY6ecvauxG1LaHo4AX5U6fi',
             'is_admin' => true,
+            'remember_token' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 }
