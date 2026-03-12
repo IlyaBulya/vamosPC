@@ -7,7 +7,7 @@ import StoreLayout from '@/layouts/store-layout';
 type CartItem = {
     line_key: string;
     id: number;
-    item_type: 'product' | 'configuration';
+    item_type: 'product' | 'user_configuration';
     name: string;
     subtitle: string | null;
     availability: 'In stock' | 'Pre-order';
@@ -154,7 +154,10 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                             {item.name}
                                                         </Link>
                                                         <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
-                                                            {item.item_type}
+                                                            {item.item_type ===
+                                                            'user_configuration'
+                                                                ? 'custom build'
+                                                                : 'product'}
                                                         </p>
                                                         {item.subtitle && (
                                                             <p className="mt-1 text-sm text-slate-300">

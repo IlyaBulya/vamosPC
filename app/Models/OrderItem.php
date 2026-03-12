@@ -15,7 +15,7 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
-        'configuration_id',
+        'user_configuration_id',
         'qty',
         'price',
     ];
@@ -28,7 +28,7 @@ class OrderItem extends Model
         return [
             'order_id' => 'integer',
             'product_id' => 'integer',
-            'configuration_id' => 'integer',
+            'user_configuration_id' => 'integer',
             'qty' => 'integer',
             'price' => 'integer',
         ];
@@ -44,8 +44,8 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function configuration(): BelongsTo
+    public function userConfiguration(): BelongsTo
     {
-        return $this->belongsTo(Configuration::class);
+        return $this->belongsTo(UserConfiguration::class);
     }
 }

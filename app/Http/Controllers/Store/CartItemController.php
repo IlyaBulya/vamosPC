@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
-use App\Models\Configuration;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\UserConfiguration;
 use App\Support\CartOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class CartItemController extends Controller
@@ -23,12 +24,14 @@ class CartItemController extends Controller
                 'nullable',
                 'integer',
                 'exists:products,id',
-                'required_without:configuration_id',
+                'required_without:user_configuration_id',
             ],
-            'configuration_id' => [
+            'user_configuration_id' => [
                 'nullable',
                 'integer',
-                'exists:configurations,id',
+                Rule::exists('user_configurations', 'id')->where(
+                    fn ($query) => $query->where('user_id', $user->id),
+                ),
                 'required_without:product_id',
             ],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
@@ -36,18 +39,20 @@ class CartItemController extends Controller
 
         if (
             array_key_exists('product_id', $data)
-            && array_key_exists('configuration_id', $data)
+            && array_key_exists('user_configuration_id', $data)
             && $data['product_id'] !== null
-            && $data['configuration_id'] !== null
+            && $data['user_configuration_id'] !== null
         ) {
             throw ValidationException::withMessages([
-                'product_id' => 'Choose either product or configuration, not both.',
-                'configuration_id' => 'Choose either configuration or product, not both.',
+                'product_id' => 'Choose either product or user configuration, not both.',
+                'user_configuration_id' => 'Choose either user configuration or product, not both.',
             ]);
         }
 
         $productId = isset($data['product_id']) ? (int) $data['product_id'] : null;
-        $configurationId = isset($data['configuration_id']) ? (int) $data['configuration_id'] : null;
+        $userConfigurationId = isset($data['user_configuration_id'])
+            ? (int) $data['user_configuration_id']
+            : null;
         $quantity = (int) ($data['quantity'] ?? 1);
 
         $order = CartOrder::ensureForUser($user);
@@ -63,7 +68,7 @@ class CartItemController extends Controller
             /** @var OrderItem|null $existingOrderItem */
             $existingOrderItem = $order->items()
                 ->where('product_id', $productId)
-                ->whereNull('configuration_id')
+                ->whereNull('user_configuration_id')
                 ->first();
 
             if ($existingOrderItem !== null) {
@@ -74,31 +79,33 @@ class CartItemController extends Controller
             } else {
                 $order->items()->create([
                     'product_id' => $productId,
-                    'configuration_id' => null,
+                    'user_configuration_id' => null,
                     'qty' => $quantity,
                     'price' => (int) $product->price_in_cents,
                 ]);
             }
-        } elseif ($configurationId !== null) {
-            $configuration = Configuration::query()->findOrFail($configurationId);
+        } elseif ($userConfigurationId !== null) {
+            $userConfiguration = UserConfiguration::query()
+                ->where('user_id', $user->id)
+                ->findOrFail($userConfigurationId);
 
             /** @var OrderItem|null $existingOrderItem */
             $existingOrderItem = $order->items()
-                ->where('configuration_id', $configurationId)
+                ->where('user_configuration_id', $userConfigurationId)
                 ->whereNull('product_id')
                 ->first();
 
             if ($existingOrderItem !== null) {
                 $existingOrderItem->update([
                     'qty' => min(99, ((int) $existingOrderItem->qty) + $quantity),
-                    'price' => (int) $configuration->price,
+                    'price' => (int) $userConfiguration->price,
                 ]);
             } else {
                 $order->items()->create([
                     'product_id' => null,
-                    'configuration_id' => $configurationId,
+                    'user_configuration_id' => $userConfigurationId,
                     'qty' => $quantity,
-                    'price' => (int) $configuration->price,
+                    'price' => (int) $userConfiguration->price,
                 ]);
             }
         }

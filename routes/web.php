@@ -23,6 +23,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/assistance', [AssistanceController::class, 'index'])->name('assistance');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('/gaming-pcs', [GamingPcController::class, 'index'])->name('gaming-pcs');
+Route::get('/gaming-pcs/{configuration}/configure', [GamingPcController::class, 'configure'])
+    ->whereNumber('configuration')
+    ->name('gaming-pcs.configure');
 Route::get('/products/{product}', [ProductController::class, 'legacy'])
     ->whereNumber('product')
     ->name('products.legacy');
@@ -62,6 +65,9 @@ Route::group([
 Route::middleware(['auth'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
     Route::post('/cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
+    Route::post('/gaming-pcs/{configuration}/buy', [GamingPcController::class, 'buy'])
+        ->whereNumber('configuration')
+        ->name('gaming-pcs.buy');
     Route::patch('/cart/items/{orderItem}', [CartItemController::class, 'update'])
         ->whereNumber('orderItem')
         ->name('cart.items.update');

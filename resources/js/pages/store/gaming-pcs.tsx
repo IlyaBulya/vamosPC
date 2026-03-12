@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { ChevronRight, Cpu, Monitor, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import FeaturePill from '@/components/store/feature-pill';
@@ -42,19 +42,6 @@ export default function GamingPcPage({
         configurations.find((configuration) => configuration.id === previewId) ??
         configurations[0] ??
         null;
-
-    const addConfigurationToCart = (configurationId: number) => {
-        router.post(
-            '/cart/items',
-            {
-                configuration_id: configurationId,
-                quantity: 1,
-            },
-            {
-                preserveScroll: true,
-            },
-        );
-    };
 
     return (
         <>
@@ -185,16 +172,13 @@ export default function GamingPcPage({
                                 </p>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    addConfigurationToCart(previewConfiguration.id)
-                                }
+                            <Link
+                                href={`/gaming-pcs/${previewConfiguration.id}/configure`}
                                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#00bd7d] px-4 py-3 text-sm font-bold text-[#04120d] shadow-[0_0_18px_rgba(0,189,125,0.45)]"
                             >
                                 <ShoppingCart className="h-4 w-4" />
                                 Configure & Buy
-                            </button>
+                            </Link>
 
                             <button
                                 type="button"

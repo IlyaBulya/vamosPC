@@ -24,7 +24,7 @@ class CheckoutController extends Controller
                 ->where('status', CartOrder::STATUS)
                 ->with([
                     'items.product:id,price_in_cents,is_sellable',
-                    'items.configuration:id,price',
+                    'items.userConfiguration:id,price',
                 ])
                 ->orderByDesc('id')
                 ->lockForUpdate()
@@ -47,11 +47,11 @@ class CheckoutController extends Controller
                     return $unitPrice * (int) $item->qty;
                 }
 
-                if ($item->configuration_id !== null) {
-                    $configuration = $item->configuration;
-                    abort_if($configuration === null, 422, 'Cart contains invalid configurations.');
+                if ($item->user_configuration_id !== null) {
+                    $userConfiguration = $item->userConfiguration;
+                    abort_if($userConfiguration === null, 422, 'Cart contains invalid user configurations.');
 
-                    $unitPrice = (int) $configuration->price;
+                    $unitPrice = (int) $userConfiguration->price;
 
                     if ((int) $item->price !== $unitPrice) {
                         $item->update(['price' => $unitPrice]);

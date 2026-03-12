@@ -14,12 +14,15 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
-            $table->unsignedBigInteger('configuration_id')->nullable();
+            $table->foreignId('user_configuration_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedInteger('qty')->default(1);
             $table->unsignedInteger('price');
             $table->timestamps();
 
-            $table->index(['order_id', 'product_id', 'configuration_id'], 'orderitems_cart_lookup_index');
+            $table->index(
+                ['order_id', 'product_id', 'user_configuration_id'],
+                'orderitems_cart_lookup_index',
+            );
         });
     }
 
