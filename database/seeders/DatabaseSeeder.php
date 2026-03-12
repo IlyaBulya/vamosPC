@@ -29,5 +29,17 @@ class DatabaseSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        DB::table('users')->insert([
+            'id' => 2,
+            'name' => 'Ilya Bulya',
+            'email' => 'ilyade3004@gmail.com',
+            'email_verified_at' => now(),
+            'password' => '$2y$12$Yfw65GWrP7./Y/KKviH6OexRXd0R1i0LEDese2viYW9BuqUAGCJay',
+            'is_admin' => true,
+            'remember_token' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
