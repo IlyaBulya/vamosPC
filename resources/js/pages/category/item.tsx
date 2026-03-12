@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, ShoppingCart, SlidersHorizontal } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import FeaturePill from '@/components/store/feature-pill';
 import PageHero from '@/components/store/page-hero';
 import ProductCard from '@/components/store/product-card';
@@ -34,16 +34,6 @@ interface CategoryItemPageProps {
     backHref: string;
     category: CategoryItem;
 }
-
-const filterGroups = [
-    'Store',
-    'Price, EUR',
-    'Brand',
-    'Graphics Card',
-    'Processor',
-    'Memory',
-    'Storage',
-];
 
 function formatPrice(priceInCents: number) {
     return new Intl.NumberFormat('en-US', {
@@ -117,28 +107,8 @@ export default function CategoryItemPage({
                 />
 
                 {category.products.length > 0 ? (
-                    <section className="mt-7 grid gap-6 xl:grid-cols-[290px_minmax(0,1fr)]">
-                        <aside className="h-fit rounded-3xl border border-white/10 bg-[#070d17]/95 p-5 xl:sticky xl:top-24">
-                            <div className="flex items-center gap-2 border-b border-white/10 pb-4 text-sm font-semibold text-white">
-                                <SlidersHorizontal className="h-4 w-4 text-[#00bd7d]" />
-                                Filters
-                            </div>
-
-                            <div className="mt-2 divide-y divide-white/10 border-b border-white/10">
-                                {filterGroups.map((filter) => (
-                                    <button
-                                        key={filter}
-                                        type="button"
-                                        className="flex w-full items-center justify-between py-4 text-left text-lg font-medium text-slate-200 transition hover:text-[#9cf5d8]"
-                                    >
-                                        <span>{filter}</span>
-                                        <Plus className="h-4 w-4" />
-                                    </button>
-                                ))}
-                            </div>
-                        </aside>
-
-                        <div className="grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
+                    <section className="mt-7">
+                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                             {category.products.map((product) => {
                                 const productHref = `${productBasePath}/${product.slug}`;
 
