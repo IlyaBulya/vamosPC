@@ -1,88 +1,115 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
+import { KeyRound, ShieldCheck, UserRound } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
-import type { NavItem } from '@/types';
-import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 
-const sidebarNavItems: NavItem[] = [
+type NavHref = NonNullable<InertiaLinkProps['href']>;
+
+type SidebarNavItem = {
+    title: string;
+    description: string;
+    href: NavHref;
+    icon: typeof UserRound;
+};
+
+const sidebarNavItems: SidebarNavItem[] = [
     {
         title: 'Profile',
+        description: 'Name and email',
         href: edit(),
-        icon: null,
+        icon: UserRound,
     },
     {
         title: 'Password',
+        description: 'Update credentials',
         href: editPassword(),
-        icon: null,
+        icon: KeyRound,
     },
     {
         title: 'Two-Factor Auth',
+        description: 'Authenticator app',
         href: show(),
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-        icon: null,
+        icon: ShieldCheck,
     },
 ];
 
-export default function SettingsLayout({ children }: PropsWithChildren) {
-    const { isCurrentUrl } = useCurrentUrl();
+function pathnameFromHref(href: NavHref): string {
+    return new URL(toUrl(href), 'http://localhost').pathname;
+}
 
-    // When server-side rendering, we only render the layout on the client...
-    if (typeof window === 'undefined') {
-        return null;
-    }
+export default function SettingsLayout({ children }: PropsWithChildren) {
+    const page = usePage();
+    const currentPath = new URL(page.url, 'http://localhost').pathname;
 
     return (
-        <div className="px-4 py-6">
-            <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
-            />
+        <div className="space-y-6">
+            <section className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)] sm:p-8">
+                <p className="text-xs tracking-[0.18em] text-[#9cf5d8] uppercase">
+                    Account
+                </p>
+                <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
+                    Settings
+                </h1>
+                <p className="mt-3 max-w-3xl text-sm text-slate-300 sm:text-base">
+                    Manage your profile details, password, and security options.
+                </p>
+            </section>
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
-                    <nav
-                        className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
-                    >
-                        {sidebarNavItems.map((item, index) => (
-                            <Button
-                                key={`${toUrl(item.href)}-${index}`}
-                                size="sm"
-                                variant="ghost"
-                                asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentUrl(item.href),
-                                })}
-                            >
-                                <Link href={item.href}>
-                                    {item.icon && (
-                                        <item.icon className="h-4 w-4" />
+            <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+                <aside className="h-fit rounded-3xl border border-white/10 bg-[#070d17]/95 p-3 lg:sticky lg:top-24">
+                    <nav className="space-y-2" aria-label="Settings">
+                        {sidebarNavItems.map((item) => {
+                            const isActive =
+                                pathnameFromHref(item.href) === currentPath;
+                            const Icon = item.icon;
+
+                            return (
+                                <Link
+                                    key={toUrl(item.href)}
+                                    href={item.href}
+                                    className={cn(
+                                        'group flex cursor-pointer items-center gap-3 rounded-2xl border border-transparent px-4 py-3 transition',
+                                        isActive
+                                            ? 'border-[#00bd7d]/40 bg-[#00bd7d]/12 shadow-[0_0_18px_rgba(0,189,125,0.35)]'
+                                            : 'hover:border-white/15 hover:bg-[#0d1625]',
                                     )}
-                                    {item.title}
+                                >
+                                    <span
+                                        className={cn(
+                                            'inline-flex rounded-lg border p-2 transition',
+                                            isActive
+                                                ? 'border-[#00bd7d]/45 bg-[#00bd7d]/12 text-[#9cf5d8]'
+                                                : 'border-white/15 bg-[#0b1321] text-slate-300 group-hover:text-white',
+                                        )}
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                    </span>
+                                    <span>
+                                        <span
+                                            className={cn(
+                                                'block text-sm font-semibold',
+                                                isActive
+                                                    ? 'text-[#9cf5d8]'
+                                                    : 'text-slate-100',
+                                            )}
+                                        >
+                                            {item.title}
+                                        </span>
+                                        <span className="text-xs text-slate-400">
+                                            {item.description}
+                                        </span>
+                                    </span>
                                 </Link>
-                            </Button>
-                        ))}
+                            );
+                        })}
                     </nav>
                 </aside>
 
-                <Separator className="my-6 lg:hidden" />
-
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
-                        {children}
-                    </section>
-                </div>
+                <div className="space-y-6">{children}</div>
             </div>
         </div>
     );
