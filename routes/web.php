@@ -103,6 +103,9 @@ Route::middleware(['auth', 'admin'])
         Route::get('/configurations', [AdminConfigurationController::class, 'index'])->name('configurations.index');
         Route::get('/configurations/create', [AdminConfigurationController::class, 'create'])->name('configurations.create');
         Route::post('/configurations', [AdminConfigurationController::class, 'store'])->name('configurations.store');
+        Route::get('/configurations/{configuration}/edit', [AdminConfigurationController::class, 'edit'])->name('configurations.edit');
+        Route::put('/configurations/{configuration}', [AdminConfigurationController::class, 'update'])->name('configurations.update');
+        Route::delete('/configurations/{configuration}', [AdminConfigurationController::class, 'destroy'])->name('configurations.destroy');
 
         Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
         Route::patch('/orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');

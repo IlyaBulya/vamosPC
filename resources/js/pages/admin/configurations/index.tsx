@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/admin-layout';
 
 type ConfigurationRow = {
@@ -28,6 +28,14 @@ export default function AdminConfigurationsPage({
 }: {
     configurations: ConfigurationRow[];
 }) {
+    const destroyConfiguration = (configurationId: number) => {
+        if (! window.confirm('Delete this configuration?')) {
+            return;
+        }
+
+        router.delete(`/admin/configurations/${configurationId}`);
+    };
+
     return (
         <>
             <Head title="Admin Configurations" />
@@ -58,6 +66,7 @@ export default function AdminConfigurationsPage({
                                         Component Preview
                                     </th>
                                     <th className="px-5 py-4 font-medium">Updated</th>
+                                    <th className="px-5 py-4 text-right font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -107,12 +116,33 @@ export default function AdminConfigurationsPage({
                                             <td className="px-5 py-4 text-slate-300">
                                                 {configuration.updated_at ?? '-'}
                                             </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex justify-end gap-2">
+                                                    <Link
+                                                        href={`/admin/configurations/${configuration.id}/edit`}
+                                                        className="rounded-full border border-[#00bd7d]/45 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#9cf5d8] transition hover:bg-[#00bd7d]/10"
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            destroyConfiguration(
+                                                                configuration.id,
+                                                            )
+                                                        }
+                                                        className="rounded-full border border-red-500/45 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-red-300 transition hover:bg-red-500/10"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={5}
+                                            colSpan={6}
                                             className="px-5 py-10 text-center text-slate-400"
                                         >
                                             No configurations found.
@@ -127,4 +157,3 @@ export default function AdminConfigurationsPage({
         </>
     );
 }
-

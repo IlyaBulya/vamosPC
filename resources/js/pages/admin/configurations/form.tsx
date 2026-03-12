@@ -34,16 +34,29 @@ function formatPrice(priceInCents: number) {
 }
 
 export default function AdminConfigurationFormPage({
+    mode,
+    configuration,
     components,
 }: {
+    mode: 'create' | 'edit';
+    configuration: {
+        id: number;
+        name: string;
+        description: string | null;
+        image: string | null;
+        price: number;
+        products: number[];
+    } | null;
     components: ComponentOption[];
 }) {
     const form = useForm<ConfigurationFormData>({
-        name: '',
-        description: '',
-        image: '',
-        price: '0',
-        products: [],
+        name: configuration?.name ?? '',
+        description: configuration?.description ?? '',
+        image: configuration?.image ?? '',
+        price: configuration ? String(configuration.price) : '0',
+        products: configuration
+            ? configuration.products.map((productId) => String(productId))
+            : [],
     });
 
     const groupedComponents = components.reduce<Record<string, ComponentOption[]>>(
@@ -101,15 +114,21 @@ export default function AdminConfigurationFormPage({
 
     const submit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        form.post('/admin/configurations');
+
+        if (mode === 'create') {
+            form.post('/admin/configurations');
+            return;
+        }
+
+        form.put(`/admin/configurations/${configuration?.id}`);
     };
 
     return (
         <>
-            <Head title="Create Configuration" />
+            <Head title={mode === 'create' ? 'Create Configuration' : 'Edit Configuration'} />
 
             <AdminLayout
-                title="Create Configuration"
+                title={mode === 'create' ? 'Create Configuration' : 'Edit Configuration'}
                 description="Select component products and publish a full configuration card."
                 actions={
                     <Link
@@ -287,7 +306,9 @@ export default function AdminConfigurationFormPage({
                                 disabled={form.processing}
                                 className="rounded-full bg-[#00bd7d] px-6 text-[#04120d] hover:bg-[#18d99a]"
                             >
-                                Create Configuration
+                                {mode === 'create'
+                                    ? 'Create Configuration'
+                                    : 'Update Configuration'}
                             </Button>
                             <Link
                                 href="/admin/configurations"
