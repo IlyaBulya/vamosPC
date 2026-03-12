@@ -135,7 +135,7 @@ export default function AdminLayout({
                                 <Link
                                     href={logout()}
                                     as="button"
-                                    className="inline-flex items-center gap-2 rounded-full border border-red-500/60 bg-red-500/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-500/20"
+                                    className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-red-500/60 bg-red-500/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-500/20"
                                 >
                                     <LogOut className="h-4 w-4" />
                                     Sign out
