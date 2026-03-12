@@ -22,7 +22,7 @@ class CartController extends Controller
         $cartOrder = $user->orders()
             ->where('status', CartOrder::STATUS)
             ->with([
-                'items.product:id,category_id,name,description,price_in_cents,stock',
+                'items.product:id,category_id,name,description,image,price_in_cents,stock',
                 'items.product.category:id,name,type',
                 'items.userConfiguration:id,base_configuration_id,name,description,image,price',
             ])
@@ -56,6 +56,7 @@ class CartController extends Controller
                         'item_type' => 'product',
                         'name' => $product->name,
                         'subtitle' => $product->description,
+                        'image' => $product->image,
                         'availability' => $product->stock > 0 ? 'In stock' : 'Pre-order',
                         'unit_price_in_cents' => (int) $orderItem->price,
                         'qty' => (int) $orderItem->qty,
@@ -75,6 +76,7 @@ class CartController extends Controller
                         'item_type' => 'user_configuration',
                         'name' => $userConfiguration->name,
                         'subtitle' => $userConfiguration->description,
+                        'image' => $userConfiguration->image,
                         'availability' => 'In stock',
                         'unit_price_in_cents' => (int) $orderItem->price,
                         'qty' => (int) $orderItem->qty,

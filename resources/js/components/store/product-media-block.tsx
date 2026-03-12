@@ -7,6 +7,9 @@ type ProductMediaBlockProps = {
     className?: string;
     innerClassName?: string;
     aspectClassName?: string;
+    imageSrc?: string | null;
+    imageAlt?: string;
+    imageClassName?: string;
 };
 
 export default function ProductMediaBlock({
@@ -15,6 +18,9 @@ export default function ProductMediaBlock({
     className,
     innerClassName,
     aspectClassName,
+    imageSrc,
+    imageAlt = 'Product image',
+    imageClassName,
 }: ProductMediaBlockProps) {
     return (
         <div
@@ -32,6 +38,12 @@ export default function ProductMediaBlock({
             >
                 {children ? (
                     children
+                ) : imageSrc ? (
+                    <img
+                        src={imageSrc}
+                        alt={imageAlt}
+                        className={cn('h-full w-full object-cover', imageClassName)}
+                    />
                 ) : (
                     <div
                         className={cn(

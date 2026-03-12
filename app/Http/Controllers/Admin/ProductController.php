@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
@@ -12,6 +13,8 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
+    use HandlesPublicImageUploads;
+
     public function index(): Response
     {
         $products = Product::query()
@@ -22,6 +25,7 @@ class ProductController extends Controller
             ->map(fn (Product $product): array => [
                 'id' => $product->id,
                 'name' => $product->name,
+                'image' => $product->image,
                 'category_name' => $product->category?->name,
                 'category_type' => $product->category?->type,
                 'price_in_cents' => (int) $product->price_in_cents,
@@ -51,6 +55,17 @@ class ProductController extends Controller
     {
         $data = $this->validated($request);
 
+        unset($data['remove_image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storePublicImage(
+                $request->file('image'),
+                'products',
+            );
+        } else {
+            $data['image'] = null;
+        }
+
         Product::query()->create($data);
 
         return redirect()
@@ -67,6 +82,7 @@ class ProductController extends Controller
                 'category_id' => (int) $product->category_id,
                 'name' => $product->name,
                 'description' => $product->description,
+                'image' => $product->image,
                 'price_in_cents' => (int) $product->price_in_cents,
                 'stock' => (int) $product->stock,
                 'color' => $product->color,
@@ -79,7 +95,27 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $product->update($this->validated($request));
+        $data = $this->validated($request);
+
+        $removeImage = (bool) ($data['remove_image'] ?? false);
+
+        unset($data['remove_image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storePublicImage(
+                $request->file('image'),
+                'products',
+            );
+
+            $this->deletePublicImage($product->image);
+        } elseif ($removeImage) {
+            $this->deletePublicImage($product->image);
+            $data['image'] = null;
+        } else {
+            unset($data['image']);
+        }
+
+        $product->update($data);
 
         return redirect()
             ->route('admin.products.index')
@@ -94,6 +130,7 @@ class ProductController extends Controller
             return back()->with('error', 'This product is already used and cannot be deleted.');
         }
 
+        $this->deletePublicImage($product->image);
         $product->delete();
 
         return redirect()
@@ -130,6 +167,8 @@ class ProductController extends Controller
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['nullable', 'boolean'],
             'price_in_cents' => ['required', 'integer', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'color' => ['nullable', 'string', 'max:255'],
@@ -142,6 +181,7 @@ class ProductController extends Controller
         $data['stock'] = (int) $data['stock'];
         $data['is_component'] = (bool) $data['is_component'];
         $data['is_sellable'] = (bool) $data['is_sellable'];
+        $data['remove_image'] = (bool) ($data['remove_image'] ?? false);
 
         return $data;
     }

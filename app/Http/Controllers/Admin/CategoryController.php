@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +13,8 @@ use Inertia\Response;
 
 class CategoryController extends Controller
 {
+    use HandlesPublicImageUploads;
+
     public function index(): Response
     {
         $categories = Category::query()
@@ -24,6 +27,7 @@ class CategoryController extends Controller
                 'name' => $category->name,
                 'type' => $category->type,
                 'description' => $category->description,
+                'image' => $category->image,
                 'products_count' => (int) $category->products_count,
             ])
             ->values();
@@ -43,7 +47,20 @@ class CategoryController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Category::query()->create($this->validated($request));
+        $data = $this->validated($request);
+
+        unset($data['remove_image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storePublicImage(
+                $request->file('image'),
+                'categories',
+            );
+        } else {
+            $data['image'] = null;
+        }
+
+        Category::query()->create($data);
 
         return redirect()
             ->route('admin.categories.index')
@@ -59,13 +76,33 @@ class CategoryController extends Controller
                 'name' => $category->name,
                 'type' => $category->type,
                 'description' => $category->description,
+                'image' => $category->image,
             ],
         ]);
     }
 
     public function update(Request $request, Category $category): RedirectResponse
     {
-        $category->update($this->validated($request, $category));
+        $data = $this->validated($request, $category);
+        $removeImage = (bool) ($data['remove_image'] ?? false);
+
+        unset($data['remove_image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storePublicImage(
+                $request->file('image'),
+                'categories',
+            );
+
+            $this->deletePublicImage($category->image);
+        } elseif ($removeImage) {
+            $this->deletePublicImage($category->image);
+            $data['image'] = null;
+        } else {
+            unset($data['image']);
+        }
+
+        $category->update($data);
 
         return redirect()
             ->route('admin.categories.index')
@@ -80,6 +117,7 @@ class CategoryController extends Controller
             return back()->with('error', 'This category still contains products and cannot be deleted.');
         }
 
+        $this->deletePublicImage($category->image);
         $category->delete();
 
         return redirect()
@@ -101,6 +139,8 @@ class CategoryController extends Controller
             ],
             'type' => ['required', 'string', Rule::in(['hardware', 'accessory', 'laptop'])],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['nullable', 'boolean'],
         ]);
     }
 }

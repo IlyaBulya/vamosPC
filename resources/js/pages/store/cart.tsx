@@ -10,6 +10,7 @@ type CartItem = {
     item_type: 'product' | 'user_configuration';
     name: string;
     subtitle: string | null;
+    image: string | null;
     availability: 'In stock' | 'Pre-order';
     unit_price_in_cents: number;
     qty: number;
@@ -143,8 +144,20 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                         >
                                             <td className="px-7 py-5">
                                                 <div className="flex items-start gap-4">
-                                                    <div className="flex h-16 w-24 shrink-0 items-center justify-center rounded-md border border-white/15 bg-[#0d1623] text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9cf5d8]/80">
-                                                        Photo
+                                                    <div className="overflow-hidden rounded-md border border-white/15 bg-[#0d1623]">
+                                                        <div className="flex h-16 w-24 shrink-0 items-center justify-center">
+                                                            {item.image ? (
+                                                                <img
+                                                                    src={item.image}
+                                                                    alt={item.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9cf5d8]/80">
+                                                                    Photo
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <div>
                                                         <Link

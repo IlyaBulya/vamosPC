@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useImagePreview } from '@/hooks/use-image-preview';
 import AdminLayout from '@/layouts/admin-layout';
 
 type ComponentOption = {
@@ -20,7 +21,8 @@ type ComponentOption = {
 type ConfigurationFormData = {
     name: string;
     description: string;
-    image: string;
+    image: File | null;
+    remove_image: boolean;
     price: string;
     products: string[];
 };
@@ -52,12 +54,18 @@ export default function AdminConfigurationFormPage({
     const form = useForm<ConfigurationFormData>({
         name: configuration?.name ?? '',
         description: configuration?.description ?? '',
-        image: configuration?.image ?? '',
+        image: null,
+        remove_image: false,
         price: configuration ? String(configuration.price) : '0',
         products: configuration
             ? configuration.products.map((productId) => String(productId))
             : [],
     });
+    const imagePreview = useImagePreview(
+        form.data.image,
+        configuration?.image ?? null,
+        form.data.remove_image,
+    );
 
     const groupedComponents = components.reduce<Record<string, ComponentOption[]>>(
         (groups, component) => {
@@ -112,15 +120,29 @@ export default function AdminConfigurationFormPage({
         );
     };
 
+    const onImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const nextFile = event.target.files?.[0] ?? null;
+
+        form.setData('image', nextFile);
+
+        if (nextFile) {
+            form.setData('remove_image', false);
+        }
+    };
+
     const submit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         if (mode === 'create') {
-            form.post('/admin/configurations');
+            form.post('/admin/configurations', {
+                forceFormData: true,
+            });
             return;
         }
 
-        form.put(`/admin/configurations/${configuration?.id}`);
+        form.put(`/admin/configurations/${configuration?.id}`, {
+            forceFormData: true,
+        });
     };
 
     return (
@@ -200,18 +222,48 @@ export default function AdminConfigurationFormPage({
 
                             <div className="grid gap-2 md:col-span-2">
                                 <Label htmlFor="image" className="text-slate-200">
-                                    Image URL
+                                    Configuration image
                                 </Label>
-                                <Input
+                                <input
                                     id="image"
-                                    value={form.data.image}
-                                    onChange={(event) =>
-                                        form.setData('image', event.target.value)
-                                    }
-                                    placeholder="https://..."
-                                    className="border-white/15 bg-[#0b1321] text-slate-100"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={onImageChange}
+                                    className="block w-full rounded-xl border border-white/15 bg-[#0b1321] px-3 py-2.5 text-sm text-slate-100 file:mr-3 file:rounded-full file:border-0 file:bg-[#00bd7d] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[#04120d]"
                                 />
+                                <p className="text-xs text-slate-500">
+                                    JPG, PNG, WEBP, or GIF up to 4 MB.
+                                </p>
                                 <InputError message={form.errors.image} />
+
+                                <div className="flex flex-wrap gap-3">
+                                    {form.data.image ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => form.setData('image', null)}
+                                            className="text-sm text-slate-400 transition hover:text-slate-200"
+                                        >
+                                            Clear selected file
+                                        </button>
+                                    ) : null}
+
+                                    {configuration?.image ? (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                form.setData(
+                                                    'remove_image',
+                                                    ! form.data.remove_image,
+                                                )
+                                            }
+                                            className="text-sm text-slate-400 transition hover:text-slate-200"
+                                        >
+                                            {form.data.remove_image
+                                                ? 'Keep current image'
+                                                : 'Remove current image'}
+                                        </button>
+                                    ) : null}
+                                </div>
                             </div>
                         </div>
 
@@ -327,9 +379,9 @@ export default function AdminConfigurationFormPage({
                         <article className="mx-auto max-w-[340px] rounded-[28px] border border-white/15 bg-gradient-to-b from-[#131a26] via-[#0c111a] to-[#070b12] p-4 shadow-[0_18px_35px_rgba(0,0,0,0.45)]">
                             <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f1622]">
                                 <div className="aspect-[4/3]">
-                                    {form.data.image ? (
+                                    {imagePreview ? (
                                         <img
-                                            src={form.data.image}
+                                            src={imagePreview}
                                             alt={form.data.name || 'Configuration preview'}
                                             className="h-full w-full object-cover"
                                         />

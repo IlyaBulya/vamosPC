@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\Product;
+use App\Models\UserConfiguration;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +16,8 @@ use Inertia\Response;
 
 class ConfigurationController extends Controller
 {
+    use HandlesPublicImageUploads;
+
     public function index(): Response
     {
         $configurations = Configuration::query()
@@ -60,6 +64,17 @@ class ConfigurationController extends Controller
             $this->validated($request),
         );
 
+        unset($data['remove_image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storePublicImage(
+                $request->file('image'),
+                'configurations',
+            );
+        } else {
+            $data['image'] = null;
+        }
+
         DB::transaction(function () use ($data, $productIds): void {
             $configuration = Configuration::query()->create($data);
             $configuration->products()->sync($productIds);
@@ -97,11 +112,30 @@ class ConfigurationController extends Controller
         [$data, $productIds] = $this->normalizeConfigurationData(
             $this->validated($request),
         );
+        $removeImage = (bool) ($data['remove_image'] ?? false);
+        $currentImage = $configuration->image;
+
+        unset($data['remove_image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storePublicImage(
+                $request->file('image'),
+                'configurations',
+            );
+        } elseif ($removeImage) {
+            $data['image'] = null;
+        } else {
+            unset($data['image']);
+        }
 
         DB::transaction(function () use ($configuration, $data, $productIds): void {
             $configuration->update($data);
             $configuration->products()->sync($productIds);
         });
+
+        if (array_key_exists('image', $data) && $data['image'] !== $currentImage) {
+            $this->deleteConfigurationImageIfUnused($currentImage, $configuration->id);
+        }
 
         return redirect()
             ->route('admin.configurations.index')
@@ -110,7 +144,9 @@ class ConfigurationController extends Controller
 
     public function destroy(Configuration $configuration): RedirectResponse
     {
+        $image = $configuration->image;
         $configuration->delete();
+        $this->deleteConfigurationImageIfUnused($image, $configuration->id);
 
         return redirect()
             ->route('admin.configurations.index')
@@ -151,7 +187,8 @@ class ConfigurationController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string', 'max:2048'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['nullable', 'boolean'],
             'price' => ['required', 'integer', 'min:0'],
             'products' => ['required', 'array', 'min:1'],
             'products.*' => [
@@ -187,8 +224,27 @@ class ConfigurationController extends Controller
                 ->whereIn('id', $productIds)
                 ->sum('price_in_cents');
         $data['description'] = $data['description'] !== '' ? $data['description'] : null;
-        $data['image'] = $data['image'] !== '' ? $data['image'] : null;
+        $data['remove_image'] = (bool) ($data['remove_image'] ?? false);
 
         return [$data, $productIds];
+    }
+
+    private function deleteConfigurationImageIfUnused(?string $image, int $configurationId): void
+    {
+        if (! is_string($image) || $image === '') {
+            return;
+        }
+
+        if (
+            Configuration::query()
+                ->whereKeyNot($configurationId)
+                ->where('image', $image)
+                ->exists()
+            || UserConfiguration::query()->where('image', $image)->exists()
+        ) {
+            return;
+        }
+
+        $this->deletePublicImage($image);
     }
 }

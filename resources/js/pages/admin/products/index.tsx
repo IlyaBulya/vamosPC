@@ -4,6 +4,7 @@ import AdminLayout from '@/layouts/admin-layout';
 type ProductRow = {
     id: number;
     name: string;
+    image: string | null;
     category_name: string | null;
     category_type: string | null;
     price_in_cents: number;
@@ -75,15 +76,35 @@ export default function AdminProductsPage({
                                             className="border-b border-white/10 last:border-b-0"
                                         >
                                             <td className="px-5 py-4">
-                                                <p className="font-semibold text-white">
-                                                    {product.name}
-                                                </p>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    ID #{product.id}
-                                                    {product.color
-                                                        ? ` • ${product.color}`
-                                                        : ''}
-                                                </p>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0f1622]">
+                                                        <div className="flex h-14 w-20 items-center justify-center">
+                                                            {product.image ? (
+                                                                <img
+                                                                    src={product.image}
+                                                                    alt={product.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                                                    Image
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="font-semibold text-white">
+                                                            {product.name}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-slate-500">
+                                                            ID #{product.id}
+                                                            {product.color
+                                                                ? ` • ${product.color}`
+                                                                : ''}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
                                                 {product.category_name ?? 'Unassigned'}

@@ -10,6 +10,7 @@ type ProductItem = {
     slug: string;
     name: string;
     description: string | null;
+    image: string | null;
     price_in_cents: number;
     stock: number;
     color: string | null;
@@ -21,6 +22,7 @@ type CategoryItem = {
     name: string;
     type: string;
     description: string | null;
+    image: string | null;
     route_slug: string;
     product_count: number;
     products: ProductItem[];
@@ -146,6 +148,7 @@ export default function CategoryItemPage({
                                         href={productHref}
                                         name={product.name}
                                         description={shortDescription(product.description)}
+                                        image={product.image}
                                         price={formatPrice(product.price_in_cents)}
                                         note={`from ${formatMonthly(product.price_in_cents)}`}
                                         availability={

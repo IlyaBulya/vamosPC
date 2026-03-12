@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useImagePreview } from '@/hooks/use-image-preview';
 import AdminLayout from '@/layouts/admin-layout';
 
 type CategoryOption = {
@@ -16,6 +17,8 @@ type ProductFormData = {
     category_id: string;
     name: string;
     description: string;
+    image: File | null;
+    remove_image: boolean;
     price_in_cents: string;
     stock: string;
     color: string;
@@ -28,6 +31,7 @@ type ProductValue = {
     category_id: number;
     name: string;
     description: string | null;
+    image: string | null;
     price_in_cents: number;
     stock: number;
     color: string | null;
@@ -48,22 +52,43 @@ export default function AdminProductFormPage({
         category_id: product ? String(product.category_id) : '',
         name: product?.name ?? '',
         description: product?.description ?? '',
+        image: null,
+        remove_image: false,
         price_in_cents: product ? String(product.price_in_cents) : '0',
         stock: product ? String(product.stock) : '0',
         color: product?.color ?? '',
         is_component: product?.is_component ?? false,
         is_sellable: product?.is_sellable ?? true,
     });
+    const imagePreview = useImagePreview(
+        form.data.image,
+        product?.image ?? null,
+        form.data.remove_image,
+    );
+
+    const onImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const nextFile = event.target.files?.[0] ?? null;
+
+        form.setData('image', nextFile);
+
+        if (nextFile) {
+            form.setData('remove_image', false);
+        }
+    };
 
     const submit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         if (mode === 'create') {
-            form.post('/admin/products');
+            form.post('/admin/products', {
+                forceFormData: true,
+            });
             return;
         }
 
-        form.put(`/admin/products/${product?.id}`);
+        form.put(`/admin/products/${product?.id}`, {
+            forceFormData: true,
+        });
     };
 
     return (
@@ -142,6 +167,68 @@ export default function AdminProductFormPage({
                                 className="rounded-xl border border-white/15 bg-[#0b1321] px-3 py-3 text-sm text-slate-100"
                             />
                             <InputError message={form.errors.description} />
+                        </div>
+
+                        <div className="grid gap-2 md:col-span-2">
+                            <Label htmlFor="image" className="text-slate-200">
+                                Product image
+                            </Label>
+                            <input
+                                id="image"
+                                type="file"
+                                accept="image/*"
+                                onChange={onImageChange}
+                                className="block w-full rounded-xl border border-white/15 bg-[#0b1321] px-3 py-2.5 text-sm text-slate-100 file:mr-3 file:rounded-full file:border-0 file:bg-[#00bd7d] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[#04120d]"
+                            />
+                            <p className="text-xs text-slate-500">
+                                JPG, PNG, WEBP, or GIF up to 4 MB.
+                            </p>
+                            <InputError message={form.errors.image} />
+
+                            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f1622]">
+                                <div className="aspect-[4/3]">
+                                    {imagePreview ? (
+                                        <img
+                                            src={imagePreview}
+                                            alt={form.data.name || 'Product preview'}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                            No image selected
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3">
+                                {form.data.image ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => form.setData('image', null)}
+                                        className="text-sm text-slate-400 transition hover:text-slate-200"
+                                    >
+                                        Clear selected file
+                                    </button>
+                                ) : null}
+
+                                {product?.image ? (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            form.setData(
+                                                'remove_image',
+                                                ! form.data.remove_image,
+                                            )
+                                        }
+                                        className="text-sm text-slate-400 transition hover:text-slate-200"
+                                    >
+                                        {form.data.remove_image
+                                            ? 'Keep current image'
+                                            : 'Remove current image'}
+                                    </button>
+                                ) : null}
+                            </div>
                         </div>
 
                         <div className="grid gap-2">

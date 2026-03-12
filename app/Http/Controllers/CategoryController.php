@@ -49,6 +49,7 @@ class CategoryController extends Controller
                         'category_id',
                         'name',
                         'description',
+                        'image',
                         'price_in_cents',
                         'stock',
                         'color',
@@ -58,7 +59,7 @@ class CategoryController extends Controller
             ])
             ->where('type', $type)
             ->where('name', $category)
-            ->firstOrFail(['id', 'name', 'description', 'type']);
+            ->firstOrFail(['id', 'name', 'description', 'image', 'type']);
 
         return Inertia::render('category/item', [
             'title' => $this->headline($categoryRecord->name),
@@ -68,6 +69,7 @@ class CategoryController extends Controller
                 'name' => $categoryRecord->name,
                 'type' => $categoryRecord->type,
                 'description' => $categoryRecord->description,
+                'image' => $categoryRecord->image,
                 'route_slug' => $this->categoryRouteSlug($categoryRecord),
                 'product_count' => $categoryRecord->products->count(),
                 'products' => $categoryRecord->products
@@ -76,6 +78,7 @@ class CategoryController extends Controller
                         'slug' => $this->productRouteSlug($product),
                         'name' => $product->name,
                         'description' => $product->description,
+                        'image' => $product->image,
                         'price_in_cents' => $product->price_in_cents,
                         'stock' => $product->stock,
                         'color' => $product->color,
@@ -94,10 +97,11 @@ class CategoryController extends Controller
         $categories = Category::query()
             ->where('type', $type)
             ->orderBy('name')
-            ->get(['name', 'description'])
+            ->get(['name', 'description', 'image'])
             ->map(fn (Category $category): array => [
                 'name' => $category->name,
                 'description' => $category->description,
+                'image' => $category->image,
             ])
             ->values();
 

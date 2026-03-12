@@ -6,6 +6,7 @@ type CategoryRow = {
     name: string;
     type: string;
     description: string | null;
+    image: string | null;
     products_count: number;
 };
 
@@ -57,8 +58,28 @@ export default function AdminCategoriesPage({
                                             key={category.id}
                                             className="border-b border-white/10 last:border-b-0"
                                         >
-                                            <td className="px-5 py-4 font-semibold text-white">
-                                                {category.name}
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0f1622]">
+                                                        <div className="flex h-14 w-20 items-center justify-center">
+                                                            {category.image ? (
+                                                                <img
+                                                                    src={category.image}
+                                                                    alt={category.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                                                    Image
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <p className="font-semibold text-white">
+                                                        {category.name}
+                                                    </p>
+                                                </div>
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
                                                 {category.type}

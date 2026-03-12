@@ -16,6 +16,7 @@ type ConfigurationCard = {
     id: number;
     name: string;
     description: string;
+    image: string | null;
     price_in_cents: number;
 };
 
@@ -507,12 +508,20 @@ export default function Welcome({
                                                             >
                                                                 <ProductMediaBlock aspectClassName="aspect-square overflow-hidden rounded-xl border border-white/15 bg-[#0b1320]">
                                                                     <>
-                                                                        <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8]/75 uppercase">
-                                                                            {index ===
-                                                                            modelTargetIndex
-                                                                                ? 'Waiting for Model'
-                                                                                : 'PC Image Placeholder'}
-                                                                        </div>
+                                                                        {card.image ? (
+                                                                            <img
+                                                                                src={card.image}
+                                                                                alt={card.name}
+                                                                                className="absolute inset-0 h-full w-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8]/75 uppercase">
+                                                                                {index ===
+                                                                                modelTargetIndex
+                                                                                    ? 'Waiting for Model'
+                                                                                    : 'PC Image Placeholder'}
+                                                                            </div>
+                                                                        )}
 
                                                                         {index ===
                                                                             modelTargetIndex && (

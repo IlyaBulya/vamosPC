@@ -7,6 +7,7 @@ type ProductCardProps = {
     href: string;
     name: string;
     description: string;
+    image?: string | null;
     price: string;
     note?: string;
     availability: 'In stock' | 'Pre-order';
@@ -29,6 +30,7 @@ export default function ProductCard({
     href,
     name,
     description,
+    image,
     price,
     note,
     availability,
@@ -69,7 +71,7 @@ export default function ProductCard({
             </div>
 
             <Link href={href} className="group mt-3 block">
-                <ProductMediaBlock />
+                <ProductMediaBlock imageSrc={image} imageAlt={name} />
             </Link>
 
             <div className="mt-4 space-y-2">

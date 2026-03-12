@@ -9,6 +9,7 @@ type ProductDetails = {
     id: number;
     name: string;
     description: string | null;
+    image: string | null;
     price_in_cents: number;
     is_component: boolean;
     is_sellable: boolean;
@@ -111,6 +112,8 @@ export default function ProductShowPage({
 
                     <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6 sm:p-7">
                         <ProductMediaBlock
+                            imageSrc={product.image}
+                            imageAlt={product.name}
                             className="p-0"
                             aspectClassName="flex h-56 items-center justify-center rounded-2xl border border-white/15 bg-[#0d1623]"
                             innerClassName="text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8]/80"

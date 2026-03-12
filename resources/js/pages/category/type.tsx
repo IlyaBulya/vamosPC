@@ -7,6 +7,7 @@ import StoreLayout from '@/layouts/store-layout';
 type CategorySummary = {
     name: string;
     description: string | null;
+    image: string | null;
 };
 
 interface CategoryTypePageProps {
@@ -51,7 +52,23 @@ export default function CategoryTypePage({
                             href={`${itemBasePath}/${category.name}`}
                             className="group rounded-3xl border border-white/10 bg-[#08101c]/85 p-6 transition hover:border-[#00bd7d]/55 hover:bg-[#0b1624]"
                         >
-                            <p className="text-xs uppercase tracking-[0.14em] text-slate-400">
+                            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f1622]">
+                                <div className="aspect-[4/3]">
+                                    {category.image ? (
+                                        <img
+                                            src={category.image}
+                                            alt={formatLabel(category.name)}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                            Category image
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <p className="mt-4 text-xs uppercase tracking-[0.14em] text-slate-400">
                                 Category
                             </p>
                             <h2 className="mt-3 text-2xl font-bold text-white">

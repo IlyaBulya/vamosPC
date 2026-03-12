@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Store;
 
+use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\Product;
@@ -16,6 +17,8 @@ use Inertia\Response;
 
 class GamingPcController extends Controller
 {
+    use HandlesPublicImageUploads;
+
     public function index(): Response
     {
         $configurations = Configuration::query()
@@ -142,7 +145,10 @@ class GamingPcController extends Controller
                 'base_configuration_id' => (int) $configuration->id,
                 'name' => "{$configuration->name} - Custom",
                 'description' => $configuration->description,
-                'image' => $configuration->image,
+                'image' => $this->copyPublicImage(
+                    $configuration->image,
+                    'user-configurations',
+                ),
                 'price' => $finalPrice,
                 'status' => 'cart',
                 'selected_components' => $normalizedSelections,

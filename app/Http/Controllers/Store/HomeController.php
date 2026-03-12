@@ -21,6 +21,7 @@ class HomeController extends Controller
                 'id' => (int) $configuration->id,
                 'name' => $configuration->name,
                 'description' => $this->buildSpec($configuration),
+                'image' => $configuration->image,
                 'price_in_cents' => (int) $configuration->price,
             ])
             ->values();

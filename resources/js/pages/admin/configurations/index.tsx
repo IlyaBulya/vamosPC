@@ -77,17 +77,37 @@ export default function AdminConfigurationsPage({
                                             className="border-b border-white/10 last:border-b-0"
                                         >
                                             <td className="px-5 py-4">
-                                                <p className="font-semibold text-white">
-                                                    {configuration.name}
-                                                </p>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    ID #{configuration.id}
-                                                </p>
-                                                {configuration.description ? (
-                                                    <p className="mt-2 line-clamp-2 text-sm text-slate-300">
-                                                        {configuration.description}
-                                                    </p>
-                                                ) : null}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0f1622]">
+                                                        <div className="flex h-14 w-20 items-center justify-center">
+                                                            {configuration.image ? (
+                                                                <img
+                                                                    src={configuration.image}
+                                                                    alt={configuration.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                                                    Image
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="font-semibold text-white">
+                                                            {configuration.name}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-slate-500">
+                                                            ID #{configuration.id}
+                                                        </p>
+                                                        {configuration.description ? (
+                                                            <p className="mt-2 line-clamp-2 text-sm text-slate-300">
+                                                                {configuration.description}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className="px-5 py-4 font-semibold text-white">
                                                 {formatPrice(configuration.price)}
