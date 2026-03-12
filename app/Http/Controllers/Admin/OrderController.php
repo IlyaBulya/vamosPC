@@ -26,14 +26,14 @@ class OrderController extends Controller
     {
         $orders = Order::query()
             ->where('status', '!=', CartOrder::STATUS)
-            ->with(['user:id,name,email', 'items.product:id,name', 'items.configuration:id,name'])
+            ->with(['user:id,name,email', 'items.product:id,name', 'items.userConfiguration:id,name'])
             ->latest()
             ->get()
             ->map(function (Order $order): array {
                 $items = $order->items->map(fn ($item): array => [
                     'id' => $item->id,
-                    'name' => $item->product?->name ?? $item->configuration?->name ?? 'Unknown item',
-                    'kind' => $item->configuration_id !== null ? 'Configuration' : 'Product',
+                    'name' => $item->product?->name ?? $item->userConfiguration?->name ?? 'Unknown item',
+                    'kind' => $item->user_configuration_id !== null ? 'User Configuration' : 'Product',
                     'qty' => (int) $item->qty,
                     'price_in_cents' => (int) $item->price,
                 ])->values();

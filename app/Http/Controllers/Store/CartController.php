@@ -24,7 +24,7 @@ class CartController extends Controller
             ->with([
                 'items.product:id,category_id,name,description,price_in_cents,stock',
                 'items.product.category:id,name,type',
-                'items.configuration:id,name,description,image,price',
+                'items.userConfiguration:id,base_configuration_id,name,description,image,price',
             ])
             ->latest('id')
             ->first();
@@ -63,19 +63,22 @@ class CartController extends Controller
                     ];
                 }
 
-                if ($orderItem->configuration !== null) {
-                    $configuration = $orderItem->configuration;
+                if ($orderItem->userConfiguration !== null) {
+                    $userConfiguration = $orderItem->userConfiguration;
+                    $href = $userConfiguration->base_configuration_id !== null
+                        ? "/gaming-pcs/{$userConfiguration->base_configuration_id}/configure"
+                        : '/gaming-pcs';
 
                     return [
                         'line_key' => (string) $orderItem->id,
-                        'id' => (int) $configuration->id,
-                        'item_type' => 'configuration',
-                        'name' => $configuration->name,
-                        'subtitle' => $configuration->description,
+                        'id' => (int) $userConfiguration->id,
+                        'item_type' => 'user_configuration',
+                        'name' => $userConfiguration->name,
+                        'subtitle' => $userConfiguration->description,
                         'availability' => 'In stock',
                         'unit_price_in_cents' => (int) $orderItem->price,
                         'qty' => (int) $orderItem->qty,
-                        'href' => '/gaming-pcs',
+                        'href' => $href,
                     ];
                 }
 
