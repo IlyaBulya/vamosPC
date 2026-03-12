@@ -110,7 +110,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                         type="button"
                         onClick={clearAll}
                         disabled={!preparedItems.length}
-                        className="text-sm font-medium text-slate-300 transition hover:text-[#9cf5d8] disabled:cursor-not-allowed disabled:text-slate-600"
+                        className="cursor-pointer text-sm font-medium text-slate-300 transition hover:text-[#9cf5d8] disabled:cursor-not-allowed disabled:text-slate-600"
                     >
                         Clear all
                     </button>
@@ -195,7 +195,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                                 item.qty - 1,
                                                             )
                                                         }
-                                                        className="p-2 text-slate-300 transition hover:text-[#9cf5d8]"
+                                                        className="cursor-pointer p-2 text-slate-300 transition hover:text-[#9cf5d8]"
                                                         aria-label="Decrease quantity"
                                                     >
                                                         <Minus className="h-4 w-4" />
@@ -211,7 +211,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                                 item.qty + 1,
                                                             )
                                                         }
-                                                        className="p-2 text-slate-300 transition hover:text-[#9cf5d8]"
+                                                        className="cursor-pointer p-2 text-slate-300 transition hover:text-[#9cf5d8]"
                                                         aria-label="Increase quantity"
                                                     >
                                                         <Plus className="h-4 w-4" />
@@ -227,7 +227,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                 <button
                                                     type="button"
                                                     onClick={() => removeItem(item)}
-                                                    className="inline-flex rounded-md p-1.5 text-red-400 transition hover:bg-red-500/10"
+                                                    className="inline-flex cursor-pointer rounded-md p-1.5 text-red-400 transition hover:bg-red-500/10"
                                                     aria-label="Remove item"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -263,7 +263,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                         <button
                             type="button"
                             disabled={!promoCode.trim()}
-                            className="rounded-xl border border-white/20 px-6 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8] disabled:cursor-not-allowed disabled:opacity-50"
+                            className="cursor-pointer rounded-xl border border-white/20 px-6 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             Apply
                         </button>
@@ -294,7 +294,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                             type="button"
                             onClick={checkout}
                             disabled={!preparedItems.length}
-                            className="min-w-[280px] rounded-full bg-[#00bd7d] px-8 py-3 font-semibold text-[#04120d] shadow-[0_0_24px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a] disabled:cursor-not-allowed disabled:bg-[#0d5a43] disabled:text-[#7fdabc] disabled:shadow-none"
+                            className="cursor-pointer min-w-[280px] rounded-full bg-[#00bd7d] px-8 py-3 font-semibold text-[#04120d] shadow-[0_0_24px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a] disabled:cursor-not-allowed disabled:bg-[#0d5a43] disabled:text-[#7fdabc] disabled:shadow-none"
                         >
                             Proceed to Checkout
                         </button>
