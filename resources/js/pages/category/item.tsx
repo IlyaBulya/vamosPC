@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Plus, ShoppingCart, SlidersHorizontal } from 'lucide-react';
 import FeaturePill from '@/components/store/feature-pill';
 import PageHero from '@/components/store/page-hero';
@@ -89,7 +89,9 @@ export default function CategoryItemPage({
                 quantity: 1,
             },
             {
-                preserveScroll: true,
+                onSuccess: () => {
+                    router.visit('/cart');
+                },
             },
         );
     };
