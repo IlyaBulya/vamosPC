@@ -23,6 +23,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/assistance', [AssistanceController::class, 'index'])->name('assistance');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('/gaming-pcs', [GamingPcController::class, 'index'])->name('gaming-pcs');
+Route::get('/gaming-pcs/{configuration}/configure', [GamingPcController::class, 'configure'])
+    ->whereNumber('configuration')
+    ->name('gaming-pcs.configure');
 Route::get('/products/{product}', [ProductController::class, 'legacy'])
     ->whereNumber('product')
     ->name('products.legacy');
