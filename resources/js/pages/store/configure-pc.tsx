@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Cpu, Monitor, ShoppingCart } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import StoreLayout from '@/layouts/store-layout';
@@ -57,6 +57,7 @@ export default function ConfigurePcPage({
                 slots.map((slot) => [slot.slot_key, slot.default_product_id]),
             ),
     );
+    const [isBuying, setIsBuying] = useState(false);
 
     const selectedProducts = useMemo<SelectedProduct[]>(
         () =>
@@ -103,6 +104,23 @@ export default function ConfigurePcPage({
             ...current,
             [slotKey]: nextProductId,
         }));
+    };
+
+    const buyBuild = () => {
+        if (! slots.length || isBuying) {
+            return;
+        }
+
+        router.post(
+            `/gaming-pcs/${configuration.id}/buy`,
+            {
+                selected_components: selectedBySlot,
+            },
+            {
+                onStart: () => setIsBuying(true),
+                onFinish: () => setIsBuying(false),
+            },
+        );
     };
 
     return (
@@ -243,16 +261,13 @@ export default function ConfigurePcPage({
 
                             <button
                                 type="button"
-                                disabled
-                                className="mt-5 inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full bg-[#00bd7d] px-4 py-3 text-sm font-bold text-[#04120d] opacity-60"
+                                onClick={buyBuild}
+                                disabled={!slots.length || isBuying}
+                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#00bd7d] px-4 py-3 text-sm font-bold text-[#04120d] shadow-[0_0_18px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <ShoppingCart className="h-4 w-4" />
-                                Buy This Build
+                                {isBuying ? 'Adding to Cart...' : 'Buy This Build'}
                             </button>
-
-                            <p className="mt-2 text-center text-xs text-slate-500">
-                                Buy action will be wired in the next step.
-                            </p>
 
                             <div className="mt-4 space-y-2">
                                 {selectedProducts.map((product) => (

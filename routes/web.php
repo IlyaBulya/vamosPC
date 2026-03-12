@@ -65,6 +65,9 @@ Route::group([
 Route::middleware(['auth'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
     Route::post('/cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
+    Route::post('/gaming-pcs/{configuration}/buy', [GamingPcController::class, 'buy'])
+        ->whereNumber('configuration')
+        ->name('gaming-pcs.buy');
     Route::patch('/cart/items/{orderItem}', [CartItemController::class, 'update'])
         ->whereNumber('orderItem')
         ->name('cart.items.update');
