@@ -19,6 +19,7 @@ class ConfigurationSeeder extends Seeder
                 'description' => null,
                 'image' => null,
                 'price' => 120000,
+                'homepage_order' => 1,
                 'products' => [1, 6, 11, 15, 18, 20, 22, 27, 30],
             ],
             [
@@ -26,6 +27,7 @@ class ConfigurationSeeder extends Seeder
                 'description' => null,
                 'image' => null,
                 'price' => 159999,
+                'homepage_order' => 2,
                 'products' => [2, 7, 12, 16, 18, 20, 23, 28, 30],
             ],
             [
@@ -33,6 +35,7 @@ class ConfigurationSeeder extends Seeder
                 'description' => null,
                 'image' => null,
                 'price' => 209900,
+                'homepage_order' => 3,
                 'products' => [3, 8, 13, 16, 19, 21, 23, 28, 30],
             ],
             [
@@ -40,6 +43,7 @@ class ConfigurationSeeder extends Seeder
                 'description' => null,
                 'image' => null,
                 'price' => 279900,
+                'homepage_order' => 4,
                 'products' => [4, 9, 13, 17, 19, 20, 23, 29, 30],
             ],
             [
@@ -47,6 +51,7 @@ class ConfigurationSeeder extends Seeder
                 'description' => null,
                 'image' => null,
                 'price' => 349900,
+                'homepage_order' => 5,
                 'products' => [5, 10, 13, 17, 19, 21, 23, 29, 30],
             ],
             [
@@ -54,6 +59,7 @@ class ConfigurationSeeder extends Seeder
                 'description' => null,
                 'image' => null,
                 'price' => 469900,
+                'homepage_order' => 6,
                 'products' => [5, 10, 14, 17, 19, 20, 24, 26, 29, 30],
             ],
         ];

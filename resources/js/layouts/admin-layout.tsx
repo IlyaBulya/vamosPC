@@ -3,6 +3,7 @@ import {
     Cpu,
     FolderTree,
     LayoutDashboard,
+    ListOrdered,
     LogOut,
     Package,
     Settings2,
@@ -42,6 +43,11 @@ const navigation = [
     { title: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { title: 'Products', href: '/admin/products', icon: Package },
     { title: 'Configurations', href: '/admin/configurations', icon: Cpu },
+    {
+        title: 'Welcome Order',
+        href: '/admin/configurations/welcome',
+        icon: ListOrdered,
+    },
     { title: 'Categories', href: '/admin/categories', icon: FolderTree },
     { title: 'Orders', href: '/admin/orders', icon: ShoppingCart },
     { title: 'Users', href: '/admin/users', icon: Users },
@@ -63,12 +69,15 @@ export default function AdminLayout({
             <div className="flex min-h-screen flex-col lg:flex-row">
                 <aside className="border-b border-white/10 bg-[#08101c] lg:min-h-screen lg:w-[280px] lg:border-r lg:border-b-0">
                     <div className="border-b border-white/10 px-6 py-6">
-                        <Link href="/admin" className="inline-flex items-center gap-3">
+                        <Link
+                            href="/admin"
+                            className="inline-flex items-center gap-3"
+                        >
                             <div className="rounded-2xl border border-[#00bd7d]/35 bg-[#00bd7d]/10 p-3">
                                 <Settings2 className="h-6 w-6 text-[#00bd7d]" />
                             </div>
                             <div>
-                                <p className="text-xs uppercase tracking-[0.18em] text-[#9cf5d8]">
+                                <p className="text-xs tracking-[0.18em] text-[#9cf5d8] uppercase">
                                     VamosPC
                                 </p>
                                 <p className="text-xl font-black text-white">
@@ -84,8 +93,18 @@ export default function AdminLayout({
                                 const isActive =
                                     item.href === '/admin'
                                         ? currentUrl === '/admin'
-                                        : currentUrl === item.href ||
-                                          currentUrl.startsWith(`${item.href}/`);
+                                        : item.href === '/admin/configurations'
+                                          ? currentUrl ===
+                                                '/admin/configurations' ||
+                                            currentUrl ===
+                                                '/admin/configurations/create' ||
+                                            /^\/admin\/configurations\/\d+\/edit$/.test(
+                                                currentUrl,
+                                            )
+                                          : currentUrl === item.href ||
+                                            currentUrl.startsWith(
+                                                `${item.href}/`,
+                                            );
 
                                 return (
                                     <Link
@@ -110,7 +129,7 @@ export default function AdminLayout({
                     <header className="border-b border-white/10 bg-[#050b18]/90">
                         <div className="flex flex-col gap-5 px-6 py-6 lg:flex-row lg:items-start lg:justify-between">
                             <div>
-                                <p className="text-xs uppercase tracking-[0.18em] text-[#9cf5d8]">
+                                <p className="text-xs tracking-[0.18em] text-[#9cf5d8] uppercase">
                                     Admin Area
                                 </p>
                                 <h1 className="mt-2 text-3xl font-black text-white">
@@ -154,7 +173,7 @@ export default function AdminLayout({
                                     {user?.email ?? 'admin@example.com'}
                                 </p>
                             </div>
-                            <p className="rounded-full border border-[#00bd7d]/35 bg-[#00bd7d]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#9cf5d8]">
+                            <p className="rounded-full border border-[#00bd7d]/35 bg-[#00bd7d]/10 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-[#9cf5d8] uppercase">
                                 Administrator
                             </p>
                         </div>

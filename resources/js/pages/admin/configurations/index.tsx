@@ -29,7 +29,7 @@ export default function AdminConfigurationsPage({
     configurations: ConfigurationRow[];
 }) {
     const destroyConfiguration = (configurationId: number) => {
-        if (! window.confirm('Delete this configuration?')) {
+        if (!window.confirm('Delete this configuration?')) {
             return;
         }
 
@@ -44,12 +44,20 @@ export default function AdminConfigurationsPage({
                 title="Configurations"
                 description="Create ready-to-sell PC configurations and attach selected component products."
                 actions={
-                    <Link
-                        href="/admin/configurations/create"
-                        className="rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.35)] transition hover:bg-[#18d99a]"
-                    >
-                        New Configuration
-                    </Link>
+                    <>
+                        <Link
+                            href="/admin/configurations/welcome"
+                            className="rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
+                        >
+                            Welcome Order
+                        </Link>
+                        <Link
+                            href="/admin/configurations/create"
+                            className="rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.35)] transition hover:bg-[#18d99a]"
+                        >
+                            New Configuration
+                        </Link>
+                    </>
                 }
             >
                 <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#08101c]/85">
@@ -60,13 +68,21 @@ export default function AdminConfigurationsPage({
                                     <th className="px-5 py-4 font-medium">
                                         Configuration
                                     </th>
-                                    <th className="px-5 py-4 font-medium">Price</th>
-                                    <th className="px-5 py-4 font-medium">Components</th>
+                                    <th className="px-5 py-4 font-medium">
+                                        Price
+                                    </th>
+                                    <th className="px-5 py-4 font-medium">
+                                        Components
+                                    </th>
                                     <th className="px-5 py-4 font-medium">
                                         Component Preview
                                     </th>
-                                    <th className="px-5 py-4 font-medium">Updated</th>
-                                    <th className="px-5 py-4 text-right font-medium">Actions</th>
+                                    <th className="px-5 py-4 font-medium">
+                                        Updated
+                                    </th>
+                                    <th className="px-5 py-4 text-right font-medium">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -82,12 +98,16 @@ export default function AdminConfigurationsPage({
                                                         <div className="flex h-14 w-20 items-center justify-center">
                                                             {configuration.image ? (
                                                                 <img
-                                                                    src={configuration.image}
-                                                                    alt={configuration.name}
+                                                                    src={
+                                                                        configuration.image
+                                                                    }
+                                                                    alt={
+                                                                        configuration.name
+                                                                    }
                                                                     className="h-full w-full object-cover"
                                                                 />
                                                             ) : (
-                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                                                <span className="text-[10px] font-semibold tracking-[0.14em] text-slate-500 uppercase">
                                                                     Image
                                                                 </span>
                                                             )}
@@ -99,33 +119,45 @@ export default function AdminConfigurationsPage({
                                                             {configuration.name}
                                                         </p>
                                                         <p className="mt-1 text-xs text-slate-500">
-                                                            ID #{configuration.id}
+                                                            ID #
+                                                            {configuration.id}
                                                         </p>
                                                         {configuration.description ? (
                                                             <p className="mt-2 line-clamp-2 text-sm text-slate-300">
-                                                                {configuration.description}
+                                                                {
+                                                                    configuration.description
+                                                                }
                                                             </p>
                                                         ) : null}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-5 py-4 font-semibold text-white">
-                                                {formatPrice(configuration.price)}
+                                                {formatPrice(
+                                                    configuration.price,
+                                                )}
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
                                                 {configuration.products_count}
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex flex-wrap gap-2">
-                                                    {configuration.products.length ? (
-                                                        configuration.products.map((product) => (
-                                                            <span
-                                                                key={product.id}
-                                                                className="rounded-full border border-[#00bd7d]/35 bg-[#00bd7d]/10 px-3 py-1 text-xs text-[#9cf5d8]"
-                                                            >
-                                                                {product.name}
-                                                            </span>
-                                                        ))
+                                                    {configuration.products
+                                                        .length ? (
+                                                        configuration.products.map(
+                                                            (product) => (
+                                                                <span
+                                                                    key={
+                                                                        product.id
+                                                                    }
+                                                                    className="rounded-full border border-[#00bd7d]/35 bg-[#00bd7d]/10 px-3 py-1 text-xs text-[#9cf5d8]"
+                                                                >
+                                                                    {
+                                                                        product.name
+                                                                    }
+                                                                </span>
+                                                            ),
+                                                        )
                                                     ) : (
                                                         <span className="text-slate-500">
                                                             -
@@ -134,13 +166,14 @@ export default function AdminConfigurationsPage({
                                                 </div>
                                             </td>
                                             <td className="px-5 py-4 text-slate-300">
-                                                {configuration.updated_at ?? '-'}
+                                                {configuration.updated_at ??
+                                                    '-'}
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex justify-end gap-2">
                                                     <Link
                                                         href={`/admin/configurations/${configuration.id}/edit`}
-                                                        className="rounded-full border border-[#00bd7d]/45 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#9cf5d8] transition hover:bg-[#00bd7d]/10"
+                                                        className="rounded-full border border-[#00bd7d]/45 px-4 py-2 text-xs font-semibold tracking-[0.14em] text-[#9cf5d8] uppercase transition hover:bg-[#00bd7d]/10"
                                                     >
                                                         Edit
                                                     </Link>
@@ -151,7 +184,7 @@ export default function AdminConfigurationsPage({
                                                                 configuration.id,
                                                             )
                                                         }
-                                                        className="rounded-full border border-red-500/45 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-red-300 transition hover:bg-red-500/10"
+                                                        className="rounded-full border border-red-500/45 px-4 py-2 text-xs font-semibold tracking-[0.14em] text-red-300 uppercase transition hover:bg-red-500/10"
                                                     >
                                                         Delete
                                                     </button>

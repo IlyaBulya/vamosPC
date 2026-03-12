@@ -16,6 +16,7 @@ class Configuration extends Model
         'description',
         'image',
         'price',
+        'homepage_order',
     ];
 
     /**
@@ -25,6 +26,7 @@ class Configuration extends Model
     {
         return [
             'price' => 'integer',
+            'homepage_order' => 'integer',
         ];
     }
 

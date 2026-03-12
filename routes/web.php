@@ -101,6 +101,8 @@ Route::middleware(['auth', 'admin'])
         Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy'])->name('categories.destroy');
 
         Route::get('/configurations', [AdminConfigurationController::class, 'index'])->name('configurations.index');
+        Route::get('/configurations/welcome', [AdminConfigurationController::class, 'welcome'])->name('configurations.welcome');
+        Route::put('/configurations/welcome', [AdminConfigurationController::class, 'updateWelcome'])->name('configurations.welcome.update');
         Route::get('/configurations/create', [AdminConfigurationController::class, 'create'])->name('configurations.create');
         Route::post('/configurations', [AdminConfigurationController::class, 'store'])->name('configurations.store');
         Route::get('/configurations/{configuration}/edit', [AdminConfigurationController::class, 'edit'])->name('configurations.edit');

@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,6 +47,13 @@ class ConfigurationController extends Controller
 
         return Inertia::render('admin/configurations/index', [
             'configurations' => $configurations,
+        ]);
+    }
+
+    public function welcome(): Response
+    {
+        return Inertia::render('admin/configurations/welcome', [
+            'configurations' => $this->welcomeConfigurations(),
         ]);
     }
 
@@ -153,6 +161,54 @@ class ConfigurationController extends Controller
             ->with('status', 'Configuration deleted successfully.');
     }
 
+    public function updateWelcome(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.id' => ['required', 'integer', 'distinct', 'exists:configurations,id'],
+            'items.*.homepage_order' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $items = collect($data['items'])
+            ->map(fn (array $item): array => [
+                'id' => (int) $item['id'],
+                'homepage_order' => $item['homepage_order'] !== null
+                    ? (int) $item['homepage_order']
+                    : null,
+            ])
+            ->values();
+
+        $selectedItems = $items
+            ->filter(fn (array $item): bool => $item['homepage_order'] !== null)
+            ->values();
+
+        if ($selectedItems->count() < 3) {
+            throw ValidationException::withMessages([
+                'items' => 'Choose at least 3 gaming PCs for the welcome page.',
+            ]);
+        }
+
+        if ($selectedItems->pluck('homepage_order')->duplicates()->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'items' => 'Each welcome position must be unique.',
+            ]);
+        }
+
+        DB::transaction(function () use ($items): void {
+            foreach ($items as $item) {
+                Configuration::query()
+                    ->whereKey($item['id'])
+                    ->update([
+                        'homepage_order' => $item['homepage_order'],
+                    ]);
+            }
+        });
+
+        return redirect()
+            ->route('admin.configurations.welcome')
+            ->with('status', 'Welcome page order updated successfully.');
+    }
+
     /**
      * @return array<int, array{id:int, name:string, description:?string, price_in_cents:int, color:?string, category_name:?string, category_type:?string}>
      */
@@ -227,6 +283,33 @@ class ConfigurationController extends Controller
         $data['remove_image'] = (bool) ($data['remove_image'] ?? false);
 
         return [$data, $productIds];
+    }
+
+    /**
+     * @return array<int, array{id:int, name:string, image:?string, price:int, products_count:int, homepage_order:?int}>
+     */
+    private function welcomeConfigurations(): array
+    {
+        /** @var array<int, array{id:int, name:string, image:?string, price:int, products_count:int, homepage_order:?int}> $configurations */
+        $configurations = Configuration::query()
+            ->withCount(['products'])
+            ->orderByRaw('case when homepage_order is null then 1 else 0 end')
+            ->orderBy('homepage_order')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Configuration $configuration): array => [
+                'id' => (int) $configuration->id,
+                'name' => $configuration->name,
+                'image' => $configuration->image,
+                'price' => (int) $configuration->price,
+                'products_count' => (int) $configuration->products_count,
+                'homepage_order' => $configuration->homepage_order !== null
+                    ? (int) $configuration->homepage_order
+                    : null,
+            ])
+            ->all();
+
+        return $configurations;
     }
 
     private function deleteConfigurationImageIfUnused(?string $image, int $configurationId): void

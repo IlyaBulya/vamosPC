@@ -15,6 +15,8 @@ class HomeController extends Controller
     {
         $configurations = Configuration::query()
             ->with(['products.category:id,name'])
+            ->whereNotNull('homepage_order')
+            ->orderBy('homepage_order')
             ->orderBy('id')
             ->get()
             ->map(fn (Configuration $configuration): array => [
