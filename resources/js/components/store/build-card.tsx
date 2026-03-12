@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from 'react';
+import type { CSSProperties, ReactNode, Ref } from 'react';
 import { cn } from '@/lib/utils';
 
 type BuildCardProps = {
@@ -11,6 +11,10 @@ type BuildCardProps = {
     className?: string;
     titleClassName?: string;
     bodyClassName?: string;
+    descriptionClassName?: string;
+    contentClassName?: string;
+    footerClassName?: string;
+    style?: CSSProperties;
 };
 
 export default function BuildCard({
@@ -23,42 +27,69 @@ export default function BuildCard({
     className,
     titleClassName,
     bodyClassName,
+    descriptionClassName,
+    contentClassName,
+    footerClassName,
+    style,
 }: BuildCardProps) {
     return (
         <article
+            style={style}
             className={cn(
-                'rounded-2xl border border-white/12 bg-[#0a1019]/95 shadow-[0_12px_36px_rgba(0,0,0,0.5)]',
+                'relative isolate overflow-hidden rounded-[30px] border border-white/12 bg-[#0a1019]/95 shadow-[0_12px_36px_rgba(0,0,0,0.5)]',
                 className,
             )}
         >
-            <div className="flex h-full flex-col p-4">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,189,125,0.14),transparent_38%)]" />
+
+            <div
+                className={cn(
+                    'relative flex h-full w-full flex-col gap-6 p-6',
+                    contentClassName,
+                )}
+            >
                 {topSlot}
 
                 <div
                     ref={mediaRef}
-                    className={cn(topSlot ? 'mt-3' : '', bodyClassName)}
+                    className={cn(
+                        'relative w-full overflow-hidden rounded-[24px] border border-white/10 bg-[#08111c]',
+                        topSlot ? 'mt-1' : '',
+                        bodyClassName,
+                    )}
                 >
                     {media}
                 </div>
 
-                <h3
-                    className={cn(
-                        'mt-4 text-2xl font-black text-white',
-                        titleClassName,
-                    )}
-                >
-                    {title}
-                </h3>
+                <div className="flex min-h-0 w-full flex-1 flex-col">
+                    <h3
+                        className={cn(
+                            'w-full text-2xl font-black text-white',
+                            titleClassName,
+                        )}
+                    >
+                        {title}
+                    </h3>
 
-                {description ? (
-                    <div className="mt-3 text-sm leading-relaxed text-slate-300">
-                        {description}
-                    </div>
-                ) : null}
+                    {description ? (
+                        <div
+                            className={cn(
+                                'mt-4 w-full text-sm leading-relaxed text-slate-300',
+                                descriptionClassName,
+                            )}
+                        >
+                            {description}
+                        </div>
+                    ) : null}
 
-                {children ? (
-                    <div className="mt-auto pt-4">{children}</div>
-                ) : null}
+                    {children ? (
+                        <div
+                            className={cn('mt-auto w-full pt-6', footerClassName)}
+                        >
+                            {children}
+                        </div>
+                    ) : null}
+                </div>
             </div>
         </article>
     );

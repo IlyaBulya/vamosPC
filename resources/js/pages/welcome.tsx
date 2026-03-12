@@ -29,6 +29,9 @@ const MODEL_SHRINK_UPWARD_CENTER_RATIO = 0.6;
 const MODEL_FINAL_SCALE_IN_CARD = 0.2;
 const LOCK_POSITION_TOLERANCE = 28;
 const LOCK_COOLDOWN_MS = 160;
+const CARDS_PER_VIEW = 3;
+const CARD_GAP_PX = 20;
+const MIN_CARD_WIDTH_PX = 280;
 
 const lerp = (from: number, to: number, t: number): number =>
     from + (to - from) * t;
@@ -40,6 +43,47 @@ const formatPrice = (priceInCents: number): string =>
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(priceInCents / 100);
+
+const splitDescriptionLines = (
+    description: string,
+): { firstLine: string; secondLine: string | null } => {
+    const parts = description
+        .split(' | ')
+        .map((part) => part.trim())
+        .filter(Boolean);
+    const ramIndex = parts.findIndex((part) => part.startsWith('RAM:'));
+
+    if (ramIndex === -1) {
+        return {
+            firstLine: description,
+            secondLine: null,
+        };
+    }
+
+    const ramPart = parts[ramIndex] ?? null;
+    const firstLineParts = parts.filter((_, index) => index !== ramIndex);
+
+    return {
+        firstLine: firstLineParts.join(' | '),
+        secondLine: ramPart,
+    };
+};
+
+const getCardsPerViewForWidth = (
+    availableWidth: number,
+    maxCardsPerView: number,
+): number => {
+    for (let count = maxCardsPerView; count > 1; count -= 1) {
+        const cardWidth =
+            (availableWidth - CARD_GAP_PX * (count - 1)) / count;
+
+        if (cardWidth >= MIN_CARD_WIDTH_PX) {
+            return count;
+        }
+    }
+
+    return 1;
+};
 
 export default function Welcome({
     canRegister = true,
@@ -59,6 +103,7 @@ export default function Welcome({
     const scrollLockYRef = useRef<number | null>(null);
     const landingLockYRef = useRef(0);
     const horizontalDistanceRef = useRef(1);
+    const hasHorizontalOverflowRef = useRef(false);
     const lastScrollYRef = useRef(0);
     const lockCooldownUntilRef = useRef(0);
 
@@ -70,9 +115,18 @@ export default function Welcome({
     });
     const [cardsTranslateX, setCardsTranslateX] = useState(0);
     const [landingProgress, setLandingProgress] = useState(0);
+    const [desktopCardWidth, setDesktopCardWidth] = useState<number | null>(
+        null,
+    );
     const modelTargetIndex = configurations.length > 1 ? 1 : 0;
+    const maxCardsPerView = Math.min(
+        CARDS_PER_VIEW,
+        Math.max(configurations.length, 1),
+    );
 
     useEffect(() => {
+        let frameId: number | null = null;
+
         const update = () => {
             const track = scrollTrackRef.current;
             const anchor = modelAnchorRef.current;
@@ -93,9 +147,41 @@ export default function Welcome({
             const progress = scrolled / totalScrollable;
             const heroProgress = Math.min(Math.max(progress / 0.3, 0), 1);
 
-            const viewportWidth = cardsViewportRef.current?.clientWidth ?? 0;
+            const visibleViewportWidth =
+                cardsViewportRef.current?.clientWidth ?? 0;
+            const cardsPerViewport = getCardsPerViewForWidth(
+                visibleViewportWidth,
+                maxCardsPerView,
+            );
+            const nextDesktopCardWidth =
+                visibleViewportWidth > 0
+                    ? (visibleViewportWidth -
+                          CARD_GAP_PX * (cardsPerViewport - 1)) /
+                      cardsPerViewport
+                    : null;
+            let widthChanged = false;
+            setDesktopCardWidth((current) => {
+                widthChanged = current !== nextDesktopCardWidth;
+
+                return widthChanged ? nextDesktopCardWidth : current;
+            });
+            if (widthChanged) {
+                if (frameId !== null) {
+                    window.cancelAnimationFrame(frameId);
+                }
+
+                frameId = window.requestAnimationFrame(() => {
+                    frameId = null;
+                    update();
+                });
+            }
             const railWidth = cardsRailRef.current?.scrollWidth ?? 0;
-            const maxHorizontalShift = Math.max(railWidth - viewportWidth, 0);
+            const maxHorizontalShift = Math.max(
+                railWidth - visibleViewportWidth,
+                0,
+            );
+            const hasHorizontalOverflow = maxHorizontalShift > 0.5;
+            hasHorizontalOverflowRef.current = hasHorizontalOverflow;
             const stickyTop = 64;
             const cardsSection = cardsSectionRef.current;
             const cardsSectionRect = cardsSection?.getBoundingClientRect();
@@ -139,7 +225,16 @@ export default function Welcome({
                         0,
                     );
                 }
-                horizontalDistanceRef.current = Math.max(maxHorizontalShift, 1);
+                horizontalDistanceRef.current = hasHorizontalOverflow
+                    ? Math.max(maxHorizontalShift, 1)
+                    : 1;
+            }
+
+            if (!hasHorizontalOverflow) {
+                horizontalProgressRef.current = 0;
+                if (scrollLockYRef.current !== null) {
+                    scrollLockYRef.current = null;
+                }
             }
 
             if (scrollLockYRef.current === null) {
@@ -155,6 +250,7 @@ export default function Welcome({
 
                 if (
                     canLock &&
+                    hasHorizontalOverflow &&
                     cardsStageProgress >= HORIZONTAL_LOCK_START_PROGRESS &&
                     horizontalProgressRef.current <
                         HORIZONTAL_UNLOCK_THRESHOLD &&
@@ -169,6 +265,7 @@ export default function Welcome({
                 }
                 if (
                     canLock &&
+                    hasHorizontalOverflow &&
                     isScrollingUp &&
                     horizontalProgressRef.current > 0 &&
                     (crossedLockGoingUp ||
@@ -189,7 +286,9 @@ export default function Welcome({
             }
 
             setCardsTranslateX(
-                -maxHorizontalShift * horizontalProgressRef.current,
+                hasHorizontalOverflow
+                    ? -maxHorizontalShift * horizontalProgressRef.current
+                    : 0,
             );
             setLandingProgress(landProgress);
             lastScrollYRef.current = window.scrollY;
@@ -309,6 +408,10 @@ export default function Welcome({
                 return;
             }
 
+            if (!hasHorizontalOverflowRef.current) {
+                return;
+            }
+
             if (scrollLockYRef.current === null) {
                 const canLock = Date.now() >= lockCooldownUntilRef.current;
                 if (
@@ -347,11 +450,11 @@ export default function Welcome({
 
             if (nextProgress !== horizontalProgressRef.current) {
                 horizontalProgressRef.current = nextProgress;
-                const viewportWidth =
+                const visibleViewportWidth =
                     cardsViewportRef.current?.clientWidth ?? 0;
                 const railWidth = cardsRailRef.current?.scrollWidth ?? 0;
                 const maxHorizontalShift = Math.max(
-                    railWidth - viewportWidth,
+                    railWidth - visibleViewportWidth,
                     0,
                 );
                 setCardsTranslateX(-maxHorizontalShift * nextProgress);
@@ -375,11 +478,14 @@ export default function Welcome({
         window.addEventListener('wheel', handleWheel, { passive: false });
 
         return () => {
+            if (frameId !== null) {
+                window.cancelAnimationFrame(frameId);
+            }
             window.removeEventListener('scroll', update);
             window.removeEventListener('resize', update);
             window.removeEventListener('wheel', handleWheel);
         };
-    }, []);
+    }, [maxCardsPerView]);
 
     return (
         <>
@@ -387,7 +493,7 @@ export default function Welcome({
 
             <StoreLayout
                 canRegister={canRegister}
-                contentClassName="relative max-w-none px-0 py-0"
+                contentClassName="relative max-w-none px-0 py-0 sm:px-0 lg:px-0"
                 footerClassName="mt-6"
             >
                 <div className="pointer-events-none absolute top-[18%] -left-20 h-72 w-72 rounded-full bg-[#00bd7d]/25 blur-3xl" />
@@ -454,7 +560,7 @@ export default function Welcome({
 
                     <section
                         ref={cardsSectionRef}
-                        className="relative z-20 mt-[118vh] h-[calc(100vh-64px)]"
+                        className="relative left-1/2 z-20 mt-[118vh] h-[calc(100vh-64px)] w-screen -translate-x-1/2"
                     >
                         <div className="sticky top-16 h-[calc(100vh-64px)]">
                             <div className="flex h-full w-full flex-col pt-3">
@@ -465,100 +571,140 @@ export default function Welcome({
                                     </p>
                                 </div>
 
-                                <div
-                                    ref={cardsViewportRef}
-                                    className="mt-6 min-h-0 flex-1 overflow-hidden"
-                                >
+                                <div className="mt-6 min-h-0 flex-1 px-4 sm:px-8 lg:px-12">
                                     <div
-                                        ref={cardsRailRef}
-                                        className="flex h-full items-start gap-5 will-change-transform"
-                                        style={{
-                                            transform: `translate3d(${cardsTranslateX}px, 0, 0)`,
-                                        }}
+                                        ref={cardsViewportRef}
+                                        className="h-full overflow-hidden"
                                     >
-                                        {configurations.length ? (
-                                            configurations.map(
-                                                (card, index) => (
-                                                    <BuildCard
-                                                        key={card.id}
-                                                        title={card.name}
-                                                        description={
-                                                            <span className="block h-16 overflow-hidden">
-                                                                {
-                                                                    card.description
+                                        <div
+                                            ref={cardsRailRef}
+                                            className="flex h-full items-start gap-5 will-change-transform"
+                                            style={{
+                                                transform: `translate3d(${cardsTranslateX}px, 0, 0)`,
+                                            }}
+                                        >
+                                            {configurations.length ? (
+                                                configurations.map(
+                                                    (card, index) => {
+                                                        const descriptionLines =
+                                                            splitDescriptionLines(
+                                                                card.description,
+                                                            );
+
+                                                        return (
+                                                            <BuildCard
+                                                                key={card.id}
+                                                                title={
+                                                                    <span className="block h-[4.5rem] line-clamp-2">
+                                                                        {card.name}
+                                                                    </span>
                                                                 }
-                                                            </span>
-                                                        }
-                                                        titleClassName="text-5xl leading-none text-white"
-                                                        className={`flex h-[560px] w-[86vw] max-w-[420px] shrink-0 sm:w-[72vw] md:w-[58vw] lg:w-auto lg:max-w-none lg:basis-[calc((100%-2.5rem)/3)] ${
-                                                            index ===
-                                                            modelTargetIndex
-                                                                ? 'border-[#00bd7d]/70 shadow-[0_0_28px_rgba(0,189,125,0.35)]'
-                                                                : 'border-white/12'
-                                                        }`}
-                                                        media={
-                                                            <div
-                                                                ref={
+                                                                description={
+                                                                    <span className="flex h-[3.75rem] flex-col overflow-hidden">
+                                                                        <span className="block line-clamp-1">
+                                                                            {
+                                                                                descriptionLines.firstLine
+                                                                            }
+                                                                        </span>
+                                                                        {descriptionLines.secondLine ? (
+                                                                            <span className="mt-1 block line-clamp-1">
+                                                                                {
+                                                                                    descriptionLines.secondLine
+                                                                                }
+                                                                            </span>
+                                                                        ) : null}
+                                                                    </span>
+                                                                }
+                                                                titleClassName="text-4xl leading-[0.92] text-white"
+                                                                descriptionClassName="w-full text-base leading-8 text-slate-300"
+                                                                contentClassName="w-full"
+                                                                footerClassName="w-full"
+                                                                bodyClassName="h-[20rem] w-full shrink-0 sm:h-[21rem] lg:h-[22rem]"
+                                                                className={`flex h-[720px] min-w-0 shrink-0 ${
                                                                     index ===
                                                                     modelTargetIndex
-                                                                        ? targetCardRef
-                                                                        : undefined
+                                                                        ? 'border-[#00bd7d]/70 shadow-[0_0_28px_rgba(0,189,125,0.35)]'
+                                                                        : 'border-white/12'
+                                                                }`}
+                                                                style={
+                                                                    desktopCardWidth
+                                                                        ? {
+                                                                              width: `${desktopCardWidth}px`,
+                                                                          }
+                                                                        : {
+                                                                              width: 'calc(100vw - 2rem)',
+                                                                          }
+                                                                }
+                                                                media={
+                                                                    <div
+                                                                        ref={
+                                                                            index ===
+                                                                            modelTargetIndex
+                                                                                ? targetCardRef
+                                                                                : undefined
+                                                                        }
+                                                                        className="h-full w-full"
+                                                                    >
+                                                                        <ProductMediaBlock
+                                                                            className="h-full w-full p-3 sm:p-4"
+                                                                            aspectClassName="h-full w-full aspect-auto overflow-hidden rounded-[20px] border border-white/15 bg-[#0b1320]"
+                                                                        >
+                                                                            <>
+                                                                                <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8]/75 uppercase">
+                                                                                    {index ===
+                                                                                    modelTargetIndex
+                                                                                        ? 'Waiting for Model'
+                                                                                        : 'PC Image Placeholder'}
+                                                                                </div>
+
+                                                                                {index ===
+                                                                                    modelTargetIndex && (
+                                                                                    <div
+                                                                                        className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-[#00bd7d]/70 bg-[#07121f]/82 text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8] uppercase transition-opacity duration-200"
+                                                                                        style={{
+                                                                                            opacity:
+                                                                                                landingProgress,
+                                                                                        }}
+                                                                                    >
+                                                                                        3D
+                                                                                        Model
+                                                                                        Inserted
+                                                                                    </div>
+                                                                                )}
+                                                                            </>
+                                                                        </ProductMediaBlock>
+                                                                    </div>
                                                                 }
                                                             >
-                                                                <ProductMediaBlock aspectClassName="aspect-square overflow-hidden rounded-xl border border-white/15 bg-[#0b1320]">
-                                                                    <>
-                                                                        <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8]/75 uppercase">
-                                                                            {index ===
-                                                                            modelTargetIndex
-                                                                                ? 'Waiting for Model'
-                                                                                : 'PC Image Placeholder'}
-                                                                        </div>
+                                                                <div className="border-t border-white/15 pt-4 text-center">
+                                                                    <p className="text-2xl tracking-wide text-[#00bd7d] uppercase">
+                                                                        STARTING AT{' '}
+                                                                        <span className="font-bold text-[#00bd7d]">
+                                                                            {formatPrice(
+                                                                                card.price_in_cents,
+                                                                            )}
+                                                                        </span>
+                                                                    </p>
 
-                                                                        {index ===
-                                                                            modelTargetIndex && (
-                                                                            <div
-                                                                                className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-[#00bd7d]/70 bg-[#07121f]/82 text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8] uppercase transition-opacity duration-200"
-                                                                                style={{
-                                                                                    opacity:
-                                                                                        landingProgress,
-                                                                                }}
-                                                                            >
-                                                                                3D
-                                                                                Model
-                                                                                Inserted
-                                                                            </div>
-                                                                        )}
-                                                                    </>
-                                                                </ProductMediaBlock>
-                                                            </div>
-                                                        }
-                                                    >
-                                                        <div className="border-t border-white/15 pt-4 text-center">
-                                                            <p className="text-2xl tracking-wide text-[#00bd7d] uppercase">
-                                                                STARTING AT{' '}
-                                                                <span className="font-bold text-[#00bd7d]">
-                                                                    {formatPrice(
-                                                                        card.price_in_cents,
-                                                                    )}
-                                                                </span>
-                                                            </p>
-
-                                                            <Link
-                                                                href={`/gaming-pcs/${card.id}/configure`}
-                                                                className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[#00bd7d] px-7 py-3 text-base font-semibold text-[#04120d] transition hover:bg-[#18d99a]"
-                                                            >
-                                                                CONFIGURE
-                                                            </Link>
-                                                        </div>
-                                                    </BuildCard>
-                                                ),
-                                            )
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-slate-300">
-                                                No configurations found. Create
-                                                one from Admin to show it here.
-                                            </div>
-                                        )}
+                                                                    <Link
+                                                                        href={`/gaming-pcs/${card.id}/configure`}
+                                                                        className="mx-auto mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#00bd7d] via-[#19d99b] to-[#00aa72] px-7 py-3.5 text-sm font-black tracking-[0.18em] text-[#04120d] shadow-[0_14px_34px_rgba(0,189,125,0.34)] ring-1 ring-white/10 transition duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-[0_18px_38px_rgba(0,189,125,0.42)]"
+                                                                    >
+                                                                        CONFIGURE
+                                                                    </Link>
+                                                                </div>
+                                                            </BuildCard>
+                                                        );
+                                                    },
+                                                )
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-slate-300">
+                                                    No configurations found.
+                                                    Create one from Admin to
+                                                    show it here.
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
