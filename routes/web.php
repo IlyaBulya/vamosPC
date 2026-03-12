@@ -1,16 +1,16 @@
 <?php
 
-use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ConfigurationController as AdminConfigurationController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\Store\AssistanceController;
 use App\Http\Controllers\Store\AccountController;
+use App\Http\Controllers\Store\AssistanceController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CartItemController;
 use App\Http\Controllers\Store\CatalogController;
@@ -26,6 +26,9 @@ Route::get('/gaming-pcs', [GamingPcController::class, 'index'])->name('gaming-pc
 Route::get('/gaming-pcs/{configuration}/configure', [GamingPcController::class, 'configure'])
     ->whereNumber('configuration')
     ->name('gaming-pcs.configure');
+Route::get('/gaming-pcs/{configuration_slug}', [GamingPcController::class, 'show'])
+    ->where('configuration_slug', '[a-z0-9-]+')
+    ->name('gaming-pcs.show');
 Route::get('/products/{product}', [ProductController::class, 'legacy'])
     ->whereNumber('product')
     ->name('products.legacy');

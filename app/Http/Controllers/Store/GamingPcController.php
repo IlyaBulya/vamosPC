@@ -11,6 +11,7 @@ use App\Support\CartOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,6 +28,7 @@ class GamingPcController extends Controller
             ->get()
             ->map(fn (Configuration $configuration): array => [
                 'id' => $configuration->id,
+                'route_slug' => $this->configurationRouteSlug($configuration),
                 'name' => $configuration->name,
                 'description' => $configuration->description,
                 'image' => $configuration->image,
@@ -45,6 +47,58 @@ class GamingPcController extends Controller
 
         return Inertia::render('store/gaming-pcs', [
             'configurations' => $configurations,
+        ]);
+    }
+
+    public function show(string $configurationSlug): Response|RedirectResponse
+    {
+        if (ctype_digit($configurationSlug)) {
+            $legacyConfiguration = Configuration::query()
+                ->with(['products.category:id,name'])
+                ->find((int) $configurationSlug);
+            abort_if($legacyConfiguration === null, 404);
+
+            return redirect("/gaming-pcs/{$this->configurationRouteSlug($legacyConfiguration)}");
+        }
+
+        $configuration = Configuration::query()
+            ->with(['products.category:id,name'])
+            ->get()
+            ->first(
+                fn (Configuration $item): bool => $this->configurationRouteSlug($item) === $configurationSlug
+                    || $this->legacyConfigurationRouteSlug($item) === $configurationSlug
+            );
+        abort_if($configuration === null, 404);
+
+        $canonicalSlug = $this->configurationRouteSlug($configuration);
+        if ($canonicalSlug !== $configurationSlug) {
+            return redirect("/gaming-pcs/{$canonicalSlug}");
+        }
+
+        return Inertia::render('gaming-pcs/show', [
+            'configuration' => [
+                'id' => (int) $configuration->id,
+                'route_slug' => $canonicalSlug,
+                'name' => $configuration->name,
+                'description' => $configuration->description,
+                'image' => $configuration->image,
+                'price_in_cents' => (int) $configuration->price,
+                'components_count' => $configuration->products->count(),
+                'components' => $configuration->products
+                    ->map(fn (Product $product): array => [
+                        'id' => (int) $product->id,
+                        'name' => $product->name,
+                        'description' => $product->description,
+                        'category_name' => $product->category?->name,
+                        'price_in_cents' => (int) $product->price_in_cents,
+                    ])
+                    ->values()
+                    ->all(),
+            ],
+            'navigation' => [
+                'back_to_list_href' => '/gaming-pcs',
+                'configure_href' => "/gaming-pcs/{$configuration->id}/configure",
+            ],
         ]);
     }
 
@@ -173,6 +227,16 @@ class GamingPcController extends Controller
         return redirect()
             ->route('cart')
             ->with('status', 'Custom configuration added to cart.');
+    }
+
+    private function configurationRouteSlug(Configuration $configuration): string
+    {
+        return Str::slug($configuration->name).'-'.$configuration->id;
+    }
+
+    private function legacyConfigurationRouteSlug(Configuration $configuration): string
+    {
+        return Str::slug($configuration->name);
     }
 
     /**

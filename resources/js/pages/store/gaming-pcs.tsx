@@ -12,6 +12,7 @@ type ConfigurationComponent = {
 
 type ConfigurationCard = {
     id: number;
+    route_slug: string;
     name: string;
     description: string | null;
     image: string | null;
@@ -105,23 +106,28 @@ export default function GamingPcPage({
                                 key={configuration.id}
                                 className="group flex h-full flex-col rounded-[30px] border border-white/10 bg-gradient-to-b from-[#151d29] via-[#0f1521] to-[#090d15] p-4 shadow-[0_18px_42px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:border-[#00bd7d]/45 hover:shadow-[0_24px_46px_rgba(0,0,0,0.5)] sm:p-5"
                             >
-                                <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#0f1622]">
-                                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(0,189,125,0.26),transparent_44%)]" />
-                                    <div className="aspect-[5/4]">
-                                        {configuration.image ? (
-                                            <img
-                                                src={configuration.image}
-                                                alt={configuration.name}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
-                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_78%,rgba(0,189,125,0.16),transparent_48%)]" />
-                                                <Monitor className="relative h-16 w-16 text-slate-500" />
-                                            </div>
-                                        )}
+                                <Link
+                                    href={`/gaming-pcs/${configuration.route_slug}`}
+                                    className="block"
+                                >
+                                    <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#0f1622]">
+                                        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(0,189,125,0.26),transparent_44%)]" />
+                                        <div className="aspect-[5/4]">
+                                            {configuration.image ? (
+                                                <img
+                                                    src={configuration.image}
+                                                    alt={configuration.name}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+                                                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_78%,rgba(0,189,125,0.16),transparent_48%)]" />
+                                                    <Monitor className="relative h-16 w-16 text-slate-500" />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
 
                                 <div className="mt-4 flex items-center justify-center gap-2">
                                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-[#0d131f]">
@@ -132,9 +138,12 @@ export default function GamingPcPage({
                                     </p>
                                 </div>
 
-                                <h2 className="mt-5 text-center text-[2.05rem] leading-[0.95] font-black text-white uppercase">
+                                <Link
+                                    href={`/gaming-pcs/${configuration.route_slug}`}
+                                    className="mt-5 text-center text-[2.05rem] leading-[0.95] font-black text-white uppercase transition hover:text-[#9cf5d8]"
+                                >
                                     {configuration.name}
-                                </h2>
+                                </Link>
 
                                 <p className="mt-4 text-center text-sm leading-relaxed text-slate-300 sm:text-base">
                                     {configuration.description ??
@@ -173,6 +182,13 @@ export default function GamingPcPage({
                                         {configuration.components_count}{' '}
                                         components included
                                     </div>
+
+                                    <Link
+                                        href={`/gaming-pcs/${configuration.route_slug}`}
+                                        className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-white/15 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-[#00bd7d]/50 hover:text-[#9cf5d8]"
+                                    >
+                                        View details
+                                    </Link>
                                 </div>
                             </article>
                         ))}
