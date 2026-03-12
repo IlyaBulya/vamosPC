@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class ,
             ProductSeeder::class ,
+            ConfigurationSeeder::class ,
         ]);
 
         DB::table('users')->insert([
