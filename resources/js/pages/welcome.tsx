@@ -12,13 +12,13 @@ type ModelFrame = {
     height: number;
 };
 
-type Card = {
+type ConfigurationCard = {
+    id: number;
     name: string;
-    spec: string;
-    price: string;
+    description: string;
+    price_in_cents: number;
 };
 
-const MODEL_TARGET_INDEX = 1;
 const MODEL_LAND_END_PROGRESS = 0.32;
 const HORIZONTAL_LOCK_START_PROGRESS = 0;
 const HORIZONTAL_UNLOCK_THRESHOLD = 0.995;
@@ -30,45 +30,23 @@ const MODEL_FINAL_SCALE_IN_CARD = 0.2;
 const LOCK_POSITION_TOLERANCE = 28;
 const LOCK_COOLDOWN_MS = 160;
 
-const cards: Card[] = [
-    {
-        name: 'VAMOS X',
-        spec: 'CPU: Intel Core i9-14900K | GPU: NVIDIA GeForce RTX 4090 | RAM: 64GB DDR5-6400MHz',
-        price: '$3,499',
-    },
-    {
-        name: 'VAMOS Z',
-        spec: 'CPU: AMD Ryzen 9 7950X3D | GPU: AMD Radeon RX 7900 XTX | RAM: 32GB DDR5-6000MHz',
-        price: '$2,899',
-    },
-    {
-        name: 'VAMOS PRO',
-        spec: 'CPU: Intel Xeon W-3400 Series | GPU: Dual NVIDIA RTX 6000 Ada | RAM: 256GB ECC DDR5',
-        price: '$8,999',
-    },
-    {
-        name: 'VAMOS STRIKE',
-        spec: 'CPU: Intel Core i7-14700KF | GPU: NVIDIA GeForce RTX 5070 Ti | RAM: 32GB DDR5-6000MHz',
-        price: '$2,199',
-    },
-    {
-        name: 'VAMOS FLOW',
-        spec: 'CPU: AMD Ryzen 7 9800X3D | GPU: NVIDIA GeForce RTX 5080 | RAM: 32GB DDR5-6400MHz',
-        price: '$3,099',
-    },
-    {
-        name: 'VAMOS EDGE',
-        spec: 'CPU: AMD Ryzen 5 9600X | GPU: AMD Radeon RX 7800 XT | RAM: 16GB DDR5-5600MHz',
-        price: '$1,799',
-    },
-];
+const lerp = (from: number, to: number, t: number): number =>
+    from + (to - from) * t;
 
-const lerp = (from: number, to: number, t: number): number => from + (to - from) * t;
+const formatPrice = (priceInCents: number): string =>
+    new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(priceInCents / 100);
 
 export default function Welcome({
     canRegister = true,
+    configurations = [],
 }: {
     canRegister?: boolean;
+    configurations?: ConfigurationCard[];
 }) {
     const scrollTrackRef = useRef<HTMLDivElement | null>(null);
     const modelAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -92,6 +70,7 @@ export default function Welcome({
     });
     const [cardsTranslateX, setCardsTranslateX] = useState(0);
     const [landingProgress, setLandingProgress] = useState(0);
+    const modelTargetIndex = configurations.length > 1 ? 1 : 0;
 
     useEffect(() => {
         const update = () => {
@@ -103,8 +82,14 @@ export default function Welcome({
             }
 
             const trackRect = track.getBoundingClientRect();
-            const totalScrollable = Math.max(track.offsetHeight - window.innerHeight, 1);
-            const scrolled = Math.min(Math.max(-trackRect.top, 0), totalScrollable);
+            const totalScrollable = Math.max(
+                track.offsetHeight - window.innerHeight,
+                1,
+            );
+            const scrolled = Math.min(
+                Math.max(-trackRect.top, 0),
+                totalScrollable,
+            );
             const progress = scrolled / totalScrollable;
             const heroProgress = Math.min(Math.max(progress / 0.3, 0), 1);
 
@@ -115,10 +100,17 @@ export default function Welcome({
             const cardsSection = cardsSectionRef.current;
             const cardsSectionRect = cardsSection?.getBoundingClientRect();
             const cardsScrollable = cardsSection
-                ? Math.max(cardsSection.offsetHeight - (window.innerHeight - stickyTop), 1)
+                ? Math.max(
+                      cardsSection.offsetHeight -
+                          (window.innerHeight - stickyTop),
+                      1,
+                  )
                 : 1;
             const cardsScrolled = cardsSectionRect
-                ? Math.min(Math.max(stickyTop - cardsSectionRect.top, 0), cardsScrollable)
+                ? Math.min(
+                      Math.max(stickyTop - cardsSectionRect.top, 0),
+                      cardsScrollable,
+                  )
                 : 0;
             const cardsStageProgress = cardsScrolled / cardsScrollable;
             const landProgress = Math.min(
@@ -129,13 +121,16 @@ export default function Welcome({
             const isScrollingUp = currentScrollY < lastScrollYRef.current;
             const isScrollingDown = currentScrollY > lastScrollYRef.current;
             if (cardsSectionRect) {
-                const cardsViewportRect = cardsViewportRef.current?.getBoundingClientRect();
-                const contentCenterY = stickyTop + (window.innerHeight - stickyTop) / 2;
+                const cardsViewportRect =
+                    cardsViewportRef.current?.getBoundingClientRect();
+                const contentCenterY =
+                    stickyTop + (window.innerHeight - stickyTop) / 2;
                 if (cardsViewportRect) {
                     const cardsViewportCenterY =
                         cardsViewportRect.top + cardsViewportRect.height / 2;
                     landingLockYRef.current = Math.max(
-                        currentScrollY + (cardsViewportCenterY - contentCenterY),
+                        currentScrollY +
+                            (cardsViewportCenterY - contentCenterY),
                         0,
                     );
                 } else {
@@ -161,11 +156,13 @@ export default function Welcome({
                 if (
                     canLock &&
                     cardsStageProgress >= HORIZONTAL_LOCK_START_PROGRESS &&
-                    horizontalProgressRef.current < HORIZONTAL_UNLOCK_THRESHOLD &&
+                    horizontalProgressRef.current <
+                        HORIZONTAL_UNLOCK_THRESHOLD &&
                     (crossedLockGoingDown ||
                         (isScrollingDown &&
-                            Math.abs(currentScrollY - landingLockYRef.current) <=
-                                LOCK_POSITION_TOLERANCE))
+                            Math.abs(
+                                currentScrollY - landingLockYRef.current,
+                            ) <= LOCK_POSITION_TOLERANCE))
                 ) {
                     scrollLockYRef.current = landingLockYRef.current;
                     window.scrollTo(0, landingLockYRef.current);
@@ -191,7 +188,9 @@ export default function Welcome({
                 horizontalProgressRef.current = 1;
             }
 
-            setCardsTranslateX(-maxHorizontalShift * horizontalProgressRef.current);
+            setCardsTranslateX(
+                -maxHorizontalShift * horizontalProgressRef.current,
+            );
             setLandingProgress(landProgress);
             lastScrollYRef.current = window.scrollY;
 
@@ -207,8 +206,12 @@ export default function Welcome({
             const centerHeight = startHeight * 1.08;
 
             const targetRect = targetCardRef.current?.getBoundingClientRect();
-            const liveEndX = targetRect ? targetRect.left + targetRect.width / 2 : centerX;
-            const liveEndY = targetRect ? targetRect.top + targetRect.height / 2 : centerY;
+            const liveEndX = targetRect
+                ? targetRect.left + targetRect.width / 2
+                : centerX;
+            const liveEndY = targetRect
+                ? targetRect.top + targetRect.height / 2
+                : centerY;
             const targetMaxWidth = targetRect
                 ? targetRect.width * MODEL_FINAL_SCALE_IN_CARD
                 : centerWidth * 0.5;
@@ -249,7 +252,10 @@ export default function Welcome({
                 1,
             );
             const cardTravelProgress = Math.min(
-                Math.max(Math.max(landProgress, horizontalProgressRef.current), 0),
+                Math.max(
+                    Math.max(landProgress, horizontalProgressRef.current),
+                    0,
+                ),
                 1,
             );
             const preShrinkSizeProgress =
@@ -260,7 +266,8 @@ export default function Welcome({
                 1,
             );
             const shrinkCenterY =
-                centerY - centerY * MODEL_SHRINK_UPWARD_CENTER_RATIO * sizeProgress;
+                centerY -
+                centerY * MODEL_SHRINK_UPWARD_CENTER_RATIO * sizeProgress;
 
             let x = startX;
             let y = startY;
@@ -307,13 +314,15 @@ export default function Welcome({
                 if (
                     canLock &&
                     ((delta > 0 &&
-                        horizontalProgressRef.current < HORIZONTAL_UNLOCK_THRESHOLD &&
+                        horizontalProgressRef.current <
+                            HORIZONTAL_UNLOCK_THRESHOLD &&
                         Math.abs(window.scrollY - landingLockYRef.current) <=
                             LOCK_POSITION_TOLERANCE) ||
                         (delta < 0 &&
                             horizontalProgressRef.current > 0 &&
-                            Math.abs(window.scrollY - landingLockYRef.current) <=
-                                LOCK_POSITION_TOLERANCE))
+                            Math.abs(
+                                window.scrollY - landingLockYRef.current,
+                            ) <= LOCK_POSITION_TOLERANCE))
                 ) {
                     scrollLockYRef.current = landingLockYRef.current;
                     window.scrollTo(0, landingLockYRef.current);
@@ -338,9 +347,13 @@ export default function Welcome({
 
             if (nextProgress !== horizontalProgressRef.current) {
                 horizontalProgressRef.current = nextProgress;
-                const viewportWidth = cardsViewportRef.current?.clientWidth ?? 0;
+                const viewportWidth =
+                    cardsViewportRef.current?.clientWidth ?? 0;
                 const railWidth = cardsRailRef.current?.scrollWidth ?? 0;
-                const maxHorizontalShift = Math.max(railWidth - viewportWidth, 0);
+                const maxHorizontalShift = Math.max(
+                    railWidth - viewportWidth,
+                    0,
+                );
                 setCardsTranslateX(-maxHorizontalShift * nextProgress);
             }
 
@@ -377,8 +390,8 @@ export default function Welcome({
                 contentClassName="relative max-w-none px-0 py-0"
                 footerClassName="mt-6"
             >
-                <div className="pointer-events-none absolute -left-20 top-[18%] h-72 w-72 rounded-full bg-[#00bd7d]/25 blur-3xl" />
-                <div className="pointer-events-none absolute -right-24 top-[14%] h-96 w-96 rounded-full bg-[#00bd7d]/20 blur-3xl" />
+                <div className="pointer-events-none absolute top-[18%] -left-20 h-72 w-72 rounded-full bg-[#00bd7d]/25 blur-3xl" />
+                <div className="pointer-events-none absolute top-[14%] -right-24 h-96 w-96 rounded-full bg-[#00bd7d]/20 blur-3xl" />
                 <div className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl" />
 
                 <div ref={scrollTrackRef} className="relative">
@@ -393,7 +406,7 @@ export default function Welcome({
                                     </span>
                                 </h1>
 
-                                <p className="mt-5 max-w-[620px] text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-[62px] lg:leading-[1.03]">
+                                <p className="mt-5 max-w-[620px] text-4xl leading-[1.05] font-semibold text-white sm:text-5xl lg:text-[62px] lg:leading-[1.03]">
                                     custom high-performance
                                     <br />
                                     PC builds
@@ -415,16 +428,18 @@ export default function Welcome({
                                 </div>
 
                                 <div className="mt-8 flex flex-wrap gap-3">
-                                    {['Fast Build', 'Warranty', 'Stress Tested'].map(
-                                        (item) => (
-                                            <FeaturePill
-                                                key={item}
-                                                className="text-lg"
-                                            >
-                                                {item}
-                                            </FeaturePill>
-                                        ),
-                                    )}
+                                    {[
+                                        'Fast Build',
+                                        'Warranty',
+                                        'Stress Tested',
+                                    ].map((item) => (
+                                        <FeaturePill
+                                            key={item}
+                                            className="text-lg"
+                                        >
+                                            {item}
+                                        </FeaturePill>
+                                    ))}
                                 </div>
                             </div>
 
@@ -444,8 +459,9 @@ export default function Welcome({
                         <div className="sticky top-16 h-[calc(100vh-64px)]">
                             <div className="flex h-full w-full flex-col pt-3">
                                 <div className="px-4 sm:px-8 lg:px-12">
-                                    <p className="text-center text-xs uppercase tracking-[0.22em] text-slate-400">
-                                        THE PINNACLE OF CUSTOM GAMING RIGS. BUILT FOR YOU.
+                                    <p className="text-center text-xs tracking-[0.22em] text-slate-400 uppercase">
+                                        THE PINNACLE OF CUSTOM GAMING RIGS.
+                                        BUILT FOR YOU.
                                     </p>
                                 </div>
 
@@ -460,76 +476,94 @@ export default function Welcome({
                                             transform: `translate3d(${cardsTranslateX}px, 0, 0)`,
                                         }}
                                     >
-                                        {cards.map((card, index) => (
-                                            <BuildCard
-                                                key={card.name}
-                                                title={card.name}
-                                                description={card.spec}
-                                                titleClassName="text-5xl leading-none text-white"
-                                                className={`flex h-[calc(100%-20px)] w-[86vw] max-w-[420px] shrink-0 sm:w-[72vw] md:w-[58vw] lg:w-auto lg:max-w-none lg:basis-[calc((100%-2.5rem)/3)] ${
-                                                    index === MODEL_TARGET_INDEX
-                                                        ? 'border-[#00bd7d]/70 shadow-[0_0_28px_rgba(0,189,125,0.35)]'
-                                                        : 'border-white/12'
-                                                }`}
-                                                media={
-                                                    <div
-                                                        ref={
-                                                            index === MODEL_TARGET_INDEX
-                                                                ? targetCardRef
-                                                                : undefined
+                                        {configurations.length ? (
+                                            configurations.map(
+                                                (card, index) => (
+                                                    <BuildCard
+                                                        key={card.id}
+                                                        title={card.name}
+                                                        description={
+                                                            <span className="block h-16 overflow-hidden">
+                                                                {
+                                                                    card.description
+                                                                }
+                                                            </span>
+                                                        }
+                                                        titleClassName="text-5xl leading-none text-white"
+                                                        className={`flex h-[560px] w-[86vw] max-w-[420px] shrink-0 sm:w-[72vw] md:w-[58vw] lg:w-auto lg:max-w-none lg:basis-[calc((100%-2.5rem)/3)] ${
+                                                            index ===
+                                                            modelTargetIndex
+                                                                ? 'border-[#00bd7d]/70 shadow-[0_0_28px_rgba(0,189,125,0.35)]'
+                                                                : 'border-white/12'
+                                                        }`}
+                                                        media={
+                                                            <div
+                                                                ref={
+                                                                    index ===
+                                                                    modelTargetIndex
+                                                                        ? targetCardRef
+                                                                        : undefined
+                                                                }
+                                                            >
+                                                                <ProductMediaBlock aspectClassName="aspect-square overflow-hidden rounded-xl border border-white/15 bg-[#0b1320]">
+                                                                    <>
+                                                                        <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8]/75 uppercase">
+                                                                            {index ===
+                                                                            modelTargetIndex
+                                                                                ? 'Waiting for Model'
+                                                                                : 'PC Image Placeholder'}
+                                                                        </div>
+
+                                                                        {index ===
+                                                                            modelTargetIndex && (
+                                                                            <div
+                                                                                className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-[#00bd7d]/70 bg-[#07121f]/82 text-center text-xs font-semibold tracking-[0.16em] text-[#9cf5d8] uppercase transition-opacity duration-200"
+                                                                                style={{
+                                                                                    opacity:
+                                                                                        landingProgress,
+                                                                                }}
+                                                                            >
+                                                                                3D
+                                                                                Model
+                                                                                Inserted
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                </ProductMediaBlock>
+                                                            </div>
                                                         }
                                                     >
-                                                        <ProductMediaBlock
-                                                            aspectClassName="aspect-square overflow-hidden rounded-xl border border-white/15 bg-[#0b1320]"
-                                                        >
-                                                            <>
-                                                                <div className="absolute inset-0 flex items-center justify-center text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8]/75">
-                                                                    {index ===
-                                                                    MODEL_TARGET_INDEX
-                                                                        ? 'Waiting for Model'
-                                                                        : 'PC Image Placeholder'}
-                                                                </div>
+                                                        <div className="border-t border-white/15 pt-4 text-center">
+                                                            <p className="text-2xl tracking-wide text-[#00bd7d] uppercase">
+                                                                STARTING AT{' '}
+                                                                <span className="font-bold text-[#00bd7d]">
+                                                                    {formatPrice(
+                                                                        card.price_in_cents,
+                                                                    )}
+                                                                </span>
+                                                            </p>
 
-                                                                {index ===
-                                                                    MODEL_TARGET_INDEX && (
-                                                                    <div
-                                                                        className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-[#00bd7d]/70 bg-[#07121f]/82 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#9cf5d8] transition-opacity duration-200"
-                                                                        style={{
-                                                                            opacity: landingProgress,
-                                                                        }}
-                                                                    >
-                                                                        3D Model Inserted
-                                                                    </div>
-                                                                )}
-                                                            </>
-                                                        </ProductMediaBlock>
-                                                    </div>
-                                                }
-                                                footer={
-                                                    <div className="border-t border-white/15 pt-4 text-center">
-                                                        <p className="text-2xl uppercase tracking-wide text-[#00bd7d]">
-                                                            STARTING AT{' '}
-                                                            <span className="font-bold text-[#00bd7d]">
-                                                                {card.price}
-                                                            </span>
-                                                        </p>
-
-                                                        <button
-                                                            type="button"
-                                                            className="mt-4 w-full rounded-xl bg-[#00bd7d] px-7 py-3 text-base font-semibold text-[#04120d] transition hover:bg-[#18d99a]"
-                                                        >
-                                                            CONFIGURE
-                                                        </button>
-                                                    </div>
-                                                }
-                                            />
-                                        ))}
+                                                            <Link
+                                                                href={`/gaming-pcs/${card.id}/configure`}
+                                                                className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[#00bd7d] px-7 py-3 text-base font-semibold text-[#04120d] transition hover:bg-[#18d99a]"
+                                                            >
+                                                                CONFIGURE
+                                                            </Link>
+                                                        </div>
+                                                    </BuildCard>
+                                                ),
+                                            )
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-slate-300">
+                                                No configurations found. Create
+                                                one from Admin to show it here.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </section>
-
                 </div>
 
                 <div className="pointer-events-none fixed inset-0 z-40">
@@ -544,7 +578,7 @@ export default function Welcome({
                         }}
                     >
                         <div className="pointer-events-none absolute -inset-6 rounded-[42px] bg-[#00bd7d]/25 blur-3xl" />
-                        <div className="relative flex h-full w-full items-center justify-center rounded-[30px] border-2 border-dashed border-[#00bd7d]/75 bg-[#07121f]/78 px-5 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#9cf5d8] sm:text-base">
+                        <div className="relative flex h-full w-full items-center justify-center rounded-[30px] border-2 border-dashed border-[#00bd7d]/75 bg-[#07121f]/78 px-5 text-center text-sm font-semibold tracking-[0.18em] text-[#9cf5d8] uppercase sm:text-base">
                             3D Model Placeholder
                         </div>
                     </div>
