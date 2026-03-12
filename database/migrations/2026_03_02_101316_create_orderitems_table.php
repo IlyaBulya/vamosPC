@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('user_configuration_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_configuration_id')->nullable();
             $table->unsignedInteger('qty')->default(1);
             $table->unsignedInteger('price');
             $table->timestamps();
