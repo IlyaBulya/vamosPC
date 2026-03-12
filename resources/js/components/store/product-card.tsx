@@ -94,7 +94,7 @@ export default function ProductCard({
                 {'href' in action ? (
                     <Link
                         href={action.href}
-                        className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
                     >
                         <ShoppingCart className="h-4 w-4" />
                         {action.label}
@@ -103,7 +103,7 @@ export default function ProductCard({
                     <button
                         type="button"
                         onClick={action.onClick}
-                        className="inline-flex items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] shadow-[0_0_16px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a]"
                     >
                         <ShoppingCart className="h-4 w-4" />
                         {action.label}

@@ -54,7 +54,9 @@ export default function ProductShowPage({
                 quantity: 1,
             },
             {
-                preserveScroll: true,
+                onSuccess: () => {
+                    router.visit('/cart');
+                },
             },
         );
     };
@@ -139,7 +141,7 @@ export default function ProductShowPage({
                                 <button
                                     type="button"
                                     onClick={addToCart}
-                                    className="rounded-xl bg-[#00bd7d] px-5 py-3 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.5)] transition hover:bg-[#18d99a]"
+                                    className="cursor-pointer rounded-xl bg-[#00bd7d] px-5 py-3 text-sm font-semibold text-[#04120d] shadow-[0_0_20px_rgba(0,189,125,0.5)] transition hover:bg-[#18d99a]"
                                 >
                                     Add to Cart
                                 </button>
