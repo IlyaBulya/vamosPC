@@ -6,7 +6,7 @@ type BuildCardProps = {
     description?: ReactNode;
     media: ReactNode;
     topSlot?: ReactNode;
-    footer?: ReactNode;
+    children?: ReactNode;
     mediaRef?: Ref<HTMLDivElement>;
     className?: string;
     titleClassName?: string;
@@ -18,7 +18,7 @@ export default function BuildCard({
     description,
     media,
     topSlot,
-    footer,
+    children,
     mediaRef,
     className,
     titleClassName,
@@ -34,11 +34,19 @@ export default function BuildCard({
             <div className="flex h-full flex-col p-4">
                 {topSlot}
 
-                <div ref={mediaRef} className={cn(topSlot ? 'mt-3' : '', bodyClassName)}>
+                <div
+                    ref={mediaRef}
+                    className={cn(topSlot ? 'mt-3' : '', bodyClassName)}
+                >
                     {media}
                 </div>
 
-                <h3 className={cn('mt-4 text-2xl font-black text-white', titleClassName)}>
+                <h3
+                    className={cn(
+                        'mt-4 text-2xl font-black text-white',
+                        titleClassName,
+                    )}
+                >
                     {title}
                 </h3>
 
@@ -48,7 +56,9 @@ export default function BuildCard({
                     </div>
                 ) : null}
 
-                {footer ? <div className="mt-auto pt-4">{footer}</div> : null}
+                {children ? (
+                    <div className="mt-auto pt-4">{children}</div>
+                ) : null}
             </div>
         </article>
     );
