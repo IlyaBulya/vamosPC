@@ -62,7 +62,7 @@ class ProductSeeder extends Seeder
                 'category' => 'processor',
                 'name' => 'AMD Ryzen 5',
                 'description' => 'AMD Ryzen 5 5600 3.5GHz Processor Box',
-                'price_in_cents' => 1347,
+                'price_in_cents' => 13470,
                 'is_component' => true,
             ],
             [
@@ -112,13 +112,6 @@ class ProductSeeder extends Seeder
                 'name' => 'Gigabyte B650',
                 'description' => 'Gigabyte B650 ATX Motherboard AM5 B650 EAGLE DDR5 PCIe 5.0 USB 3.2 Gen2 LAN GbE',
                 'price_in_cents' => 113499,
-                'is_component' => true,
-            ],
-            [
-                'category' => 'motherboard',
-                'name' => 'Gigabyte X870',
-                'description' => 'Gigabyte X870 A ELITE WIFI7 Motherboard',
-                'price_in_cents' => 28099,
                 'is_component' => true,
             ],
             [
@@ -447,20 +440,20 @@ class ProductSeeder extends Seeder
         $missingCategories = array_diff($categorySlugs, array_keys($categoryIds));
         if ($missingCategories !== []) {
             throw new RuntimeException(
-                'Missing categories for ProductSeeder: '.implode(', ', $missingCategories)
-            );
+                'Missing categories for ProductSeeder: ' . implode(', ', $missingCategories)
+                );
         }
 
         DB::table('products')->insert(array_map(
-            fn (array $product): array => [
-                'category_id' => $categoryIds[$product['category']],
-                'name' => $product['name'],
-                'description' => $product['description'],
-                'price_in_cents' => $product['price_in_cents'],
-                'is_component' => $product['is_component'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
+        fn(array $product): array => [
+        'category_id' => $categoryIds[$product['category']],
+        'name' => $product['name'],
+        'description' => $product['description'],
+        'price_in_cents' => $product['price_in_cents'],
+        'is_component' => $product['is_component'],
+        'created_at' => $now,
+        'updated_at' => $now,
+        ],
             $products
         ));
     }
