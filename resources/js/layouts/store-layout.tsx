@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import StoreHeader from '@/components/store-header';
 import StoreFooter from '@/components/store-footer';
+import StoreHeader from '@/components/store-header';
 import { cn } from '@/lib/utils';
 
 interface StoreLayoutProps {

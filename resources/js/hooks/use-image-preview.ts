@@ -1,25 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export function useImagePreview(
     file: File | null,
     currentImage: string | null,
     removeImage: boolean,
 ) {
-    const [previewUrl, setPreviewUrl] = useState<string | null>(
-        removeImage ? null : currentImage,
-    );
-
-    useEffect(() => {
+    const objectUrl = useMemo(() => {
         if (! file) {
-            setPreviewUrl(removeImage ? null : currentImage);
-            return;
+            return null;
         }
 
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewUrl(objectUrl);
+        return URL.createObjectURL(file);
+    }, [file]);
 
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [currentImage, file, removeImage]);
+    useEffect(() => {
+        return () => {
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
+    }, [objectUrl]);
 
-    return previewUrl;
+    if (objectUrl) {
+        return objectUrl;
+    }
+
+    return removeImage ? null : currentImage;
 }

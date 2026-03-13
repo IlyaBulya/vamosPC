@@ -2,17 +2,17 @@ import { Form, Head } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import AuthLayout from '@/layouts/auth-layout';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     InputOTP,
     InputOTPGroup,
     InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { Label } from '@/components/ui/label';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
+import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/two-factor/login';
 
 export default function TwoFactorChallenge() {
