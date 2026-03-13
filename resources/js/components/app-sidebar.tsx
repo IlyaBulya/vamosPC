@@ -12,9 +12,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { home } from '@/routes';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
-import { home } from '@/routes';
 
 const mainNavItems: NavItem[] = [
     {
