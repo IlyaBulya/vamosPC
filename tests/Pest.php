@@ -20,7 +20,7 @@ pest()->extend(Tests\TestCase::class)
 
 function createUser(array $overrides = [], bool $verified = true): User
 {
-    return User::create(array_merge([
+    return User::query()->forceCreate(array_merge([
         'name' => 'Test User',
         'email' => 'user-'.Str::uuid().'@example.com',
         'password' => 'password',
