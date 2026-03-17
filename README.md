@@ -80,9 +80,26 @@ npm run dev
 - catalog categories
 - products
 - gaming PC configurations
-- admin users defined in `database/seeders/DatabaseSeeder.php`
 
-Review the seeded admin accounts before using the project outside local/dev environments.
+## Admin bootstrap and protection
+
+Admin users are no longer seeded.
+
+To create the first admin, promote an existing user in your SQL editor:
+
+```sql
+UPDATE users
+SET is_admin = 1
+WHERE email = 'your-admin@example.com';
+```
+
+To prevent demotion of super admins from the Admin Users panel, configure:
+
+```env
+SUPER_ADMIN_EMAILS=owner@example.com,coowner@example.com
+```
+
+Users in `SUPER_ADMIN_EMAILS` can still manage the panel, but their admin role cannot be removed through admin role actions.
 
 ## Useful commands
 
