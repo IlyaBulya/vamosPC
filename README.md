@@ -93,13 +93,15 @@ SET is_admin = 1
 WHERE email = 'your-admin@example.com';
 ```
 
-To prevent demotion of super admins from the Admin Users panel, configure:
+To protect selected admin accounts from demotion in the Admin Users panel:
 
-```env
-SUPER_ADMIN_EMAILS=owner@example.com,coowner@example.com
+```sql
+UPDATE users
+SET is_super_admin = 1, is_admin = 1
+WHERE email IN ('owner@example.com', 'coowner@example.com');
 ```
 
-Users in `SUPER_ADMIN_EMAILS` can still manage the panel, but their admin role cannot be removed through admin role actions.
+Users with `is_super_admin = 1` can still manage the panel, but their admin role cannot be removed through admin role actions.
 
 ## Useful commands
 

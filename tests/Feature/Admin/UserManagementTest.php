@@ -27,11 +27,9 @@ test('admins can create new admin users', function () {
 test('super admins cannot be demoted', function () {
     $superAdmin = createUser([
         'is_admin' => true,
-        'email' => 'founder@example.com',
+        'is_super_admin' => true,
     ]);
     $actor = createUser(['is_admin' => true]);
-
-    config()->set('admin.super_admin_emails', ['founder@example.com']);
 
     $response = $this
         ->actingAs($actor)
@@ -50,11 +48,9 @@ test('super admins cannot be demoted', function () {
 test('admin privileges can be removed for non-super admins', function () {
     $targetAdmin = createUser([
         'is_admin' => true,
-        'email' => 'manager@example.com',
+        'is_super_admin' => false,
     ]);
     $actor = createUser(['is_admin' => true]);
-
-    config()->set('admin.super_admin_emails', ['founder@example.com']);
 
     $response = $this
         ->actingAs($actor)

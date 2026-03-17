@@ -27,7 +27,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'is_admin' => (bool) $user->is_admin,
-                'is_super_admin' => $this->isSuperAdmin($user),
+                'is_super_admin' => (bool) $user->is_super_admin,
                 'orders_count' => (int) $user->orders_count,
                 'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
                 'created_at' => $user->created_at?->toDateTimeString(),
@@ -71,7 +71,7 @@ class UserController extends Controller
         $isAdmin = (bool) $data['is_admin'];
         $currentlyAdmin = (bool) ($user->is_admin ?? false);
 
-        if (! $isAdmin && $currentlyAdmin && $this->isSuperAdmin($user)) {
+        if (! $isAdmin && $currentlyAdmin && (bool) ($user->is_super_admin ?? false)) {
             return back()->with('error', 'Super admin accounts cannot be demoted.');
         }
 
@@ -94,29 +94,5 @@ class UserController extends Controller
             ->where('is_admin', true)
             ->whereKeyNot($user->id)
             ->doesntExist();
-    }
-
-    private function isSuperAdmin(User $user): bool
-    {
-        $email = strtolower((string) $user->email);
-
-        return in_array($email, $this->superAdminEmails(), true);
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function superAdminEmails(): array
-    {
-        $configured = config('admin.super_admin_emails', []);
-
-        if (! is_array($configured)) {
-            return [];
-        }
-
-        return array_values(array_filter(array_map(
-            static fn ($value): string => strtolower(trim((string) $value)),
-            $configured,
-        )));
     }
 }
