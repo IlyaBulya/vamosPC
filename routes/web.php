@@ -116,6 +116,8 @@ Route::middleware(['auth', 'admin'])
         Route::patch('/orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
 
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
+        Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role.update');
     });
 
 require __DIR__.'/settings.php';
