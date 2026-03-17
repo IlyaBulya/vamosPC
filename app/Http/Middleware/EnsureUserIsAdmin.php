@@ -16,11 +16,9 @@ class EnsureUserIsAdmin
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+        $isFlaggedAdmin = $user !== null && (bool) ($user->is_admin ?? false);
 
-        $isHardcodedAdmin = $user !== null && (int)$user->id === 1;
-        $isFlaggedAdmin = $user !== null && (bool)($user->is_admin ?? false);
-
-        abort_unless($isHardcodedAdmin || $isFlaggedAdmin, 403);
+        abort_unless($isFlaggedAdmin, 403);
 
         return $next($request);
     }
