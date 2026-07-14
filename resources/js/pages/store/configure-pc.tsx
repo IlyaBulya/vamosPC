@@ -1,11 +1,14 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
+import ConflictModal from '@/components/configurator/conflict-modal';
 import SlotSection from '@/components/configurator/slot-section';
 import SummaryCard from '@/components/configurator/summary-card';
 import { useCompatibility } from '@/hooks/use-compatibility';
 import {
+    postJson,
     type ComponentSlot,
     type ConfiguratorConfiguration,
+    type ResolveResult,
     type SlotProduct,
 } from '@/lib/configurator';
 import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
@@ -14,6 +17,13 @@ import StoreLayout from '@/layouts/store-layout';
 type SelectedEntry = SlotProduct & {
     slot_key: string;
     slot_label: string;
+};
+
+type PendingConflict = {
+    slotKey: string;
+    productId: number;
+    productName: string;
+    result: ResolveResult;
 };
 
 export default function ConfigurePcPage({
@@ -42,6 +52,9 @@ export default function ConfigurePcPage({
     const [isBuying, setIsBuying] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [draftSaved, setDraftSaved] = useState(false);
+    const [pendingConflict, setPendingConflict] =
+        useState<PendingConflict | null>(null);
+    const [isResolving, setIsResolving] = useState(false);
 
     const { errors } = usePage().props;
     const serverErrors = Object.values(errors ?? {});
@@ -79,12 +92,76 @@ export default function ConfigurePcPage({
         [selectedBySlot, slots],
     );
 
-    const setSelectedSlot = (slotKey: string, productId: number) => {
+    const applySelections = (changes: Record<string, number>) => {
         setDraftSaved(false);
         setSelectedBySlot((current) => ({
             ...current,
-            [slotKey]: productId,
+            ...changes,
         }));
+    };
+
+    const setSelectedSlot = (slotKey: string, productId: number) => {
+        const isAnnotatedIncompatible = check?.option_annotations[
+            slotKey
+        ]?.some((annotation) => annotation.product_id === productId);
+
+        if (!isAnnotatedIncompatible) {
+            applySelections({ [slotKey]: productId });
+            return;
+        }
+
+        if (isResolving) {
+            return;
+        }
+
+        const productName =
+            slots
+                .find((slot) => slot.slot_key === slotKey)
+                ?.products.find((product) => product.id === productId)?.name ??
+            'Selected component';
+
+        setIsResolving(true);
+        postJson<ResolveResult>(`/gaming-pcs/${configuration.id}/resolve`, {
+            selected_components: { ...selectedBySlot, [slotKey]: productId },
+            changed_slot_key: slotKey,
+        })
+            .then((result) => {
+                if (!result.conflicts.length) {
+                    // The annotation was stale; the pick is fine after all.
+                    applySelections({ [slotKey]: productId });
+                    return;
+                }
+
+                setPendingConflict({
+                    slotKey,
+                    productId,
+                    productName,
+                    result,
+                });
+            })
+            .catch(() => {
+                // If the resolver is unreachable, apply anyway — the server
+                // still blocks incompatible purchases.
+                applySelections({ [slotKey]: productId });
+            })
+            .finally(() => setIsResolving(false));
+    };
+
+    const confirmConflict = () => {
+        if (!pendingConflict) {
+            return;
+        }
+
+        applySelections({
+            [pendingConflict.slotKey]: pendingConflict.productId,
+            ...Object.fromEntries(
+                pendingConflict.result.replacements.map((replacement) => [
+                    replacement.slot_key,
+                    replacement.to_product_id,
+                ]),
+            ),
+        });
+        setPendingConflict(null);
     };
 
     const buyBuild = () => {
@@ -216,6 +293,15 @@ export default function ConfigurePcPage({
                         onReset={resetSelections}
                     />
                 </section>
+
+                {pendingConflict && (
+                    <ConflictModal
+                        productName={pendingConflict.productName}
+                        result={pendingConflict.result}
+                        onConfirm={confirmConflict}
+                        onCancel={() => setPendingConflict(null)}
+                    />
+                )}
             </StoreLayout>
         </>
     );

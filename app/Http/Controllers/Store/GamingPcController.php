@@ -164,6 +164,24 @@ class GamingPcController extends Controller
         ]);
     }
 
+    /**
+     * Conflict + auto-replacement proposal for a selection the shopper is
+     * about to apply (the payload already contains the change).
+     */
+    public function resolve(Request $request, Configuration $configuration): JsonResponse
+    {
+        $data = $request->validate([
+            'selected_components' => ['nullable', 'array'],
+            'changed_slot_key' => ['required', 'string', 'max:64'],
+        ]);
+
+        return response()->json($this->configurator->proposeReplacements(
+            $configuration,
+            is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
+            (string) $data['changed_slot_key'],
+        ));
+    }
+
     public function buy(Request $request, Configuration $configuration): RedirectResponse
     {
         $user = $request->user();

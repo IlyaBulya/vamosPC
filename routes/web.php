@@ -29,6 +29,9 @@ Route::get('/gaming-pcs/{configuration}/configure', [GamingPcController::class, 
 Route::post('/gaming-pcs/{configuration}/check', [GamingPcController::class, 'check'])
     ->whereNumber('configuration')
     ->name('gaming-pcs.check');
+Route::post('/gaming-pcs/{configuration}/resolve', [GamingPcController::class, 'resolve'])
+    ->whereNumber('configuration')
+    ->name('gaming-pcs.resolve');
 Route::get('/gaming-pcs/{configuration_slug}', [GamingPcController::class, 'show'])
     ->where('configuration_slug', '[a-z0-9-]+')
     ->name('gaming-pcs.show');

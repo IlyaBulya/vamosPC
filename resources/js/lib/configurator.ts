@@ -52,6 +52,28 @@ export type CheckResult = {
     option_annotations: Record<string, OptionAnnotation[]>;
 };
 
+export type ConflictItem = {
+    slot_key: string;
+    product_id: number;
+    product_name: string;
+};
+
+export type ConflictReplacement = {
+    slot_key: string;
+    from_product_id: number;
+    from_name: string;
+    to_product_id: number;
+    to_name: string;
+    to_price_in_cents: number;
+};
+
+export type ResolveResult = {
+    conflicts: ConflictItem[];
+    replacements: ConflictReplacement[];
+    resolved: boolean;
+    messages: string[];
+};
+
 export function formatPrice(priceInCents: number) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',

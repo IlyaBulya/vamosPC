@@ -135,6 +135,64 @@ test('check endpoint flags an incompatible selection', function () {
         ->assertJsonPath('selected_total_in_cents', 58000);
 });
 
+test('resolve endpoint proposes an automatic replacement for a conflicting part', function () {
+    $gpuCategory = compatCategory('graphics-card');
+    $psuCategory = compatCategory('power-supply');
+
+    $smallGpu = compatComponent($gpuCategory, 'gpu', 'Small GPU', 30000, [
+        'tdp_watts' => 145,
+        'recommended_psu_watts' => 550,
+    ]);
+    $bigGpu = compatComponent($gpuCategory, 'gpu', 'Big GPU', 90000, [
+        'tdp_watts' => 300,
+        'recommended_psu_watts' => 750,
+    ]);
+    $psu650 = compatComponent($psuCategory, 'psu', '650W PSU', 5000, ['wattage' => 650]);
+    $psu850 = compatComponent($psuCategory, 'psu', '850W PSU', 9000, ['wattage' => 850]);
+
+    $configuration = Configuration::query()->create([
+        'name' => 'Resolve Build',
+        'description' => null,
+        'image' => null,
+        'price' => 40000,
+    ]);
+    $configuration->products()->sync([$smallGpu->id, $psu650->id]);
+    ConfigurationSlots::rebuildFromProducts($configuration);
+
+    $gpuSlotKey = compatSlotKey($configuration, 'gpu');
+    $psuSlotKey = compatSlotKey($configuration, 'psu');
+
+    // The shopper picks the big GPU while the 650W PSU is selected.
+    $this->postJson("/gaming-pcs/{$configuration->id}/resolve", [
+        'selected_components' => [
+            $gpuSlotKey => $bigGpu->id,
+            $psuSlotKey => $psu650->id,
+        ],
+        'changed_slot_key' => $gpuSlotKey,
+    ])
+        ->assertOk()
+        ->assertJsonPath('resolved', true)
+        ->assertJsonPath('conflicts.0.product_id', $psu650->id)
+        ->assertJsonPath('replacements.0.to_product_id', $psu850->id)
+        ->assertJsonPath('replacements.0.to_name', '850W PSU');
+});
+
+test('resolve endpoint reports unresolvable conflicts without replacements', function () {
+    ['configuration' => $configuration, 'ddr4' => $ddr4] = compatSetup();
+    $ramSlotKey = compatSlotKey($configuration, 'ram');
+
+    // DDR4 kit against a DDR5-only board and CPU; no alternative board or
+    // CPU exists, so nothing can be auto-replaced.
+    $this->postJson("/gaming-pcs/{$configuration->id}/resolve", [
+        'selected_components' => [$ramSlotKey => $ddr4->id],
+        'changed_slot_key' => $ramSlotKey,
+    ])
+        ->assertOk()
+        ->assertJsonPath('resolved', false)
+        ->assertJsonCount(2, 'conflicts')
+        ->assertJsonCount(0, 'replacements');
+});
+
 test('buying an incompatible build is rejected with compatibility errors', function () {
     ['configuration' => $configuration, 'ddr4' => $ddr4] = compatSetup();
     $user = createUser();

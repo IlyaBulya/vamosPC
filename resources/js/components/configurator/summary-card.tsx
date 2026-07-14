@@ -8,7 +8,6 @@ import {
     Save,
     ShoppingCart,
     XCircle,
-    Zap,
 } from 'lucide-react';
 import {
     formatPrice,
@@ -21,47 +20,6 @@ type SelectedEntry = SlotProduct & {
     slot_key: string;
     slot_label: string;
 };
-
-function PowerMeter({
-    loadWatts,
-    psuWatts,
-}: {
-    loadWatts: number;
-    psuWatts: number | null;
-}) {
-    const ratio = psuWatts ? Math.min(1, loadWatts / psuWatts) : null;
-    const barColor =
-        ratio === null || ratio < 0.7
-            ? 'bg-[#00bd7d]'
-            : ratio < 0.85
-              ? 'bg-amber-400'
-              : 'bg-red-500';
-
-    return (
-        <div className="rounded-xl border border-white/10 bg-[#0a121f] p-3">
-            <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-1.5 text-slate-300">
-                    <Zap className="h-3.5 w-3.5 text-[#9cf5d8]" />
-                    Estimated load
-                </span>
-                <span className="font-semibold text-white">
-                    {loadWatts} W
-                    {psuWatts ? (
-                        <span className="text-slate-400"> / {psuWatts} W</span>
-                    ) : null}
-                </span>
-            </div>
-            {ratio !== null && (
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                    <div
-                        className={`h-full rounded-full transition-all ${barColor}`}
-                        style={{ width: `${Math.round(ratio * 100)}%` }}
-                    />
-                </div>
-            )}
-        </div>
-    );
-}
 
 export default function SummaryCard({
     configuration,
@@ -97,14 +55,6 @@ export default function SummaryCard({
         selectedTotalInCents + configuration.markup_in_cents,
     );
     const hasErrors = check?.has_errors ?? false;
-    const psuWatts = (() => {
-        const psu = selectedProducts.find(
-            (product) => product.component_type === 'psu',
-        );
-        const wattage = psu?.specs?.['wattage'];
-
-        return typeof wattage === 'number' ? wattage : null;
-    })();
 
     return (
         <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-4 sm:p-5 lg:sticky lg:top-6 lg:h-fit">
@@ -144,33 +94,6 @@ export default function SummaryCard({
                     <p className="text-4xl font-black text-white">
                         {formatPrice(previewPriceInCents)}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
-                        selected parts + base markup
-                    </p>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                    {check?.load_watts != null && (
-                        <PowerMeter
-                            loadWatts={check.load_watts}
-                            psuWatts={psuWatts}
-                        />
-                    )}
-
-                    <div className="space-y-1 rounded-xl border border-white/10 bg-[#0a121f] p-3 text-sm text-slate-300">
-                        <p className="flex justify-between">
-                            <span>Selected parts</span>
-                            <span className="font-semibold text-white">
-                                {formatPrice(selectedTotalInCents)}
-                            </span>
-                        </p>
-                        <p className="flex justify-between">
-                            <span>Assembly & service</span>
-                            <span className="font-semibold text-white">
-                                {formatPrice(configuration.markup_in_cents)}
-                            </span>
-                        </p>
-                    </div>
                 </div>
 
                 {(check?.violations.length ?? 0) > 0 && (
@@ -193,13 +116,6 @@ export default function SummaryCard({
                             </div>
                         ))}
                     </div>
-                )}
-
-                {check !== null && !hasErrors && (
-                    <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#9cf5d8]">
-                        <Check className="h-3.5 w-3.5" />
-                        All components are compatible
-                    </p>
                 )}
 
                 {serverErrors.length > 0 && (

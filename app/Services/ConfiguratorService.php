@@ -299,6 +299,123 @@ class ConfiguratorService
     }
 
     /**
+     * When a just-changed slot makes the build incompatible, find the
+     * conflicting slots and greedily pick the cheapest alternatives that
+     * bring the error count down (ideally to zero) — the "auto-replace"
+     * proposal shown to the shopper before the change is applied.
+     *
+     * @param  array<string, mixed>  $selectedPayload  slot_key => product id (already includes the change)
+     * @return array{
+     *     conflicts: array<int, array{slot_key: string, product_id: int, product_name: string}>,
+     *     replacements: array<int, array{slot_key: string, from_product_id: int, from_name: string, to_product_id: int, to_name: string, to_price_in_cents: int}>,
+     *     resolved: bool,
+     *     messages: list<string>
+     * }
+     */
+    public function proposeReplacements(
+        Configuration $configuration,
+        array $selectedPayload,
+        string $changedSlotKey,
+    ): array {
+        $entries = $this->slotEntries($configuration)->keyBy('slot_key');
+        $resolved = $this->resolveSelections($configuration, $selectedPayload);
+
+        /** @var Collection<string, Product> $working */
+        $working = $resolved['products'];
+
+        $errorsOf = fn (): array => $this->checker->errors(new BuildSelection($working->values()));
+        $initialErrors = $errorsOf();
+
+        if ($initialErrors === []) {
+            return ['conflicts' => [], 'replacements' => [], 'resolved' => true, 'messages' => []];
+        }
+
+        $changedType = $entries->get($changedSlotKey)['component_type'] ?? null;
+        $messages = [];
+        $conflictSlotKeys = [];
+
+        foreach ($initialErrors as $violation) {
+            if ($changedType === null || ! in_array($changedType, $violation->componentTypes, true)) {
+                continue;
+            }
+
+            $messages[] = $violation->message;
+
+            foreach ($violation->componentTypes as $type) {
+                if ($type === $changedType) {
+                    continue;
+                }
+
+                foreach ($entries as $slotKey => $entry) {
+                    if ($entry['component_type'] === $type && $slotKey !== $changedSlotKey) {
+                        $conflictSlotKeys[$slotKey] = true;
+                    }
+                }
+            }
+        }
+
+        $conflicts = [];
+        $replacements = [];
+        $currentErrorCount = count($initialErrors);
+
+        foreach (array_keys($conflictSlotKeys) as $slotKey) {
+            /** @var Product $original */
+            $original = $working->get($slotKey);
+            $conflicts[] = [
+                'slot_key' => (string) $slotKey,
+                'product_id' => (int) $original->id,
+                'product_name' => $original->name,
+            ];
+
+            if ($currentErrorCount === 0) {
+                continue;
+            }
+
+            $best = null;
+            $bestCount = $currentErrorCount;
+
+            foreach ($entries->get($slotKey)['options'] as $candidate) {
+                if ((int) $candidate->id === (int) $original->id) {
+                    continue;
+                }
+
+                $working->put($slotKey, $candidate);
+                $count = count($errorsOf());
+
+                if ($count < $bestCount) {
+                    $best = $candidate;
+                    $bestCount = $count;
+
+                    if ($count === 0) {
+                        break;
+                    }
+                }
+            }
+
+            $working->put($slotKey, $best ?? $original);
+
+            if ($best !== null) {
+                $currentErrorCount = $bestCount;
+                $replacements[] = [
+                    'slot_key' => (string) $slotKey,
+                    'from_product_id' => (int) $original->id,
+                    'from_name' => $original->name,
+                    'to_product_id' => (int) $best->id,
+                    'to_name' => $best->name,
+                    'to_price_in_cents' => (int) $best->price_in_cents,
+                ];
+            }
+        }
+
+        return [
+            'conflicts' => $conflicts,
+            'replacements' => $replacements,
+            'resolved' => $currentErrorCount === 0,
+            'messages' => array_values(array_unique($messages)),
+        ];
+    }
+
+    /**
      * For every slot option, would swapping it into the current build
      * introduce compatibility errors involving that component? Only
      * incompatible options are listed.
