@@ -445,6 +445,8 @@ class ProductSeeder extends Seeder
             );
         }
 
+        $specsByDescription = require database_path('data/component-specs.php');
+
         DB::table('products')->insert(array_map(
             fn (array $product): array => [
                 'category_id' => $categoryIds[$product['category']],
@@ -453,6 +455,9 @@ class ProductSeeder extends Seeder
                 'description' => $product['description'],
                 'price_in_cents' => $product['price_in_cents'],
                 'is_component' => $product['is_component'],
+                'specs' => isset($specsByDescription[$product['description']])
+                    ? json_encode($specsByDescription[$product['description']])
+                    : null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],

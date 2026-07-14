@@ -38,7 +38,8 @@ class ConfigurationSeeder extends Seeder
                 'image' => null,
                 'price' => 209900,
                 'homepage_order' => 3,
-                'products' => [3, 8, 13, 16, 19, 21, 23, 28, 30],
+                // 17 (DDR5 kit), not 16 (DDR4): the B650 board is DDR5-only.
+                'products' => [3, 8, 13, 17, 19, 21, 23, 28, 30],
             ],
             [
                 'name' => 'VAMOS STRIKE',
@@ -62,7 +63,8 @@ class ConfigurationSeeder extends Seeder
                 'image' => null,
                 'price' => 469900,
                 'homepage_order' => 6,
-                'products' => [5, 10, 14, 17, 19, 20, 24, 26, 29, 30],
+                // 21 (850W), not 20 (650W): the RTX 5070 Ti needs a 750W+ PSU.
+                'products' => [5, 10, 14, 17, 19, 21, 24, 26, 29, 30],
             ],
         ];
 

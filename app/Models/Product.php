@@ -43,6 +43,16 @@ class Product extends Model
         ];
     }
 
+    /**
+     * Read a single structured spec value (see App\Support\Specs\SpecSchema).
+     */
+    public function spec(string $key): mixed
+    {
+        $specs = $this->specs;
+
+        return is_array($specs) ? ($specs[$key] ?? null) : null;
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
