@@ -1,5 +1,5 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Lock, Package, ShieldCheck } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { AlertTriangle, Lock, Package, ShieldCheck, Trash2, Wrench } from 'lucide-react';
 import InfoCard from '@/components/store/info-card';
 import PageHero from '@/components/store/page-hero';
 import StoreLayout from '@/layouts/store-layout';
@@ -24,6 +24,15 @@ type AccountOrder = {
     created_at: string | null;
 };
 
+type AccountDraft = {
+    id: number;
+    name: string;
+    price_in_cents: number;
+    has_errors: boolean;
+    configure_href: string;
+    updated_at: string | null;
+};
+
 function formatPrice(priceInCents: number) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -37,9 +46,16 @@ export default function AccountPage() {
         auth: { user: AuthUser | null };
         stats: AccountStats;
         orders: AccountOrder[];
+        drafts: AccountDraft[];
     }>();
     const user = page.props.auth.user;
-    const { stats, orders } = page.props;
+    const { stats, orders, drafts } = page.props;
+
+    const deleteDraft = (draftId: number) => {
+        router.delete(`/account/drafts/${draftId}`, {
+            preserveScroll: true,
+        });
+    };
 
     return (
         <>
@@ -138,6 +154,76 @@ export default function AccountPage() {
                         ) : (
                             <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
                                 No orders yet. Your future purchases will appear here.
+                            </div>
+                        )}
+                    </article>
+
+                    <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-6">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-xl border border-[#00bd7d]/40 bg-[#00bd7d]/10 p-2">
+                                <Wrench className="h-5 w-5 text-[#00bd7d]" />
+                            </div>
+                            <h2 className="text-xl font-bold text-white">
+                                Saved Builds
+                            </h2>
+                        </div>
+                        <p className="mt-3 text-sm text-slate-300">
+                            Configurator drafts you saved. Continue where you
+                            left off.
+                        </p>
+                        {drafts.length ? (
+                            <div className="mt-5 space-y-3">
+                                {drafts.map((draft) => (
+                                    <div
+                                        key={draft.id}
+                                        className="rounded-2xl border border-white/10 bg-[#0b1321] p-4"
+                                    >
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-semibold text-white">
+                                                    {draft.name}
+                                                </p>
+                                                <p className="mt-1 flex items-center gap-2 text-sm text-slate-400">
+                                                    {formatPrice(
+                                                        draft.price_in_cents,
+                                                    )}
+                                                    {draft.updated_at
+                                                        ? ` • ${draft.updated_at}`
+                                                        : ''}
+                                                    {draft.has_errors && (
+                                                        <span className="inline-flex items-center gap-1 text-xs text-amber-300">
+                                                            <AlertTriangle className="h-3 w-3" />
+                                                            has issues
+                                                        </span>
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <div className="flex shrink-0 items-center gap-2">
+                                                <Link
+                                                    href={draft.configure_href}
+                                                    className="rounded-full border border-[#00bd7d]/55 bg-[#00bd7d]/15 px-3 py-1.5 text-xs font-medium text-[#9cf5d8] transition hover:bg-[#00bd7d]/25"
+                                                >
+                                                    Continue
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        deleteDraft(draft.id)
+                                                    }
+                                                    aria-label={`Delete draft ${draft.name}`}
+                                                    className="cursor-pointer rounded-full border border-red-500/40 p-1.5 text-red-300 transition hover:bg-red-500/15"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-[#0b1321] p-4 text-sm text-slate-400">
+                                No saved builds yet. Use “Save Draft” in the
+                                configurator to keep a build for later.
                             </div>
                         )}
                     </article>

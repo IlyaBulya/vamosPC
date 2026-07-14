@@ -77,6 +77,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/gaming-pcs/{configuration}/drafts', [GamingPcController::class, 'storeDraft'])
         ->whereNumber('configuration')
         ->name('gaming-pcs.drafts.store');
+    Route::delete('/account/drafts/{userConfiguration}', [GamingPcController::class, 'destroyDraft'])
+        ->whereNumber('userConfiguration')
+        ->name('account.drafts.destroy');
     Route::patch('/cart/items/{orderItem}', [CartItemController::class, 'update'])
         ->whereNumber('orderItem')
         ->name('cart.items.update');

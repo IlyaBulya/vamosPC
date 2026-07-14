@@ -208,6 +208,39 @@ test('drafts can be saved even with compatibility errors and prefill the configu
             ->where("initial_selections.{$ramSlotKey}", $ddr4->id));
 });
 
+test('account page lists drafts and owners can delete them', function () {
+    ['configuration' => $configuration] = compatSetup();
+    $user = createUser();
+
+    $this->actingAs($user)
+        ->post("/gaming-pcs/{$configuration->id}/drafts", [
+            'name' => 'Listed draft',
+        ]);
+
+    $draft = UserConfiguration::query()->firstOrFail();
+
+    $this->actingAs($user)
+        ->get('/account')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('drafts', 1)
+            ->where('drafts.0.name', 'Listed draft')
+            ->where('drafts.0.configure_href', "/gaming-pcs/{$configuration->id}/configure?draft={$draft->id}"));
+
+    // A stranger cannot delete someone else's draft.
+    $stranger = createUser(['email' => 'stranger2@example.com']);
+    $this->actingAs($stranger)
+        ->delete("/account/drafts/{$draft->id}")
+        ->assertForbidden();
+
+    $this->actingAs($user)
+        ->from('/account')
+        ->delete("/account/drafts/{$draft->id}")
+        ->assertRedirect('/account');
+
+    expect(UserConfiguration::query()->count())->toBe(0);
+});
+
 test('drafts belonging to another user are ignored on prefill', function () {
     ['configuration' => $configuration, 'ddr4' => $ddr4] = compatSetup();
     $owner = createUser();

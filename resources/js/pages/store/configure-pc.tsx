@@ -1,84 +1,71 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Cpu, Monitor, ShoppingCart } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import SlotSection from '@/components/configurator/slot-section';
+import SummaryCard from '@/components/configurator/summary-card';
+import { useCompatibility } from '@/hooks/use-compatibility';
+import {
+    type ComponentSlot,
+    type ConfiguratorConfiguration,
+    type SlotProduct,
+} from '@/lib/configurator';
+import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
 import StoreLayout from '@/layouts/store-layout';
 
-type SlotProduct = {
-    id: number;
-    name: string;
-    description: string | null;
-    price_in_cents: number;
-    color: string | null;
-    category_name: string | null;
-};
-
-type ComponentSlot = {
-    slot_key: string;
-    slot_label: string;
-    category_id: number | null;
-    category_name: string;
-    default_product_id: number;
-    products: SlotProduct[];
-};
-
-type Configuration = {
-    id: number;
-    name: string;
-    description: string | null;
-    image: string | null;
-    price_in_cents: number;
-    base_components_total_in_cents: number;
-    markup_in_cents: number;
-};
-
-type SelectedProduct = SlotProduct & {
+type SelectedEntry = SlotProduct & {
     slot_key: string;
     slot_label: string;
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function ConfigurePcPage({
     configuration,
     slots,
     initial_selections,
 }: {
-    configuration: Configuration;
+    configuration: ConfiguratorConfiguration;
     slots: ComponentSlot[];
     initial_selections?: Record<string, number> | null;
 }) {
-    const [selectedBySlot, setSelectedBySlot] = useState<Record<string, number>>(
+    const defaultSelections = useMemo(
         () =>
             Object.fromEntries(
-                slots.map((slot) => [
-                    slot.slot_key,
-                    initial_selections?.[slot.slot_key] ??
-                        slot.default_product_id,
-                ]),
+                slots.map((slot) => [slot.slot_key, slot.default_product_id]),
             ),
+        [slots],
+    );
+
+    const [selectedBySlot, setSelectedBySlot] = useState<Record<string, number>>(
+        () => ({
+            ...defaultSelections,
+            ...(initial_selections ?? {}),
+        }),
     );
     const [isBuying, setIsBuying] = useState(false);
-    const { errors } = usePage().props;
-    const errorMessages = Object.values(errors ?? {});
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [draftSaved, setDraftSaved] = useState(false);
 
-    const selectedProducts = useMemo<SelectedProduct[]>(
+    const { errors } = usePage().props;
+    const serverErrors = Object.values(errors ?? {});
+
+    const { check, isChecking } = useCompatibility(
+        configuration.id,
+        selectedBySlot,
+    );
+
+    const selectedProducts = useMemo<SelectedEntry[]>(
         () =>
             slots
                 .map((slot) => {
                     const selectedId =
-                        selectedBySlot[slot.slot_key] ?? slot.default_product_id;
+                        selectedBySlot[slot.slot_key] ??
+                        slot.default_product_id;
                     const selected =
-                        slot.products.find((product) => product.id === selectedId) ??
+                        slot.products.find(
+                            (product) => product.id === selectedId,
+                        ) ??
                         slot.products[0] ??
                         null;
 
-                    if (! selected) {
+                    if (!selected) {
                         return null;
                     }
 
@@ -88,47 +75,53 @@ export default function ConfigurePcPage({
                         slot_label: slot.slot_label,
                     };
                 })
-                .filter((product): product is SelectedProduct => product !== null),
+                .filter((product): product is SelectedEntry => product !== null),
         [selectedBySlot, slots],
     );
 
-    const selectedTotalInCents = selectedProducts.reduce(
-        (sum, product) => sum + product.price_in_cents,
-        0,
-    );
-    const previewPriceInCents = Math.max(
-        0,
-        selectedTotalInCents + configuration.markup_in_cents,
-    );
-
-    const setSelectedSlot = (slotKey: string, value: string) => {
-        const nextProductId = Number(value);
-
-        if (! Number.isFinite(nextProductId)) {
-            return;
-        }
-
+    const setSelectedSlot = (slotKey: string, productId: number) => {
+        setDraftSaved(false);
         setSelectedBySlot((current) => ({
             ...current,
-            [slotKey]: nextProductId,
+            [slotKey]: productId,
         }));
     };
 
     const buyBuild = () => {
-        if (! slots.length || isBuying) {
+        if (!slots.length || isBuying || check?.has_errors) {
             return;
         }
 
         router.post(
             `/gaming-pcs/${configuration.id}/buy`,
-            {
-                selected_components: selectedBySlot,
-            },
+            { selected_components: selectedBySlot },
             {
                 onStart: () => setIsBuying(true),
                 onFinish: () => setIsBuying(false),
             },
         );
+    };
+
+    const saveDraft = () => {
+        if (!slots.length || isSavingDraft) {
+            return;
+        }
+
+        router.post(
+            `/gaming-pcs/${configuration.id}/drafts`,
+            { selected_components: selectedBySlot },
+            {
+                preserveScroll: true,
+                onStart: () => setIsSavingDraft(true),
+                onSuccess: () => setDraftSaved(true),
+                onFinish: () => setIsSavingDraft(false),
+            },
+        );
+    };
+
+    const resetSelections = () => {
+        setDraftSaved(false);
+        setSelectedBySlot(defaultSelections);
     };
 
     return (
@@ -148,7 +141,28 @@ export default function ConfigurePcPage({
                     </span>
                 </div>
 
-                <section className="mt-6 grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
+                <section className="mt-6 grid gap-6 xl:grid-cols-[200px_1fr_minmax(340px,0.9fr)]">
+                    <nav className="hidden xl:block">
+                        <div className="sticky top-6 space-y-1">
+                            <p className="mb-3 text-xs uppercase tracking-[0.16em] text-[#9cf5d8]">
+                                Components
+                            </p>
+                            {slots.map((slot) => (
+                                <a
+                                    key={slot.slot_key}
+                                    href={`#slot-${slot.slot_key}`}
+                                    className="block rounded-lg px-3 py-1.5 text-sm text-slate-400 transition hover:bg-white/[0.04] hover:text-[#9cf5d8]"
+                                >
+                                    {slot.component_type
+                                        ? COMPONENT_TYPE_LABELS[
+                                              slot.component_type
+                                          ]
+                                        : slot.slot_label}
+                                </a>
+                            ))}
+                        </div>
+                    </nav>
+
                     <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-5 sm:p-6">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
@@ -168,145 +182,39 @@ export default function ConfigurePcPage({
                             </span>
                         </div>
 
-                        <div className="mt-5 space-y-3">
-                            {slots.map((slot) => {
-                                const selectedId =
-                                    selectedBySlot[slot.slot_key] ??
-                                    slot.default_product_id;
-
-                                return (
-                                    <label
-                                        key={slot.slot_key}
-                                        className="block rounded-2xl border border-white/10 bg-[#0b1321] p-4"
-                                    >
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <p className="text-sm font-semibold text-white">
-                                                {slot.slot_label}
-                                            </p>
-                                            <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
-                                                {slot.category_name}
-                                            </p>
-                                        </div>
-
-                                        <select
-                                            value={String(selectedId)}
-                                            onChange={(event) =>
-                                                setSelectedSlot(
-                                                    slot.slot_key,
-                                                    event.target.value,
-                                                )
-                                            }
-                                            disabled={!slot.products.length}
-                                            className="mt-3 w-full rounded-xl border border-white/15 bg-[#111821] px-3 py-2 text-sm text-slate-100"
-                                        >
-                                            {slot.products.map((product) => (
-                                                <option
-                                                    key={product.id}
-                                                    value={String(product.id)}
-                                                >
-                                                    {product.name} -{' '}
-                                                    {formatPrice(product.price_in_cents)}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                );
-                            })}
+                        <div className="mt-5 space-y-4">
+                            {slots.map((slot) => (
+                                <SlotSection
+                                    key={slot.slot_key}
+                                    slot={slot}
+                                    selectedId={
+                                        selectedBySlot[slot.slot_key] ??
+                                        slot.default_product_id
+                                    }
+                                    annotations={
+                                        check?.option_annotations[
+                                            slot.slot_key
+                                        ]
+                                    }
+                                    onSelect={setSelectedSlot}
+                                />
+                            ))}
                         </div>
                     </article>
 
-                    <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-4 sm:p-5 lg:sticky lg:top-6 lg:h-fit">
-                        <p className="mb-4 text-xs uppercase tracking-[0.16em] text-[#9cf5d8]">
-                            Live Preview
-                        </p>
-
-                        <article className="mx-auto max-w-[390px] rounded-[28px] border border-white/15 bg-gradient-to-b from-[#131a26] via-[#0c111a] to-[#070b12] p-4 shadow-[0_18px_35px_rgba(0,0,0,0.45)]">
-                            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f1622]">
-                                <div className="aspect-[4/3]">
-                                    {configuration.image ? (
-                                        <img
-                                            src={configuration.image}
-                                            alt={configuration.name}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
-                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_18%,rgba(0,189,125,0.25),transparent_42%)]" />
-                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,rgba(0,189,125,0.14),transparent_48%)]" />
-                                            <Monitor className="relative h-16 w-16 text-slate-500" />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <h2 className="mt-4 text-center text-3xl font-black uppercase tracking-[0.02em] text-white">
-                                {configuration.name}
-                            </h2>
-
-                            <div className="mt-4 text-center">
-                                <p className="text-4xl font-black text-white">
-                                    {formatPrice(previewPriceInCents)}
-                                </p>
-                                <p className="mt-1 text-xs text-slate-400">
-                                    selected parts + base markup
-                                </p>
-                            </div>
-
-                            <div className="mt-4 space-y-2 rounded-xl border border-white/10 bg-[#0a121f] p-3 text-sm text-slate-300">
-                                <p>
-                                    Selected parts total:{' '}
-                                    <span className="font-semibold text-white">
-                                        {formatPrice(selectedTotalInCents)}
-                                    </span>
-                                </p>
-                                <p>
-                                    Base build markup:{' '}
-                                    <span className="font-semibold text-white">
-                                        {formatPrice(configuration.markup_in_cents)}
-                                    </span>
-                                </p>
-                            </div>
-
-                            {errorMessages.length > 0 && (
-                                <div className="mt-4 space-y-1 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
-                                    {errorMessages.map((message, index) => (
-                                        <p key={index}>{message}</p>
-                                    ))}
-                                </div>
-                            )}
-
-                            <button
-                                type="button"
-                                onClick={buyBuild}
-                                disabled={!slots.length || isBuying}
-                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#00bd7d] px-4 py-3 text-sm font-bold text-[#04120d] shadow-[0_0_18px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a] disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                <ShoppingCart className="h-4 w-4" />
-                                {isBuying ? 'Adding to Cart...' : 'Buy This Build'}
-                            </button>
-
-                            <div className="mt-4 space-y-2">
-                                {selectedProducts.map((product) => (
-                                    <div
-                                        key={product.slot_key}
-                                        className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2"
-                                    >
-                                        <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
-                                            {product.slot_label}
-                                        </p>
-                                        <p className="mt-1 text-sm text-slate-200">
-                                            {product.name}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-                                <Cpu className="h-3.5 w-3.5" />
-                                {selectedProducts.length} selected components
-                            </div>
-                        </article>
-                    </aside>
+                    <SummaryCard
+                        configuration={configuration}
+                        selectedProducts={selectedProducts}
+                        check={check}
+                        isChecking={isChecking}
+                        serverErrors={serverErrors}
+                        isBuying={isBuying}
+                        isSavingDraft={isSavingDraft}
+                        draftSaved={draftSaved}
+                        onBuy={buyBuild}
+                        onSaveDraft={saveDraft}
+                        onReset={resetSelections}
+                    />
                 </section>
             </StoreLayout>
         </>

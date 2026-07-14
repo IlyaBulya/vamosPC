@@ -288,6 +288,21 @@ class GamingPcController extends Controller
         return back()->with('status', 'Configuration draft saved.');
     }
 
+    public function destroyDraft(Request $request, UserConfiguration $userConfiguration): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null, 403);
+        abort_unless(
+            (int) $userConfiguration->user_id === (int) $user->id
+                && $userConfiguration->status === 'draft',
+            403,
+        );
+
+        $userConfiguration->delete();
+
+        return back()->with('status', 'Draft deleted.');
+    }
+
     private function configurationRouteSlug(Configuration $configuration): string
     {
         return $configuration->slug ?? Str::slug($configuration->name).'-'.$configuration->id;
