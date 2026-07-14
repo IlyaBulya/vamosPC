@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
+use App\Models\ConfigurationSlot;
 use App\Models\Product;
 use App\Models\UserConfiguration;
+use App\Services\ConfiguratorService;
 use App\Support\ConfigurationSlots;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +73,7 @@ class ConfigurationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        [$data, $productIds] = $this->normalizeConfigurationData(
+        [$data, $productIds, $quantities] = $this->normalizeConfigurationData(
             $this->validated($request),
         );
 
@@ -85,10 +88,10 @@ class ConfigurationController extends Controller
             $data['image'] = null;
         }
 
-        DB::transaction(function () use ($data, $productIds): void {
+        DB::transaction(function () use ($data, $productIds, $quantities): void {
             $configuration = Configuration::query()->create($data);
             $configuration->products()->sync($productIds);
-            $this->finalizeConfiguration($configuration, $productIds);
+            $this->finalizeConfiguration($configuration, $productIds, $quantities);
         });
 
         return redirect()
@@ -98,7 +101,7 @@ class ConfigurationController extends Controller
 
     public function edit(Configuration $configuration): Response
     {
-        $configuration->load(['products:id']);
+        $configuration->load(['products:id', 'slots']);
 
         return Inertia::render('admin/configurations/form', [
             'mode' => 'edit',
@@ -113,6 +116,11 @@ class ConfigurationController extends Controller
                     ->map(fn ($productId): int => (int) $productId)
                     ->values()
                     ->all(),
+                'quantities' => $configuration->slots
+                    ->mapWithKeys(fn (ConfigurationSlot $slot): array => [
+                        (string) $slot->default_product_id => (int) $slot->quantity,
+                    ])
+                    ->all(),
             ],
             'components' => $this->components(),
         ]);
@@ -120,7 +128,7 @@ class ConfigurationController extends Controller
 
     public function update(Request $request, Configuration $configuration): RedirectResponse
     {
-        [$data, $productIds] = $this->normalizeConfigurationData(
+        [$data, $productIds, $quantities] = $this->normalizeConfigurationData(
             $this->validated($request),
         );
         $removeImage = (bool) ($data['remove_image'] ?? false);
@@ -139,10 +147,10 @@ class ConfigurationController extends Controller
             unset($data['image']);
         }
 
-        DB::transaction(function () use ($configuration, $data, $productIds): void {
+        DB::transaction(function () use ($configuration, $data, $productIds, $quantities): void {
             $configuration->update($data);
             $configuration->products()->sync($productIds);
-            $this->finalizeConfiguration($configuration, $productIds);
+            $this->finalizeConfiguration($configuration, $productIds, $quantities);
         });
 
         if (array_key_exists('image', $data) && $data['image'] !== $currentImage) {
@@ -214,24 +222,77 @@ class ConfigurationController extends Controller
     }
 
     /**
+     * Live compatibility verdict for the configuration form: takes the
+     * currently selected component ids + quantities and returns the same
+     * report shape the storefront uses.
+     */
+    public function check(Request $request, ConfiguratorService $configurator): JsonResponse
+    {
+        $data = $request->validate([
+            'products' => ['nullable', 'array'],
+            'products.*' => ['integer', 'exists:products,id'],
+            'quantities' => ['nullable', 'array'],
+            'quantities.*' => ['integer', 'min:1', 'max:10'],
+        ]);
+
+        $productIds = collect($data['products'] ?? [])
+            ->map(fn ($productId): int => (int) $productId)
+            ->unique()
+            ->values();
+        $quantities = collect($data['quantities'] ?? [])
+            ->mapWithKeys(fn ($quantity, $productId): array => [(int) $productId => (int) $quantity]);
+
+        $products = Product::query()
+            ->whereIn('id', $productIds)
+            ->get()
+            ->flatMap(fn (Product $product) => array_fill(
+                0,
+                max(1, (int) $quantities->get((int) $product->id, 1)),
+                $product,
+            ))
+            ->values();
+
+        $componentsTotal = (int) $products->sum(
+            fn (Product $product): int => (int) $product->price_in_cents,
+        );
+
+        return response()->json([
+            ...$configurator->compatibilityReport($products),
+            'components_total_in_cents' => $componentsTotal,
+        ]);
+    }
+
+    /**
      * Persist the derived fields that depend on the configuration's id and
      * component set: the canonical slug, the stored markup (manual price
      * minus components total), and the regenerated slots.
      *
      * @param  array<int, int>  $productIds
+     * @param  array<int, int>  $quantities  product id => units per build
      */
-    private function finalizeConfiguration(Configuration $configuration, array $productIds): void
+    private function finalizeConfiguration(Configuration $configuration, array $productIds, array $quantities = []): void
     {
-        $componentsTotal = (int) Product::query()
-            ->whereIn('id', $productIds)
-            ->sum('price_in_cents');
+        $componentsTotal = $this->componentsTotal($productIds, $quantities);
 
         $configuration->forceFill([
             'slug' => Str::slug($configuration->name).'-'.$configuration->id,
             'markup_in_cents' => (int) $configuration->price - $componentsTotal,
         ])->save();
 
-        ConfigurationSlots::rebuildFromProducts($configuration);
+        ConfigurationSlots::rebuildFromProducts($configuration, $quantities);
+    }
+
+    /**
+     * @param  array<int, int>  $productIds
+     * @param  array<int, int>  $quantities
+     */
+    private function componentsTotal(array $productIds, array $quantities): int
+    {
+        return (int) Product::query()
+            ->whereIn('id', $productIds)
+            ->get(['id', 'price_in_cents'])
+            ->sum(fn (Product $product): int => (int) $product->price_in_cents
+                * max(1, (int) ($quantities[(int) $product->id] ?? 1)));
     }
 
     /**
@@ -280,12 +341,14 @@ class ConfigurationController extends Controller
                     fn ($query) => $query->where('is_component', true),
                 ),
             ],
+            'quantities' => ['nullable', 'array'],
+            'quantities.*' => ['integer', 'min:1', 'max:10'],
         ]);
     }
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{0: array<string, mixed>, 1: array<int, int>}
+     * @return array{0: array<string, mixed>, 1: array<int, int>, 2: array<int, int>}
      */
     private function normalizeConfigurationData(array $data): array
     {
@@ -295,19 +358,22 @@ class ConfigurationController extends Controller
             ->values()
             ->all();
 
-        unset($data['products']);
+        $quantities = collect($data['quantities'] ?? [])
+            ->mapWithKeys(fn ($quantity, $productId): array => [(int) $productId => (int) $quantity])
+            ->only($productIds)
+            ->all();
+
+        unset($data['products'], $data['quantities']);
 
         $manualPrice = (int) $data['price'];
 
         $data['price'] = $manualPrice > 0
             ? $manualPrice
-            : (int) Product::query()
-                ->whereIn('id', $productIds)
-                ->sum('price_in_cents');
+            : $this->componentsTotal($productIds, $quantities);
         $data['description'] = $data['description'] !== '' ? $data['description'] : null;
         $data['remove_image'] = (bool) ($data['remove_image'] ?? false);
 
-        return [$data, $productIds];
+        return [$data, $productIds, $quantities];
     }
 
     /**

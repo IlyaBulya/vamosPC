@@ -1,5 +1,15 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Cpu, Monitor, ShoppingCart } from 'lucide-react';
+import {
+    AlertTriangle,
+    Check,
+    Cpu,
+    Loader2,
+    Monitor,
+    ShoppingCart,
+    XCircle,
+    Zap,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useImagePreview } from '@/hooks/use-image-preview';
 import AdminLayout from '@/layouts/admin-layout';
+import { postJson, type Violation } from '@/lib/configurator';
 
 type ComponentOption = {
     id: number;
@@ -25,6 +36,14 @@ type ConfigurationFormData = {
     remove_image: boolean;
     price: string;
     products: string[];
+    quantities: Record<string, string>;
+};
+
+type AdminCheckResult = {
+    violations: Violation[];
+    has_errors: boolean;
+    load_watts: number | null;
+    components_total_in_cents: number;
 };
 
 function formatPrice(priceInCents: number) {
@@ -48,6 +67,7 @@ export default function AdminConfigurationFormPage({
         image: string | null;
         price: number;
         products: number[];
+        quantities: Record<string, number>;
     } | null;
     components: ComponentOption[];
 }) {
@@ -60,7 +80,14 @@ export default function AdminConfigurationFormPage({
         products: configuration
             ? configuration.products.map((productId) => String(productId))
             : [],
+        quantities: Object.fromEntries(
+            Object.entries(configuration?.quantities ?? {}).map(
+                ([productId, quantity]) => [productId, String(quantity)],
+            ),
+        ),
     });
+    const [check, setCheck] = useState<AdminCheckResult | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
     const imagePreview = useImagePreview(
         form.data.image,
         configuration?.image ?? null,
@@ -86,10 +113,71 @@ export default function AdminConfigurationFormPage({
     const selectedComponents = components.filter((component) =>
         selectedIdSet.has(component.id),
     );
+    const quantityOf = (productId: number) => {
+        const raw = Number(form.data.quantities[String(productId)] ?? '1');
+
+        return Number.isFinite(raw) && raw >= 1 ? Math.min(10, Math.round(raw)) : 1;
+    };
     const selectedComponentsTotal = selectedComponents.reduce(
-        (sum, component) => sum + component.price_in_cents,
+        (sum, component) =>
+            sum + component.price_in_cents * quantityOf(component.id),
         0,
     );
+
+    const productsKey = JSON.stringify([
+        form.data.products,
+        form.data.quantities,
+    ]);
+
+    useEffect(() => {
+        if (!form.data.products.length) {
+            setCheck(null);
+            return;
+        }
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => {
+            setIsChecking(true);
+            const [products, quantities] = JSON.parse(productsKey) as [
+                string[],
+                Record<string, string>,
+            ];
+            postJson<AdminCheckResult>(
+                '/admin/configurations/check',
+                {
+                    products: products.map(Number),
+                    quantities: Object.fromEntries(
+                        Object.entries(quantities).map(([id, qty]) => [
+                            id,
+                            Number(qty) || 1,
+                        ]),
+                    ),
+                },
+                controller.signal,
+            )
+                .then((result) => {
+                    setCheck(result);
+                    setIsChecking(false);
+                })
+                .catch((error: unknown) => {
+                    if (
+                        !(
+                            error instanceof DOMException &&
+                            error.name === 'AbortError'
+                        )
+                    ) {
+                        console.error(error);
+                        setIsChecking(false);
+                    }
+                });
+        }, 300);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [productsKey]);
 
     const manualPrice = Number(form.data.price);
     const previewPrice =
@@ -110,14 +198,29 @@ export default function AdminConfigurationFormPage({
             }
 
             form.setData('products', [...form.data.products, productKey]);
+            form.setData('quantities', {
+                ...form.data.quantities,
+                [productKey]: form.data.quantities[productKey] ?? '1',
+            });
 
             return;
         }
+
+        const nextQuantities = { ...form.data.quantities };
+        delete nextQuantities[productKey];
 
         form.setData(
             'products',
             form.data.products.filter((value) => value !== productKey),
         );
+        form.setData('quantities', nextQuantities);
+    };
+
+    const setQuantity = (productId: number, value: string) => {
+        form.setData('quantities', {
+            ...form.data.quantities,
+            [String(productId)]: value,
+        });
     };
 
     const onImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,11 +416,51 @@ export default function AdminConfigurationFormPage({
                                                             <p className="font-medium text-white">
                                                                 {component.name}
                                                             </p>
-                                                            <p className="text-sm font-semibold text-[#9cf5d8]">
-                                                                {formatPrice(
-                                                                    component.price_in_cents,
-                                                                )}
-                                                            </p>
+                                                            <div className="flex items-center gap-2">
+                                                                {selectedIdSet.has(
+                                                                    component.id,
+                                                                ) ? (
+                                                                    <span className="flex items-center gap-1 text-xs text-slate-400">
+                                                                        ×
+                                                                        <input
+                                                                            type="number"
+                                                                            min={1}
+                                                                            max={10}
+                                                                            value={
+                                                                                form
+                                                                                    .data
+                                                                                    .quantities[
+                                                                                    String(
+                                                                                        component.id,
+                                                                                    )
+                                                                                ] ??
+                                                                                '1'
+                                                                            }
+                                                                            onClick={(
+                                                                                event,
+                                                                            ) =>
+                                                                                event.preventDefault()
+                                                                            }
+                                                                            onChange={(
+                                                                                event,
+                                                                            ) =>
+                                                                                setQuantity(
+                                                                                    component.id,
+                                                                                    event
+                                                                                        .target
+                                                                                        .value,
+                                                                                )
+                                                                            }
+                                                                            className="h-7 w-14 rounded-lg border border-white/15 bg-[#0b1321] px-2 text-center text-xs text-slate-100"
+                                                                        />
+                                                                    </span>
+                                                                ) : null}
+                                                                <p className="text-sm font-semibold text-[#9cf5d8]">
+                                                                    {formatPrice(
+                                                                        component.price_in_cents,
+                                                                    )}
+                                                                </p>
+                                                            </div>
                                                         </div>
 
                                                         {component.description ? (
@@ -333,11 +476,27 @@ export default function AdminConfigurationFormPage({
                                 )}
                             </div>
 
-                            <div className="mt-4 rounded-xl border border-white/10 bg-[#0a121f] px-3 py-3 text-sm text-slate-300">
-                                Selected component total:{' '}
-                                <span className="font-semibold text-white">
-                                    {formatPrice(selectedComponentsTotal)}
-                                </span>
+                            <div className="mt-4 space-y-1 rounded-xl border border-white/10 bg-[#0a121f] px-3 py-3 text-sm text-slate-300">
+                                <p className="flex justify-between">
+                                    <span>Components total</span>
+                                    <span className="font-semibold text-white">
+                                        {formatPrice(selectedComponentsTotal)}
+                                    </span>
+                                </p>
+                                <p className="flex justify-between">
+                                    <span>Markup (price − components)</span>
+                                    <span
+                                        className={`font-semibold ${
+                                            previewPrice - selectedComponentsTotal < 0
+                                                ? 'text-red-300'
+                                                : 'text-white'
+                                        }`}
+                                    >
+                                        {formatPrice(
+                                            previewPrice - selectedComponentsTotal,
+                                        )}
+                                    </span>
+                                </p>
                             </div>
 
                             <InputError message={form.errors.products} />
@@ -396,9 +555,61 @@ export default function AdminConfigurationFormPage({
                             </div>
 
                             <div className="mt-4 flex items-center justify-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-400">
-                                <span className="h-3 w-3 rounded-full border border-white/50 bg-[#00bd7d] shadow-[0_0_12px_rgba(0,189,125,0.8)]" />
-                                Build Ready
+                                {isChecking ? (
+                                    <>
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        Checking...
+                                    </>
+                                ) : check?.has_errors ? (
+                                    <>
+                                        <span className="h-3 w-3 rounded-full border border-white/50 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
+                                        Incompatible Build
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="h-3 w-3 rounded-full border border-white/50 bg-[#00bd7d] shadow-[0_0_12px_rgba(0,189,125,0.8)]" />
+                                        Build Ready
+                                    </>
+                                )}
                             </div>
+
+                            {check?.load_watts != null && (
+                                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+                                    <Zap className="h-3.5 w-3.5 text-[#9cf5d8]" />
+                                    Estimated load: {check.load_watts} W
+                                </p>
+                            )}
+
+                            {(check?.violations.length ?? 0) > 0 && (
+                                <div className="mt-3 space-y-1.5">
+                                    {check!.violations.map((violation, index) => (
+                                        <div
+                                            key={index}
+                                            className={`flex items-start gap-2 rounded-xl border p-2.5 text-xs ${
+                                                violation.severity === 'error'
+                                                    ? 'border-red-500/40 bg-red-500/10 text-red-200'
+                                                    : 'border-amber-400/40 bg-amber-400/10 text-amber-200'
+                                            }`}
+                                        >
+                                            {violation.severity === 'error' ? (
+                                                <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                            ) : (
+                                                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                            )}
+                                            <span>{violation.message}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {check !== null &&
+                                !check.has_errors &&
+                                !check.violations.length && (
+                                    <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#9cf5d8]">
+                                        <Check className="h-3.5 w-3.5" />
+                                        All components are compatible
+                                    </p>
+                                )}
 
                             <h3 className="mt-4 text-center text-3xl font-black uppercase tracking-[0.02em] text-white">
                                 {form.data.name || 'New Configuration'}

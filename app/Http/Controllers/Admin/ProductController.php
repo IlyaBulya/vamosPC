@@ -158,6 +158,7 @@ class ProductController extends Controller
                 'id' => $category->id,
                 'name' => $category->name,
                 'type' => $category->type,
+                'suggested_component_type' => ComponentType::fromCategoryName($category->name)?->value,
             ])
             ->all();
 

@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Cpu,
     FolderTree,
+    HeartPulse,
     LayoutDashboard,
     ListOrdered,
     LogOut,
@@ -49,6 +50,7 @@ const navigation = [
         icon: ListOrdered,
     },
     { title: 'Categories', href: '/admin/categories', icon: FolderTree },
+    { title: 'Catalog Health', href: '/admin/catalog-health', icon: HeartPulse },
     { title: 'Orders', href: '/admin/orders', icon: ShoppingCart },
     { title: 'Users', href: '/admin/users', icon: Users },
 ];

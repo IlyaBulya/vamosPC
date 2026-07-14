@@ -14,8 +14,10 @@ class ConfigurationSlots
      * product id, with "#N" labels when a category appears more than once.
      *
      * Temporary bridge until the admin slot editor manages slots directly.
+     *
+     * @param  array<int, int>  $quantities  product id => units per build
      */
-    public static function rebuildFromProducts(Configuration $configuration): void
+    public static function rebuildFromProducts(Configuration $configuration, array $quantities = []): void
     {
         $configuration->load(['products.category:id,name']);
 
@@ -47,7 +49,7 @@ class ConfigurationSlots
             $configuration->slots()->create([
                 'component_type' => $product->component_type,
                 'label' => $label,
-                'quantity' => 1,
+                'quantity' => max(1, (int) ($quantities[(int) $product->id] ?? 1)),
                 'default_product_id' => (int) $product->id,
                 'is_required' => true,
                 'sort_order' => ($position + 1) * 10,

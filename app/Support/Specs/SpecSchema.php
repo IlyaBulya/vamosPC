@@ -127,20 +127,36 @@ class SpecSchema
     }
 
     /**
-     * Drop unknown keys and empty values from a specs payload so only
-     * schema-defined fields are persisted.
+     * Drop unknown keys and empty values from a specs payload and cast the
+     * remaining values to their schema types (form submissions arrive as
+     * strings), so only clean, typed fields are persisted.
      *
      * @param  array<string, mixed>  $specs
      * @return array<string, mixed>|null
      */
     public static function filter(ComponentType $type, array $specs): ?array
     {
-        $known = self::fieldsFor($type);
+        $castScalar = fn ($value) => is_string($value) && ctype_digit($value)
+            ? (int) $value
+            : $value;
 
-        $filtered = array_filter(
-            array_intersect_key($specs, $known),
-            fn ($value): bool => $value !== null && $value !== '' && $value !== [],
-        );
+        $filtered = [];
+
+        foreach (self::fieldsFor($type) as $key => $field) {
+            $value = $specs[$key] ?? null;
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $filtered[$key] = match ($field['type']) {
+                'integer' => (int) $value,
+                'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+                'enum' => $castScalar($value),
+                'enum_list' => array_values(array_map($castScalar, (array) $value)),
+                default => (string) $value,
+            };
+        }
 
         return $filtered === [] ? null : $filtered;
     }

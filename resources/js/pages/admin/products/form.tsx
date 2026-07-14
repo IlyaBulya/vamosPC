@@ -1,16 +1,23 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import SpecFields, { type SpecValues } from '@/components/admin/spec-fields';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useImagePreview } from '@/hooks/use-image-preview';
 import AdminLayout from '@/layouts/admin-layout';
+import {
+    COMPONENT_TYPE_LABELS,
+    SPEC_SCHEMA,
+    type ComponentType,
+} from '@/lib/spec-schema';
 
 type CategoryOption = {
     id: number;
     name: string;
     type: string;
+    suggested_component_type: string | null;
 };
 
 type ProductFormData = {
@@ -22,6 +29,8 @@ type ProductFormData = {
     price_in_cents: string;
     stock: string;
     color: string;
+    component_type: string;
+    specs: SpecValues;
     is_component: boolean;
     is_sellable: boolean;
 };
@@ -35,9 +44,63 @@ type ProductValue = {
     price_in_cents: number;
     stock: number;
     color: string | null;
+    component_type: string | null;
+    specs: Record<string, unknown> | null;
     is_component: boolean;
     is_sellable: boolean;
 };
+
+function toSpecValues(specs: Record<string, unknown> | null): SpecValues {
+    return Object.fromEntries(
+        Object.entries(specs ?? {}).map(([key, value]) => [
+            key,
+            typeof value === 'boolean'
+                ? value
+                : Array.isArray(value)
+                  ? value.map(String)
+                  : String(value ?? ''),
+        ]),
+    );
+}
+
+/**
+ * Split free-form comma lists into arrays and drop empty values before
+ * the payload leaves the browser.
+ */
+function normalizeSpecs(componentType: string, specs: SpecValues): SpecValues {
+    if (!(componentType in SPEC_SCHEMA)) {
+        return {};
+    }
+
+    const normalized: SpecValues = {};
+
+    for (const field of SPEC_SCHEMA[componentType as ComponentType]) {
+        const value = specs[field.key];
+
+        if (value === undefined || value === '' || (Array.isArray(value) && !value.length)) {
+            continue;
+        }
+
+        if (
+            field.type === 'enum_list' &&
+            typeof value === 'string'
+        ) {
+            const items = value
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+            if (items.length) {
+                normalized[field.key] = items;
+            }
+            continue;
+        }
+
+        normalized[field.key] = value;
+    }
+
+    return normalized;
+}
 
 export default function AdminProductFormPage({
     mode,
@@ -57,6 +120,8 @@ export default function AdminProductFormPage({
         price_in_cents: product ? String(product.price_in_cents) : '0',
         stock: product ? String(product.stock) : '0',
         color: product?.color ?? '',
+        component_type: product?.component_type ?? '',
+        specs: toSpecValues(product?.specs ?? null),
         is_component: product?.is_component ?? false,
         is_sellable: product?.is_sellable ?? true,
     });
@@ -76,8 +141,32 @@ export default function AdminProductFormPage({
         }
     };
 
+    const onCategoryChange = (categoryId: string) => {
+        form.setData('category_id', categoryId);
+
+        const category = categories.find(
+            (item) => String(item.id) === categoryId,
+        );
+
+        if (category?.suggested_component_type) {
+            form.setData(
+                'component_type',
+                category.suggested_component_type,
+            );
+        }
+    };
+
+    const setSpec = (key: string, value: string | boolean | string[]) => {
+        form.setData('specs', { ...form.data.specs, [key]: value });
+    };
+
     const submit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        form.transform((data) => ({
+            ...data,
+            specs: normalizeSpecs(data.component_type, data.specs),
+        }));
 
         if (mode === 'create') {
             form.post('/admin/products', {
@@ -120,7 +209,7 @@ export default function AdminProductFormPage({
                                 id="category_id"
                                 value={form.data.category_id}
                                 onChange={(event) =>
-                                    form.setData('category_id', event.target.value)
+                                    onCategoryChange(event.target.value)
                                 }
                                 className="h-11 rounded-xl border border-white/15 bg-[#0b1321] px-3 text-sm text-slate-100"
                             >
@@ -305,6 +394,54 @@ export default function AdminProductFormPage({
                                 Available for direct sale
                             </Label>
                         </div>
+                    </div>
+
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1321] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-lg font-semibold text-white">
+                                    Component Specs
+                                </h2>
+                                <p className="text-sm text-slate-400">
+                                    Used by the configurator for compatibility
+                                    checks. Leave blank what you don't know —
+                                    unfilled specs are simply not verified.
+                                </p>
+                            </div>
+                            <select
+                                value={form.data.component_type}
+                                onChange={(event) =>
+                                    form.setData(
+                                        'component_type',
+                                        event.target.value,
+                                    )
+                                }
+                                className="h-10 rounded-xl border border-white/15 bg-[#0a121f] px-3 text-sm text-slate-100"
+                            >
+                                <option value="">Not a PC component</option>
+                                {Object.entries(COMPONENT_TYPE_LABELS).map(
+                                    ([value, label]) => (
+                                        <option key={value} value={value}>
+                                            {label}
+                                        </option>
+                                    ),
+                                )}
+                            </select>
+                        </div>
+
+                        {form.data.component_type in SPEC_SCHEMA && (
+                            <div className="mt-4">
+                                <SpecFields
+                                    componentType={
+                                        form.data
+                                            .component_type as ComponentType
+                                    }
+                                    values={form.data.specs}
+                                    onChange={setSpec}
+                                />
+                            </div>
+                        )}
+                        <InputError message={form.errors.component_type} />
                     </div>
 
                     <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1321] px-4 py-4 text-sm text-slate-400">

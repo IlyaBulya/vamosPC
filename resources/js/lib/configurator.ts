@@ -110,12 +110,12 @@ function xsrfToken(): string {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
-export async function postCheck(
-    configurationId: number,
-    selections: Record<string, number>,
+export async function postJson<T>(
+    url: string,
+    body: Record<string, unknown>,
     signal?: AbortSignal,
-): Promise<CheckResult> {
-    const response = await fetch(`/gaming-pcs/${configurationId}/check`, {
+): Promise<T> {
+    const response = await fetch(url, {
         method: 'POST',
         credentials: 'same-origin',
         signal,
@@ -125,12 +125,24 @@ export async function postCheck(
             'X-Requested-With': 'XMLHttpRequest',
             'X-XSRF-TOKEN': xsrfToken(),
         },
-        body: JSON.stringify({ selected_components: selections }),
+        body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-        throw new Error(`Compatibility check failed: ${response.status}`);
+        throw new Error(`Request to ${url} failed: ${response.status}`);
     }
 
     return response.json();
+}
+
+export async function postCheck(
+    configurationId: number,
+    selections: Record<string, number>,
+    signal?: AbortSignal,
+): Promise<CheckResult> {
+    return postJson<CheckResult>(
+        `/gaming-pcs/${configurationId}/check`,
+        { selected_components: selections },
+        signal,
+    );
 }
