@@ -71,20 +71,29 @@ const isPhoneLayout = (): boolean =>
         window.matchMedia('(pointer: coarse)').matches);
 
 function MobileConfigurationCard({ card }: { card: ConfigurationCard }) {
+    const compactDescription = card.description
+        .split(' | ')
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .slice(0, 2)
+        .join(' • ');
+
     return (
         <Link
             href={`/gaming-pcs/${card.id}/configure`}
-            className="group flex aspect-[3/5] snap-start flex-col overflow-hidden rounded-xl border border-white/12 bg-[#0a1019]/95 p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.4)] min-[390px]:rounded-2xl min-[390px]:p-2"
+            className="group relative isolate flex aspect-[1/2] snap-start flex-col overflow-hidden rounded-xl border border-white/12 bg-[#0a1019]/95 p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.4)] min-[390px]:rounded-2xl min-[390px]:p-2"
             aria-label={`Configure ${card.name}`}
         >
-            <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#08111c] min-[390px]:rounded-xl">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,189,125,0.16),transparent_48%)]" />
+
+            <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#08111c] min-[390px]:rounded-xl">
                 {card.image ? (
                     <img
                         src={card.image}
                         alt={card.name}
                         loading="lazy"
                         decoding="async"
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover transition duration-300 group-active:scale-[1.03]"
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-[0.55rem] font-semibold tracking-[0.12em] text-[#9cf5d8]/75 uppercase">
@@ -93,16 +102,28 @@ function MobileConfigurationCard({ card }: { card: ConfigurationCard }) {
                 )}
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col pt-1.5">
+            <div className="relative flex min-h-0 flex-1 flex-col pt-1.5">
                 <h3 className="line-clamp-2 text-[0.65rem] leading-tight font-bold text-white min-[390px]:text-xs">
                     {card.name}
                 </h3>
-                <p className="mt-auto truncate text-[0.62rem] leading-tight font-bold text-[#00bd7d] min-[390px]:text-xs">
-                    {formatPrice(card.price_in_cents)}
-                </p>
-                <span className="mt-0.5 truncate text-[0.5rem] leading-tight font-bold tracking-[0.08em] text-[#9cf5d8] uppercase min-[390px]:text-[0.6rem]">
-                    Configure
-                </span>
+
+                {compactDescription ? (
+                    <p className="mt-1 line-clamp-2 text-[0.5rem] leading-[1.25] text-slate-400 min-[390px]:text-[0.58rem]">
+                        {compactDescription}
+                    </p>
+                ) : null}
+
+                <div className="mt-auto border-t border-white/10 pt-1">
+                    <p className="text-[0.45rem] leading-none tracking-[0.08em] text-slate-500 uppercase min-[390px]:text-[0.5rem]">
+                        Starting at
+                    </p>
+                    <p className="mt-0.5 truncate text-[0.62rem] leading-tight font-bold text-[#00bd7d] min-[390px]:text-xs">
+                        {formatPrice(card.price_in_cents)}
+                    </p>
+                    <span className="mt-1 flex min-h-5 items-center justify-center rounded-md bg-gradient-to-r from-[#00bd7d] to-[#19d99b] px-1 text-[0.48rem] leading-none font-black tracking-[0.05em] text-[#04120d] uppercase min-[390px]:min-h-6 min-[390px]:text-[0.55rem]">
+                        Configure
+                    </span>
+                </div>
             </div>
         </Link>
     );
@@ -275,9 +296,9 @@ export default function Welcome({
                 contentClassName="relative max-w-none px-0 py-0 sm:px-0 lg:px-0"
                 footerClassName="mt-0 sm:mt-6"
             >
-                <div className="pointer-events-none absolute top-[18%] -left-20 h-72 w-72 rounded-full bg-[#00bd7d]/25 blur-3xl" />
-                <div className="pointer-events-none absolute top-[14%] -right-24 hidden h-96 w-96 rounded-full bg-[#00bd7d]/20 blur-3xl sm:block" />
-                <div className="pointer-events-none absolute bottom-0 left-0 hidden h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl sm:block" />
+                <div className="store-performance-glow pointer-events-none absolute top-[18%] -left-20 h-72 w-72 rounded-full bg-[#00bd7d]/25 blur-3xl" />
+                <div className="store-performance-glow pointer-events-none absolute top-[14%] -right-24 h-96 w-96 rounded-full bg-[#00bd7d]/20 blur-3xl" />
+                <div className="store-performance-glow pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl" />
 
                 <div className="relative">
                     <div className="homepage-hero-stage top-16 z-10 h-[calc(100dvh-64px)] w-full">
@@ -348,7 +369,7 @@ export default function Welcome({
 
                         {configurations.length ? (
                             <div
-                                className="mt-3 touch-pan-x snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-3 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                className="mt-3 touch-auto snap-x snap-proximity overflow-x-auto overscroll-x-contain px-3 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                                 aria-label="Gaming PC configurations"
                                 role="region"
                             >

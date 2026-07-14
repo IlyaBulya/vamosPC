@@ -143,6 +143,16 @@
 }
 
 @layer components {
+    .store-performance-glow {
+        display: none;
+    }
+
+    .store-header-surface {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background-color: #050b16;
+    }
+
     .homepage-hero-stage {
         position: relative;
     }
@@ -162,6 +172,16 @@
     }
 
     @media (min-width: 768px) {
+        .store-performance-glow {
+            display: block;
+        }
+
+        .store-header-surface {
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+            background-color: rgb(5 11 22 / 95%);
+        }
+
         .homepage-hero-stage {
             position: sticky;
         }
@@ -184,6 +204,16 @@
     }
 
     @media (min-width: 768px) and (max-height: 520px) and (pointer: coarse) {
+        .store-performance-glow {
+            display: none;
+        }
+
+        .store-header-surface {
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+            background-color: #050b16;
+        }
+
         .homepage-hero-stage {
             position: relative;
         }

@@ -25,8 +25,8 @@ export default function StoreLayout({
                 className,
             )}
         >
-            <div className="pointer-events-none absolute top-24 -left-16 h-72 w-72 rounded-full bg-[#00bd7d]/20 blur-3xl" />
-            <div className="pointer-events-none absolute top-44 right-0 h-80 w-80 rounded-full bg-[#00bd7d]/15 blur-3xl" />
+            <div className="store-performance-glow pointer-events-none absolute top-24 -left-16 h-72 w-72 rounded-full bg-[#00bd7d]/20 blur-3xl" />
+            <div className="store-performance-glow pointer-events-none absolute top-44 right-0 h-80 w-80 rounded-full bg-[#00bd7d]/15 blur-3xl" />
 
             <StoreHeader canRegister={canRegister} />
 
