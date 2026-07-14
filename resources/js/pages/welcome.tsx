@@ -65,6 +65,49 @@ const getCardsPerViewForWidth = (
     return 1;
 };
 
+const isPhoneLayout = (): boolean =>
+    window.innerWidth < 768 ||
+    (window.innerHeight < 520 &&
+        window.matchMedia('(pointer: coarse)').matches);
+
+function MobileConfigurationCard({ card }: { card: ConfigurationCard }) {
+    return (
+        <Link
+            href={`/gaming-pcs/${card.id}/configure`}
+            className="group flex aspect-[3/5] snap-start flex-col overflow-hidden rounded-xl border border-white/12 bg-[#0a1019]/95 p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.4)] min-[390px]:rounded-2xl min-[390px]:p-2"
+            aria-label={`Configure ${card.name}`}
+        >
+            <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#08111c] min-[390px]:rounded-xl">
+                {card.image ? (
+                    <img
+                        src={card.image}
+                        alt={card.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="absolute inset-0 h-full w-full object-cover"
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-[0.55rem] font-semibold tracking-[0.12em] text-[#9cf5d8]/75 uppercase">
+                        PC
+                    </div>
+                )}
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col pt-1.5">
+                <h3 className="line-clamp-2 text-[0.65rem] leading-tight font-bold text-white min-[390px]:text-xs">
+                    {card.name}
+                </h3>
+                <p className="mt-auto truncate text-[0.62rem] leading-tight font-bold text-[#00bd7d] min-[390px]:text-xs">
+                    {formatPrice(card.price_in_cents)}
+                </p>
+                <span className="mt-0.5 truncate text-[0.5rem] leading-tight font-bold tracking-[0.08em] text-[#9cf5d8] uppercase min-[390px]:text-[0.6rem]">
+                    Configure
+                </span>
+            </div>
+        </Link>
+    );
+}
+
 export default function Welcome({
     canRegister = true,
     configurations = [],
@@ -94,18 +137,28 @@ export default function Welcome({
         const update = () => {
             frameId = null;
 
+            const rail = cardsRailRef.current;
+            if (isPhoneLayout()) {
+                if (rail) {
+                    rail.style.transform = 'translate3d(0, 0, 0)';
+                }
+                if (heroContentRef.current) {
+                    heroContentRef.current.style.filter = 'none';
+                    heroContentRef.current.style.opacity = '1';
+                }
+                if (heroShadeRef.current) {
+                    heroShadeRef.current.style.opacity = '0';
+                }
+
+                return;
+            }
+
             const visibleViewportWidth =
                 cardsViewportRef.current?.clientWidth ?? 0;
-            const isMobileViewport =
-                window.innerWidth < 768 ||
-                (window.innerHeight < 520 &&
-                    window.matchMedia('(pointer: coarse)').matches);
-            const cardsPerViewport = isMobileViewport
-                ? 1
-                : getCardsPerViewForWidth(
-                      visibleViewportWidth,
-                      maxCardsPerView,
-                  );
+            const cardsPerViewport = getCardsPerViewForWidth(
+                visibleViewportWidth,
+                maxCardsPerView,
+            );
             const nextDesktopCardWidth =
                 visibleViewportWidth > 0
                     ? (visibleViewportWidth -
@@ -118,7 +171,6 @@ export default function Welcome({
                     : nextDesktopCardWidth;
             });
 
-            const rail = cardsRailRef.current;
             const railWidth = cardsRailRef.current?.scrollWidth ?? 0;
             const maxHorizontalShift = Math.max(
                 railWidth - visibleViewportWidth,
@@ -166,8 +218,7 @@ export default function Welcome({
                 rail.style.transform = `translate3d(${translateX}px, 0, 0)`;
             }
             if (heroContentRef.current) {
-                const maximumBlur = isMobileViewport ? 8 : 12;
-                heroContentRef.current.style.filter = `blur(${heroTransitionProgress * maximumBlur}px)`;
+                heroContentRef.current.style.filter = `blur(${heroTransitionProgress * 12}px)`;
                 heroContentRef.current.style.opacity = `${1 - heroTransitionProgress * 0.72}`;
             }
             if (heroShadeRef.current) {
@@ -181,8 +232,14 @@ export default function Welcome({
             }
         };
 
+        const handleScroll = () => {
+            if (!isPhoneLayout()) {
+                scheduleUpdate();
+            }
+        };
+
         scheduleUpdate();
-        window.addEventListener('scroll', scheduleUpdate, { passive: true });
+        window.addEventListener('scroll', handleScroll, { passive: true });
         window.addEventListener('resize', scheduleUpdate);
 
         const resizeObserver = new ResizeObserver(scheduleUpdate);
@@ -204,7 +261,7 @@ export default function Welcome({
                 window.cancelAnimationFrame(frameId);
             }
             resizeObserver.disconnect();
-            window.removeEventListener('scroll', scheduleUpdate);
+            window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', scheduleUpdate);
         };
     }, [configurations.length, maxCardsPerView]);
@@ -223,12 +280,12 @@ export default function Welcome({
                 <div className="pointer-events-none absolute bottom-0 left-0 hidden h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl sm:block" />
 
                 <div className="relative">
-                    <div className="sticky top-16 z-10 h-[calc(100dvh-64px)] w-full">
+                    <div className="homepage-hero-stage top-16 z-10 h-[calc(100dvh-64px)] w-full">
                         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_73%_52%,rgba(0,189,125,0.22),transparent_40%)]" />
 
                         <section
                             ref={heroContentRef}
-                            className="relative grid h-full w-full grid-cols-1 items-center gap-8 px-4 py-6 transition-[filter,opacity] duration-150 ease-out will-change-[filter,opacity] sm:px-8 sm:py-8 lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:px-16 lg:py-12 [@media(max-height:500px)]:py-3"
+                            className="homepage-hero-content relative grid h-full w-full grid-cols-1 items-center gap-8 px-4 py-6 sm:px-8 sm:py-8 lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:px-16 lg:py-12 [@media(max-height:500px)]:py-3"
                         >
                             <div className="max-w-[700px]">
                                 <h1 className="text-[2.6rem] leading-none font-black tracking-tight min-[390px]:text-5xl sm:text-6xl lg:text-[98px] lg:leading-[0.96]">
@@ -277,13 +334,44 @@ export default function Welcome({
 
                         <div
                             ref={heroShadeRef}
-                            className="will-change-opacity pointer-events-none absolute inset-0 z-10 bg-[#030712] opacity-0 transition-opacity duration-150 ease-out"
+                            className="homepage-hero-shade will-change-opacity pointer-events-none absolute inset-0 z-10 bg-[#030712] opacity-0 transition-opacity duration-150 ease-out"
                         />
                     </div>
 
+                    <section className="homepage-mobile-carousel relative z-20 bg-[#030712] py-5">
+                        <div className="px-3">
+                            <p className="text-center text-[0.65rem] leading-4 tracking-[0.16em] text-slate-400 uppercase">
+                                THE PINNACLE OF CUSTOM GAMING RIGS. BUILT FOR
+                                YOU.
+                            </p>
+                        </div>
+
+                        {configurations.length ? (
+                            <div
+                                className="mt-3 touch-pan-x snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-3 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                aria-label="Gaming PC configurations"
+                                role="region"
+                            >
+                                <div className="grid w-max auto-cols-[calc((100vw-2.5rem)/3)] grid-flow-col gap-2">
+                                    {configurations.map((card) => (
+                                        <MobileConfigurationCard
+                                            key={card.id}
+                                            card={card}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="px-4 py-10 text-center text-sm text-slate-300">
+                                No configurations found. Create one from Admin
+                                to show it here.
+                            </div>
+                        )}
+                    </section>
+
                     <section
                         ref={cardsSectionRef}
-                        className="relative z-20 w-full"
+                        className="homepage-desktop-scroll relative z-20 w-full"
                         style={{
                             height: `calc(100dvh - 64px + ${horizontalScrollDistance}px)`,
                         }}
@@ -373,6 +461,8 @@ export default function Welcome({
                                                                                 alt={
                                                                                     card.name
                                                                                 }
+                                                                                loading="lazy"
+                                                                                decoding="async"
                                                                                 className="absolute inset-0 h-full w-full object-cover"
                                                                             />
                                                                         ) : (
