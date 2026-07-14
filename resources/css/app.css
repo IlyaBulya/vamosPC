@@ -154,7 +154,14 @@
     }
 
     .homepage-hero-stage {
+        height: calc(100vh - 4rem);
+        height: calc(100svh - 4rem);
         position: relative;
+    }
+
+    .mobile-configuration-card {
+        height: clamp(22rem, 62vh, 31rem);
+        height: clamp(22rem, 62svh, 31rem);
     }
 
     .homepage-hero-content {
@@ -183,6 +190,7 @@
         }
 
         .homepage-hero-stage {
+            height: calc(100dvh - 4rem);
             position: sticky;
         }
 
@@ -215,6 +223,7 @@
         }
 
         .homepage-hero-stage {
+            height: calc(100svh - 4rem);
             position: relative;
         }
 

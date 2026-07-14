@@ -90,7 +90,7 @@ function MobileConfigurationCard({ card }: { card: ConfigurationCard }) {
     return (
         <Link
             href={`/gaming-pcs/${card.id}/configure`}
-            className="group relative isolate flex h-[clamp(22rem,62dvh,31rem)] snap-start flex-col overflow-hidden rounded-[26px] border border-white/12 bg-[#0a1019]/98 p-3 shadow-[0_18px_42px_rgba(0,0,0,0.48)] ring-1 ring-white/5"
+            className="mobile-configuration-card group relative isolate flex snap-start flex-col overflow-hidden rounded-[26px] border border-white/12 bg-[#0a1019]/98 p-3 shadow-[0_18px_42px_rgba(0,0,0,0.48)] ring-1 ring-white/5"
             aria-label={`Configure ${card.name}`}
         >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,189,125,0.2),transparent_45%)]" />
@@ -337,12 +337,12 @@ export default function Welcome({
                 <div className="store-performance-glow pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl" />
 
                 <div className="relative">
-                    <div className="homepage-hero-stage top-16 z-10 h-[calc(100dvh-64px)] w-full">
+                    <div className="homepage-hero-stage top-16 z-10 w-full">
                         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_73%_52%,rgba(0,189,125,0.22),transparent_40%)]" />
 
                         <section
                             ref={heroContentRef}
-                            className="homepage-hero-content relative grid h-full w-full grid-cols-1 items-center gap-8 px-4 py-6 sm:px-8 sm:py-8 lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:px-16 lg:py-12 [@media(max-height:500px)]:py-3"
+                            className="homepage-hero-content relative grid h-full w-full grid-cols-1 items-center gap-8 px-4 py-6 sm:px-8 sm:py-8 lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:px-16 lg:py-12 [@media(min-width:768px)_and_(max-height:500px)]:py-3"
                         >
                             <div className="max-w-[700px]">
                                 <h1 className="text-[2.6rem] leading-none font-black tracking-tight min-[390px]:text-5xl sm:text-6xl lg:text-[98px] lg:leading-[0.96]">
@@ -351,13 +351,13 @@ export default function Welcome({
                                     </span>
                                 </h1>
 
-                                <p className="mt-3 max-w-[620px] text-[1.55rem] leading-[1.12] font-semibold text-white min-[360px]:text-[1.75rem] min-[390px]:text-3xl sm:mt-5 sm:text-5xl lg:text-[62px] lg:leading-[1.03] [@media(max-height:500px)]:mt-2">
+                                <p className="mt-3 max-w-[620px] text-[1.55rem] leading-[1.12] font-semibold text-white min-[360px]:text-[1.75rem] min-[390px]:text-3xl sm:mt-5 sm:text-5xl lg:text-[62px] lg:leading-[1.03] [@media(min-width:768px)_and_(max-height:500px)]:mt-2">
                                     custom high-performance
                                     <br />
                                     PC builds
                                 </p>
 
-                                <div className="mt-6 flex flex-col gap-3 min-[360px]:flex-row sm:mt-8 sm:flex-wrap sm:gap-4 lg:mt-10 [@media(max-height:500px)]:mt-3">
+                                <div className="mt-6 flex flex-col gap-3 min-[360px]:flex-row sm:mt-8 sm:flex-wrap sm:gap-4 lg:mt-10 [@media(min-width:768px)_and_(max-height:500px)]:mt-3">
                                     <Link
                                         href="/catalog"
                                         className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#00bd7d] px-5 py-2.5 text-base font-semibold text-white shadow-[0_0_25px_rgba(0,189,125,0.6)] transition hover:bg-[#02a96f] min-[360px]:w-auto sm:px-8 sm:py-3 sm:text-lg"
@@ -372,7 +372,7 @@ export default function Welcome({
                                     </button>
                                 </div>
 
-                                <div className="mt-5 flex flex-wrap gap-2 sm:mt-6 sm:gap-3 lg:mt-8 [@media(max-height:500px)]:hidden">
+                                <div className="mt-5 flex flex-wrap gap-2 sm:mt-6 sm:gap-3 lg:mt-8 [@media(min-width:768px)_and_(max-height:500px)]:hidden">
                                     {[
                                         'Fast Build',
                                         'Warranty',

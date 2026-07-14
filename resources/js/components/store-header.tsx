@@ -179,7 +179,7 @@ export default function StoreHeader({ canRegister = true }: StoreHeaderProps) {
             {isMobileMenuOpen ? (
                 <div
                     id="mobile-store-navigation"
-                    className="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-b border-white/10 bg-[#050b16]/98 px-3 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_24px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:px-8 lg:hidden"
+                    className="absolute inset-x-0 top-full max-h-[calc(100svh-4rem)] overflow-y-auto overscroll-contain border-b border-white/10 bg-[#050b16]/98 px-3 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_24px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:px-8 lg:hidden"
                 >
                     <nav aria-label="Mobile navigation" className="grid gap-2">
                         {storeNavItems.map((item) => {
