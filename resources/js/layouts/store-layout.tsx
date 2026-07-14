@@ -21,12 +21,12 @@ export default function StoreLayout({
     return (
         <div
             className={cn(
-                'relative min-h-screen overflow-x-hidden bg-[#030712] text-slate-100',
+                'relative min-h-screen overflow-x-clip bg-[#030712] text-slate-100',
                 className,
             )}
         >
-            <div className="pointer-events-none absolute -left-16 top-24 h-72 w-72 rounded-full bg-[#00bd7d]/20 blur-3xl" />
-            <div className="pointer-events-none absolute right-0 top-44 h-80 w-80 rounded-full bg-[#00bd7d]/15 blur-3xl" />
+            <div className="pointer-events-none absolute top-24 -left-16 h-72 w-72 rounded-full bg-[#00bd7d]/20 blur-3xl" />
+            <div className="pointer-events-none absolute top-44 right-0 h-80 w-80 rounded-full bg-[#00bd7d]/15 blur-3xl" />
 
             <StoreHeader canRegister={canRegister} />
 
