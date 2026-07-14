@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { ArrowRight, Cpu } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import BuildCard from '@/components/store/build-card';
 import FeaturePill from '@/components/store/feature-pill';
@@ -71,22 +72,30 @@ const isPhoneLayout = (): boolean =>
         window.matchMedia('(pointer: coarse)').matches);
 
 function MobileConfigurationCard({ card }: { card: ConfigurationCard }) {
-    const compactDescription = card.description
+    const compactSpecs = card.description
         .split(' | ')
         .map((part) => part.trim())
         .filter(Boolean)
-        .slice(0, 2)
-        .join(' • ');
+        .slice(0, 3)
+        .map((part, index) => {
+            const [rawLabel, ...rawValue] = part.split(':');
+            const value = rawValue.join(':').trim();
+
+            return {
+                label: value ? rawLabel.trim() : `SPEC ${index + 1}`,
+                value: value || part,
+            };
+        });
 
     return (
         <Link
             href={`/gaming-pcs/${card.id}/configure`}
-            className="group relative isolate flex aspect-[1/2] snap-start flex-col overflow-hidden rounded-xl border border-white/12 bg-[#0a1019]/95 p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.4)] min-[390px]:rounded-2xl min-[390px]:p-2"
+            className="group relative isolate flex h-[clamp(22rem,62dvh,31rem)] snap-start flex-col overflow-hidden rounded-[26px] border border-white/12 bg-[#0a1019]/98 p-3 shadow-[0_18px_42px_rgba(0,0,0,0.48)] ring-1 ring-white/5"
             aria-label={`Configure ${card.name}`}
         >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,189,125,0.16),transparent_48%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,189,125,0.2),transparent_45%)]" />
 
-            <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#08111c] min-[390px]:rounded-xl">
+            <div className="relative h-[42%] w-full shrink-0 overflow-hidden rounded-[19px] border border-white/12 bg-[#08111c]">
                 {card.image ? (
                     <img
                         src={card.image}
@@ -96,32 +105,59 @@ function MobileConfigurationCard({ card }: { card: ConfigurationCard }) {
                         className="absolute inset-0 h-full w-full object-cover transition duration-300 group-active:scale-[1.03]"
                     />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-[0.55rem] font-semibold tracking-[0.12em] text-[#9cf5d8]/75 uppercase">
-                        PC
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[radial-gradient(circle_at_center,rgba(0,189,125,0.17),transparent_62%)] text-[#9cf5d8]">
+                        <div className="flex size-14 items-center justify-center rounded-2xl border border-[#00bd7d]/35 bg-[#00bd7d]/10 shadow-[0_0_28px_rgba(0,189,125,0.16)]">
+                            <Cpu className="h-7 w-7" strokeWidth={1.6} />
+                        </div>
+                        <span className="mt-3 text-[0.62rem] font-bold tracking-[0.18em] uppercase">
+                            Custom build
+                        </span>
                     </div>
                 )}
+
+                <span className="absolute top-2.5 left-2.5 rounded-full border border-[#00bd7d]/30 bg-[#05130f]/80 px-2.5 py-1 text-[0.58rem] font-bold tracking-[0.1em] text-[#9cf5d8] uppercase backdrop-blur-sm">
+                    VamosPC
+                </span>
             </div>
 
-            <div className="relative flex min-h-0 flex-1 flex-col pt-1.5">
-                <h3 className="line-clamp-2 text-[0.65rem] leading-tight font-bold text-white min-[390px]:text-xs">
+            <div className="relative flex min-h-0 flex-1 flex-col pt-3.5">
+                <h3 className="line-clamp-2 shrink-0 text-xl leading-[1.05] font-black text-white min-[390px]:text-2xl">
                     {card.name}
                 </h3>
 
-                {compactDescription ? (
-                    <p className="mt-1 line-clamp-2 text-[0.5rem] leading-[1.25] text-slate-400 min-[390px]:text-[0.58rem]">
-                        {compactDescription}
-                    </p>
+                {compactSpecs.length ? (
+                    <div className="mt-3 grid gap-1.5">
+                        {compactSpecs.map((spec, index) => (
+                            <div
+                                key={`${spec.label}-${spec.value}`}
+                                className={`min-w-0 items-center gap-2 rounded-lg border border-white/8 bg-white/[0.035] px-2.5 py-1.5 ${index === 2 ? 'hidden min-[390px]:flex' : 'flex'}`}
+                            >
+                                <span className="w-7 shrink-0 text-[0.55rem] font-bold tracking-[0.08em] text-[#00bd7d] uppercase">
+                                    {spec.label}
+                                </span>
+                                <span className="truncate text-[0.68rem] text-slate-300 min-[390px]:text-xs">
+                                    {spec.value}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 ) : null}
 
-                <div className="mt-auto border-t border-white/10 pt-1">
-                    <p className="text-[0.45rem] leading-none tracking-[0.08em] text-slate-500 uppercase min-[390px]:text-[0.5rem]">
-                        Starting at
-                    </p>
-                    <p className="mt-0.5 truncate text-[0.62rem] leading-tight font-bold text-[#00bd7d] min-[390px]:text-xs">
-                        {formatPrice(card.price_in_cents)}
-                    </p>
-                    <span className="mt-1 flex min-h-5 items-center justify-center rounded-md bg-gradient-to-r from-[#00bd7d] to-[#19d99b] px-1 text-[0.48rem] leading-none font-black tracking-[0.05em] text-[#04120d] uppercase min-[390px]:min-h-6 min-[390px]:text-[0.55rem]">
+                <div className="mt-auto border-t border-white/10 pt-3">
+                    <div className="flex items-end justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[0.58rem] leading-none tracking-[0.12em] text-slate-500 uppercase">
+                                Starting at
+                            </p>
+                            <p className="mt-1 truncate text-xl leading-none font-black text-[#00bd7d] min-[390px]:text-2xl">
+                                {formatPrice(card.price_in_cents)}
+                            </p>
+                        </div>
+                    </div>
+
+                    <span className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00bd7d] via-[#19d99b] to-[#00aa72] px-4 text-xs font-black tracking-[0.12em] text-[#04120d] uppercase shadow-[0_10px_24px_rgba(0,189,125,0.25)]">
                         Configure
+                        <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
                     </span>
                 </div>
             </div>
@@ -359,21 +395,31 @@ export default function Welcome({
                         />
                     </div>
 
-                    <section className="homepage-mobile-carousel relative z-20 bg-[#030712] py-5">
-                        <div className="px-3">
-                            <p className="text-center text-[0.65rem] leading-4 tracking-[0.16em] text-slate-400 uppercase">
-                                THE PINNACLE OF CUSTOM GAMING RIGS. BUILT FOR
-                                YOU.
+                    <section
+                        id="mobile-configurations"
+                        className="homepage-mobile-carousel relative z-20 scroll-mt-16 bg-[#030712] py-7"
+                    >
+                        <div className="flex items-end justify-between gap-4 px-4">
+                            <div>
+                                <p className="text-[0.62rem] font-bold tracking-[0.18em] text-[#00bd7d] uppercase">
+                                    Featured builds
+                                </p>
+                                <h2 className="mt-1 text-2xl leading-none font-black text-white">
+                                    Choose your PC
+                                </h2>
+                            </div>
+                            <p className="shrink-0 pb-0.5 text-[0.62rem] font-semibold tracking-[0.08em] text-slate-500 uppercase">
+                                Swipe →
                             </p>
                         </div>
 
                         {configurations.length ? (
                             <div
-                                className="mt-3 touch-auto snap-x snap-proximity overflow-x-auto overscroll-x-contain px-3 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                className="mt-5 touch-auto snap-x snap-proximity scroll-px-4 overflow-x-auto overscroll-x-contain px-4 pb-3 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                                 aria-label="Gaming PC configurations"
                                 role="region"
                             >
-                                <div className="grid w-max auto-cols-[calc((100vw-2.5rem)/3)] grid-flow-col gap-2">
+                                <div className="grid w-max auto-cols-[min(82vw,22rem)] grid-flow-col gap-3">
                                     {configurations.map((card) => (
                                         <MobileConfigurationCard
                                             key={card.id}
