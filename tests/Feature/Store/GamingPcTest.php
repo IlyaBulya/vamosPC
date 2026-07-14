@@ -6,6 +6,22 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\UserConfiguration;
 use App\Support\CartOrder;
+use App\Support\ConfigurationSlots;
+
+function gamingConfigurationWith(Configuration $configuration, array $productIds): void
+{
+    $configuration->products()->attach($productIds);
+
+    $componentsTotal = (int) Product::query()
+        ->whereIn('id', $productIds)
+        ->sum('price_in_cents');
+
+    $configuration->forceFill([
+        'markup_in_cents' => (int) $configuration->price - $componentsTotal,
+    ])->save();
+
+    ConfigurationSlots::rebuildFromProducts($configuration);
+}
 
 function gamingCategory(array $overrides = []): Category
 {
@@ -50,7 +66,7 @@ test('buying gaming configuration with default selections creates user configura
         'price' => 120000,
         'homepage_order' => null,
     ]);
-    $configuration->products()->attach([$defaultComponent->id]);
+    gamingConfigurationWith($configuration, [$defaultComponent->id]);
 
     $this->actingAs($user)
         ->post(route('gaming-pcs.buy', $configuration))
@@ -62,7 +78,7 @@ test('buying gaming configuration with default selections creates user configura
     expect((int) $savedConfiguration->user_id)->toBe((int) $user->id);
     expect((int) $savedConfiguration->price)->toBe(120000);
 
-    $selectionKey = 'cat-'.$category->id.'-0';
+    $selectionKey = (string) $configuration->slots()->firstOrFail()->id;
     expect($savedConfiguration->selected_components)->toHaveKey($selectionKey);
     expect((int) $savedConfiguration->selected_components[$selectionKey]['product_id'])
         ->toBe((int) $defaultComponent->id);
@@ -91,9 +107,9 @@ test('buying gaming configuration with valid custom selection recalculates final
         'price' => 70000,
         'homepage_order' => null,
     ]);
-    $configuration->products()->attach([$defaultComponent->id]);
+    gamingConfigurationWith($configuration, [$defaultComponent->id]);
 
-    $slotKey = 'cat-'.$category->id.'-0';
+    $slotKey = (string) $configuration->slots()->firstOrFail()->id;
 
     $this->actingAs($user)
         ->post(route('gaming-pcs.buy', $configuration), [
@@ -132,9 +148,9 @@ test('buying gaming configuration fails when selected component is not allowed i
         'price' => 50000,
         'homepage_order' => null,
     ]);
-    $configuration->products()->attach([$defaultComponent->id]);
+    gamingConfigurationWith($configuration, [$defaultComponent->id]);
 
-    $slotKey = 'cat-'.$category->id.'-0';
+    $slotKey = (string) $configuration->slots()->firstOrFail()->id;
 
     $this->actingAs($user)
         ->from(route('gaming-pcs.configure', $configuration))

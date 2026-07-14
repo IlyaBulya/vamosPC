@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ComponentType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -440,20 +441,21 @@ class ProductSeeder extends Seeder
         $missingCategories = array_diff($categorySlugs, array_keys($categoryIds));
         if ($missingCategories !== []) {
             throw new RuntimeException(
-                'Missing categories for ProductSeeder: ' . implode(', ', $missingCategories)
-                );
+                'Missing categories for ProductSeeder: '.implode(', ', $missingCategories)
+            );
         }
 
         DB::table('products')->insert(array_map(
-        fn(array $product): array => [
-        'category_id' => $categoryIds[$product['category']],
-        'name' => $product['name'],
-        'description' => $product['description'],
-        'price_in_cents' => $product['price_in_cents'],
-        'is_component' => $product['is_component'],
-        'created_at' => $now,
-        'updated_at' => $now,
-        ],
+            fn (array $product): array => [
+                'category_id' => $categoryIds[$product['category']],
+                'component_type' => ComponentType::fromCategoryName($product['category'])?->value,
+                'name' => $product['name'],
+                'description' => $product['description'],
+                'price_in_cents' => $product['price_in_cents'],
+                'is_component' => $product['is_component'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
             $products
         ));
     }

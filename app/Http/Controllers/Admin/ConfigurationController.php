@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\UserConfiguration;
+use App\Support\ConfigurationSlots;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -86,6 +88,7 @@ class ConfigurationController extends Controller
         DB::transaction(function () use ($data, $productIds): void {
             $configuration = Configuration::query()->create($data);
             $configuration->products()->sync($productIds);
+            $this->finalizeConfiguration($configuration, $productIds);
         });
 
         return redirect()
@@ -139,6 +142,7 @@ class ConfigurationController extends Controller
         DB::transaction(function () use ($configuration, $data, $productIds): void {
             $configuration->update($data);
             $configuration->products()->sync($productIds);
+            $this->finalizeConfiguration($configuration, $productIds);
         });
 
         if (array_key_exists('image', $data) && $data['image'] !== $currentImage) {
@@ -210,6 +214,27 @@ class ConfigurationController extends Controller
     }
 
     /**
+     * Persist the derived fields that depend on the configuration's id and
+     * component set: the canonical slug, the stored markup (manual price
+     * minus components total), and the regenerated slots.
+     *
+     * @param  array<int, int>  $productIds
+     */
+    private function finalizeConfiguration(Configuration $configuration, array $productIds): void
+    {
+        $componentsTotal = (int) Product::query()
+            ->whereIn('id', $productIds)
+            ->sum('price_in_cents');
+
+        $configuration->forceFill([
+            'slug' => Str::slug($configuration->name).'-'.$configuration->id,
+            'markup_in_cents' => (int) $configuration->price - $componentsTotal,
+        ])->save();
+
+        ConfigurationSlots::rebuildFromProducts($configuration);
+    }
+
+    /**
      * @return array<int, array{id:int, name:string, description:?string, price_in_cents:int, color:?string, category_name:?string, category_type:?string}>
      */
     private function components(): array
@@ -259,7 +284,7 @@ class ConfigurationController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{0: array<string, mixed>, 1: array<int, int>}
      */
     private function normalizeConfigurationData(array $data): array

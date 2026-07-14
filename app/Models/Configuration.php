@@ -13,9 +13,11 @@ class Configuration extends Model
      */
     protected $fillable = [
         'name',
+        'slug',
         'description',
         'image',
         'price',
+        'markup_in_cents',
         'homepage_order',
     ];
 
@@ -26,6 +28,7 @@ class Configuration extends Model
     {
         return [
             'price' => 'integer',
+            'markup_in_cents' => 'integer',
             'homepage_order' => 'integer',
         ];
     }
@@ -34,6 +37,11 @@ class Configuration extends Model
     {
         return $this->belongsToMany(Product::class, 'configuration_product')
             ->withTimestamps();
+    }
+
+    public function slots(): HasMany
+    {
+        return $this->hasMany(ConfigurationSlot::class)->orderBy('sort_order');
     }
 
     public function userConfigurations(): HasMany

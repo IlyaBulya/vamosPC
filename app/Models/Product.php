@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ComponentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,12 +15,14 @@ class Product extends Model
      */
     protected $fillable = [
         'category_id',
+        'component_type',
         'name',
         'description',
         'image',
         'price_in_cents',
         'stock',
         'color',
+        'specs',
         'is_component',
         'is_sellable',
     ];
@@ -31,8 +34,10 @@ class Product extends Model
     {
         return [
             'category_id' => 'integer',
+            'component_type' => ComponentType::class,
             'price_in_cents' => 'integer',
             'stock' => 'integer',
+            'specs' => 'array',
             'is_component' => 'boolean',
             'is_sellable' => 'boolean',
         ];

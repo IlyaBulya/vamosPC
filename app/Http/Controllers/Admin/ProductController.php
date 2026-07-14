@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ComponentType;
 use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\Specs\SpecSchema;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,6 +31,7 @@ class ProductController extends Controller
                 'image' => $product->image,
                 'category_name' => $product->category?->name,
                 'category_type' => $product->category?->type,
+                'component_type' => $product->component_type?->value,
                 'price_in_cents' => (int) $product->price_in_cents,
                 'stock' => (int) $product->stock,
                 'color' => $product->color,
@@ -86,6 +90,8 @@ class ProductController extends Controller
                 'price_in_cents' => (int) $product->price_in_cents,
                 'stock' => (int) $product->stock,
                 'color' => $product->color,
+                'component_type' => $product->component_type?->value,
+                'specs' => $product->specs,
                 'is_component' => (bool) $product->is_component,
                 'is_sellable' => (bool) $product->is_sellable,
             ],
@@ -172,6 +178,8 @@ class ProductController extends Controller
             'price_in_cents' => ['required', 'integer', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'color' => ['nullable', 'string', 'max:255'],
+            'component_type' => ['nullable', Rule::enum(ComponentType::class)],
+            'specs' => ['nullable', 'array'],
             'is_component' => ['required', 'boolean'],
             'is_sellable' => ['required', 'boolean'],
         ]);
@@ -182,6 +190,29 @@ class ProductController extends Controller
         $data['is_component'] = (bool) $data['is_component'];
         $data['is_sellable'] = (bool) $data['is_sellable'];
         $data['remove_image'] = (bool) ($data['remove_image'] ?? false);
+
+        // Component type: explicit value wins; otherwise derive it from the
+        // category so products created through the current form still get
+        // typed for the configurator.
+        $componentType = isset($data['component_type'])
+            ? ComponentType::from($data['component_type'])
+            : ComponentType::fromCategoryName(
+                Category::query()->find($data['category_id'])?->name,
+            );
+        $data['component_type'] = $componentType?->value;
+
+        // Specs: only touch them when the request carries the key, so edits
+        // from forms that do not submit specs never wipe existing data.
+        if ($request->has('specs')) {
+            if ($componentType !== null && is_array($data['specs'] ?? null)) {
+                $request->validate(SpecSchema::rulesFor($componentType));
+                $data['specs'] = SpecSchema::filter($componentType, $data['specs']);
+            } else {
+                $data['specs'] = null;
+            }
+        } else {
+            unset($data['specs']);
+        }
 
         return $data;
     }

@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
+use App\Models\ConfigurationSlot;
 use App\Models\Product;
 use App\Models\UserConfiguration;
 use App\Support\CartOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -23,7 +25,7 @@ class GamingPcController extends Controller
     public function index(): Response
     {
         $configurations = Configuration::query()
-            ->with(['products.category:id,name'])
+            ->with(['slots.defaultProduct.category:id,name'])
             ->orderBy('id', 'desc')
             ->get()
             ->map(fn (Configuration $configuration): array => [
@@ -33,13 +35,16 @@ class GamingPcController extends Controller
                 'description' => $configuration->description,
                 'image' => $configuration->image,
                 'price_in_cents' => (int) $configuration->price,
-                'components_count' => $configuration->products->count(),
-                'components' => $configuration->products
-                    ->map(fn (Product $product): array => [
-                        'id' => $product->id,
-                        'name' => $product->name,
-                        'category_name' => $product->category?->name,
-                    ])
+                'components_count' => $configuration->slots->count(),
+                'components' => $configuration->slots
+                    ->map(fn (ConfigurationSlot $slot): ?array => $slot->defaultProduct !== null
+                        ? [
+                            'id' => (int) $slot->defaultProduct->id,
+                            'name' => $slot->defaultProduct->name,
+                            'category_name' => $slot->defaultProduct->category?->name,
+                        ]
+                        : null)
+                    ->filter()
                     ->values()
                     ->all(),
             ])
@@ -53,45 +58,50 @@ class GamingPcController extends Controller
     public function show(string $configurationSlug): Response|RedirectResponse
     {
         if (ctype_digit($configurationSlug)) {
-            $legacyConfiguration = Configuration::query()
-                ->with(['products.category:id,name'])
-                ->find((int) $configurationSlug);
+            $legacyConfiguration = Configuration::query()->find((int) $configurationSlug);
             abort_if($legacyConfiguration === null, 404);
 
             return redirect("/gaming-pcs/{$this->configurationRouteSlug($legacyConfiguration)}");
         }
 
         $configuration = Configuration::query()
-            ->with(['products.category:id,name'])
-            ->get()
-            ->first(
-                fn (Configuration $item): bool => $this->configurationRouteSlug($item) === $configurationSlug
-                    || $this->legacyConfigurationRouteSlug($item) === $configurationSlug
-            );
-        abort_if($configuration === null, 404);
+            ->with(['slots.defaultProduct.category:id,name'])
+            ->where('slug', $configurationSlug)
+            ->first();
 
-        $canonicalSlug = $this->configurationRouteSlug($configuration);
-        if ($canonicalSlug !== $configurationSlug) {
-            return redirect("/gaming-pcs/{$canonicalSlug}");
+        if ($configuration === null) {
+            // Legacy links: name-only slugs or stale name-id slugs.
+            $legacyConfiguration = Configuration::query()
+                ->get()
+                ->first(
+                    fn (Configuration $item): bool => $this->legacyConfigurationRouteSlug($item) === $configurationSlug
+                        || Str::slug($item->name).'-'.$item->id === $configurationSlug
+                );
+            abort_if($legacyConfiguration === null, 404);
+
+            return redirect("/gaming-pcs/{$this->configurationRouteSlug($legacyConfiguration)}");
         }
 
         return Inertia::render('gaming-pcs/show', [
             'configuration' => [
                 'id' => (int) $configuration->id,
-                'route_slug' => $canonicalSlug,
+                'route_slug' => $this->configurationRouteSlug($configuration),
                 'name' => $configuration->name,
                 'description' => $configuration->description,
                 'image' => $configuration->image,
                 'price_in_cents' => (int) $configuration->price,
-                'components_count' => $configuration->products->count(),
-                'components' => $configuration->products
-                    ->map(fn (Product $product): array => [
-                        'id' => (int) $product->id,
-                        'name' => $product->name,
-                        'description' => $product->description,
-                        'category_name' => $product->category?->name,
-                        'price_in_cents' => (int) $product->price_in_cents,
-                    ])
+                'components_count' => $configuration->slots->count(),
+                'components' => $configuration->slots
+                    ->map(fn (ConfigurationSlot $slot): ?array => $slot->defaultProduct !== null
+                        ? [
+                            'id' => (int) $slot->defaultProduct->id,
+                            'name' => $slot->defaultProduct->name,
+                            'description' => $slot->defaultProduct->description,
+                            'category_name' => $slot->defaultProduct->category?->name,
+                            'price_in_cents' => (int) $slot->defaultProduct->price_in_cents,
+                        ]
+                        : null)
+                    ->filter()
                     ->values()
                     ->all(),
             ],
@@ -105,8 +115,6 @@ class GamingPcController extends Controller
     public function configure(Configuration $configuration): Response
     {
         $builderData = $this->buildBuilderData($configuration);
-        $slots = $builderData['slots'];
-        $baseComponentsTotal = (int) $builderData['base_components_total_in_cents'];
 
         return Inertia::render('store/configure-pc', [
             'configuration' => [
@@ -115,10 +123,10 @@ class GamingPcController extends Controller
                 'description' => $configuration->description,
                 'image' => $configuration->image,
                 'price_in_cents' => (int) $configuration->price,
-                'base_components_total_in_cents' => $baseComponentsTotal,
-                'markup_in_cents' => (int) $configuration->price - $baseComponentsTotal,
+                'base_components_total_in_cents' => (int) $builderData['base_components_total_in_cents'],
+                'markup_in_cents' => (int) $configuration->markup_in_cents,
             ],
-            'slots' => $slots,
+            'slots' => $builderData['slots'],
         ]);
     }
 
@@ -174,6 +182,7 @@ class GamingPcController extends Controller
 
             $normalizedSelections[$slotKey] = [
                 'slot_label' => (string) $slot['slot_label'],
+                'component_type' => $slot['component_type'],
                 'category_id' => $slot['category_id'] !== null ? (int) $slot['category_id'] : null,
                 'category_name' => (string) $slot['category_name'],
                 'product_id' => (int) $selectedProduct['id'],
@@ -182,7 +191,7 @@ class GamingPcController extends Controller
             ];
         }
 
-        $markupInCents = (int) $configuration->price - $baseComponentsTotal;
+        $markupInCents = (int) $configuration->markup_in_cents;
         $finalPrice = max(0, $selectedComponentsTotal + $markupInCents);
 
         DB::transaction(function () use (
@@ -231,7 +240,7 @@ class GamingPcController extends Controller
 
     private function configurationRouteSlug(Configuration $configuration): string
     {
-        return Str::slug($configuration->name).'-'.$configuration->id;
+        return $configuration->slug ?? Str::slug($configuration->name).'-'.$configuration->id;
     }
 
     private function legacyConfigurationRouteSlug(Configuration $configuration): string
@@ -240,68 +249,92 @@ class GamingPcController extends Controller
     }
 
     /**
+     * Build the configurator payload from the configuration's slots.
+     *
+     * Each slot unit becomes one selectable entry (slots with quantity > 1
+     * expand into "{id}:{unit}" keys). Options are all sellable components
+     * of the slot's component type; untyped slots fall back to the default
+     * product's category.
+     *
      * @return array{
-     *     slots: \Illuminate\Support\Collection<int, array{
+     *     slots: Collection<int, array{
      *         slot_key: string,
      *         slot_label: string,
+     *         component_type: string|null,
      *         category_id: int|null,
      *         category_name: string,
      *         default_product_id: int,
-     *         products: array<int, array{
-     *             id: int,
-     *             name: string,
-     *             description: string|null,
-     *             price_in_cents: int,
-     *             color: string|null,
-     *             category_name: string|null
-     *         }>
+     *         products: array<int, array<string, mixed>>
      *     }>,
      *     base_components_total_in_cents: int
      * }
      */
     private function buildBuilderData(Configuration $configuration): array
     {
-        $configuration->load(['products.category:id,name']);
+        $configuration->load(['slots.defaultProduct.category:id,name']);
 
-        $baseProducts = $configuration->products->values();
-        $categoryIds = $baseProducts
-            ->pluck('category_id')
+        $slots = $configuration->slots->filter(
+            fn (ConfigurationSlot $slot): bool => $slot->defaultProduct !== null,
+        )->values();
+
+        $componentTypes = $slots
+            ->map(fn (ConfigurationSlot $slot): ?string => $slot->component_type?->value)
             ->filter()
-            ->map(fn ($categoryId): int => (int) $categoryId)
             ->unique()
             ->values();
 
-        $optionsByCategoryId = Product::query()
-            ->with(['category:id,name'])
-            ->where('is_component', true)
-            ->whereIn('category_id', $categoryIds)
-            ->orderBy('category_id')
-            ->orderBy('name')
-            ->get(['id', 'category_id', 'name', 'description', 'price_in_cents', 'color'])
-            ->groupBy('category_id');
+        $fallbackCategoryIds = $slots
+            ->filter(fn (ConfigurationSlot $slot): bool => $slot->component_type === null)
+            ->map(fn (ConfigurationSlot $slot): ?int => $slot->defaultProduct?->category_id)
+            ->filter()
+            ->unique()
+            ->values();
 
-        $slots = $baseProducts
-            ->groupBy(fn (Product $product): string => $product->category_id !== null
-                ? 'cat-'.$product->category_id
-                : 'uncategorized')
-            ->flatMap(function ($groupedProducts, string $categoryKey) use ($optionsByCategoryId) {
-                /** @var Product|null $firstProduct */
-                $firstProduct = $groupedProducts->first();
-                $categoryId = $firstProduct?->category_id !== null
-                    ? (int) $firstProduct->category_id
-                    : null;
-                $categoryName = $firstProduct?->category?->name ?? 'Uncategorized';
-                $slotCount = $groupedProducts->count();
+        $optionColumns = [
+            'id', 'category_id', 'component_type', 'name', 'description',
+            'price_in_cents', 'color', 'specs',
+        ];
 
-                $categoryOptions = $categoryId !== null
-                    ? ($optionsByCategoryId->get($categoryId) ?? collect())
-                    : collect();
+        $optionsByType = $componentTypes->isEmpty()
+            ? collect()
+            : Product::query()
+                ->with(['category:id,name'])
+                ->where('is_component', true)
+                ->where('is_sellable', true)
+                ->whereIn('component_type', $componentTypes)
+                ->orderBy('price_in_cents')
+                ->orderBy('name')
+                ->get($optionColumns)
+                ->groupBy(fn (Product $product): string => (string) $product->component_type?->value);
 
-                if ($categoryOptions->isEmpty()) {
-                    $categoryOptions = $groupedProducts;
+        $optionsByCategory = $fallbackCategoryIds->isEmpty()
+            ? collect()
+            : Product::query()
+                ->with(['category:id,name'])
+                ->where('is_component', true)
+                ->where('is_sellable', true)
+                ->whereNull('component_type')
+                ->whereIn('category_id', $fallbackCategoryIds)
+                ->orderBy('price_in_cents')
+                ->orderBy('name')
+                ->get($optionColumns)
+                ->groupBy('category_id');
+
+        $entries = $slots
+            ->flatMap(function (ConfigurationSlot $slot) use ($optionsByType, $optionsByCategory): array {
+                /** @var Product $default */
+                $default = $slot->defaultProduct;
+
+                /** @var Collection<int, Product> $options */
+                $options = $slot->component_type !== null
+                    ? ($optionsByType->get($slot->component_type->value) ?? collect())
+                    : ($optionsByCategory->get((int) $default->category_id) ?? collect());
+
+                if (! $options->contains(fn (Product $product): bool => (int) $product->id === (int) $default->id)) {
+                    $options = $options->concat([$default]);
                 }
 
-                $products = $categoryOptions
+                $products = $options
                     ->map(fn (Product $product): array => [
                         'id' => (int) $product->id,
                         'name' => $product->name,
@@ -309,32 +342,35 @@ class GamingPcController extends Controller
                         'price_in_cents' => (int) $product->price_in_cents,
                         'color' => $product->color,
                         'category_name' => $product->category?->name,
+                        'component_type' => $product->component_type?->value,
+                        'specs' => $product->specs,
                     ])
                     ->values()
                     ->all();
 
-                return $groupedProducts
-                    ->values()
-                    ->map(fn (Product $baseProduct, int $index): array => [
-                        'slot_key' => "{$categoryKey}-{$index}",
-                        'slot_label' => $slotCount > 1
-                            ? "{$categoryName} #".($index + 1)
-                            : $categoryName,
-                        'category_id' => $categoryId,
-                        'category_name' => $categoryName,
-                        'default_product_id' => (int) $baseProduct->id,
+                $quantity = max(1, (int) $slot->quantity);
+
+                return collect(range(1, $quantity))
+                    ->map(fn (int $unit): array => [
+                        'slot_key' => $quantity > 1 ? "{$slot->id}:{$unit}" : (string) $slot->id,
+                        'slot_label' => $quantity > 1 ? "{$slot->label} #{$unit}" : $slot->label,
+                        'component_type' => $slot->component_type?->value,
+                        'category_id' => $default->category_id !== null ? (int) $default->category_id : null,
+                        'category_name' => $default->category?->name ?? 'Uncategorized',
+                        'default_product_id' => (int) $slot->default_product_id,
                         'products' => $products,
                     ])
                     ->all();
             })
             ->values();
 
-        $baseComponentsTotal = (int) $baseProducts->sum(
-            fn (Product $product): int => (int) $product->price_in_cents,
+        $baseComponentsTotal = (int) $slots->sum(
+            fn (ConfigurationSlot $slot): int => (int) $slot->defaultProduct->price_in_cents
+                * max(1, (int) $slot->quantity),
         );
 
         return [
-            'slots' => $slots,
+            'slots' => $entries,
             'base_components_total_in_cents' => $baseComponentsTotal,
         ];
     }

@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Configuration;
+use App\Support\ConfigurationSlots;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ConfigurationSeeder extends Seeder
 {
@@ -70,11 +72,22 @@ class ConfigurationSeeder extends Seeder
                 unset($data['products']);
 
                 $configuration = Configuration::query()->updateOrCreate(
-                ['name' => $data['name']],
+                    ['name' => $data['name']],
                     $data,
                 );
 
                 $configuration->products()->sync($productIds);
+
+                $componentsTotal = (int) DB::table('products')
+                    ->whereIn('id', $productIds)
+                    ->sum('price_in_cents');
+
+                $configuration->forceFill([
+                    'slug' => Str::slug($configuration->name).'-'.$configuration->id,
+                    'markup_in_cents' => (int) $configuration->price - $componentsTotal,
+                ])->save();
+
+                ConfigurationSlots::rebuildFromProducts($configuration);
             }
         });
     }
