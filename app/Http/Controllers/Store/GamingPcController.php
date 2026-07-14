@@ -6,12 +6,12 @@ use App\Http\Controllers\Concerns\HandlesPublicImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Models\ConfigurationSlot;
-use App\Models\Product;
 use App\Models\UserConfiguration;
+use App\Services\ConfiguratorService;
 use App\Support\CartOrder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +21,10 @@ use Inertia\Response;
 class GamingPcController extends Controller
 {
     use HandlesPublicImageUploads;
+
+    public function __construct(
+        private readonly ConfiguratorService $configurator,
+    ) {}
 
     public function index(): Response
     {
@@ -112,9 +116,9 @@ class GamingPcController extends Controller
         ]);
     }
 
-    public function configure(Configuration $configuration): Response
+    public function configure(Request $request, Configuration $configuration): Response
     {
-        $builderData = $this->buildBuilderData($configuration);
+        $builderData = $this->configurator->builderPayload($configuration);
 
         return Inertia::render('store/configure-pc', [
             'configuration' => [
@@ -127,6 +131,34 @@ class GamingPcController extends Controller
                 'markup_in_cents' => (int) $configuration->markup_in_cents,
             ],
             'slots' => $builderData['slots'],
+            'initial_selections' => $this->draftSelections($request, $configuration, $builderData['slots']),
+        ]);
+    }
+
+    /**
+     * Real-time compatibility + pricing verdict for the configurator UI.
+     */
+    public function check(Request $request, Configuration $configuration): JsonResponse
+    {
+        $data = $request->validate([
+            'selected_components' => ['nullable', 'array'],
+        ]);
+
+        $resolved = $this->configurator->resolveSelections(
+            $configuration,
+            is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
+        );
+        $report = $this->configurator->compatibilityReport($resolved['products']);
+        $markupInCents = (int) $configuration->markup_in_cents;
+
+        return response()->json([
+            ...$report,
+            'selected_total_in_cents' => (int) $resolved['total_in_cents'],
+            'final_price_in_cents' => max(0, (int) $resolved['total_in_cents'] + $markupInCents),
+            'option_annotations' => $this->configurator->optionAnnotations(
+                $configuration,
+                $resolved['products'],
+            ),
         ]);
     }
 
@@ -135,62 +167,33 @@ class GamingPcController extends Controller
         $user = $request->user();
         abort_unless($user !== null, 403);
 
-        $builderData = $this->buildBuilderData($configuration);
-        $slots = $builderData['slots'];
-        $baseComponentsTotal = (int) $builderData['base_components_total_in_cents'];
-
-        abort_if($slots->isEmpty(), 422, 'This configuration has no components.');
-
         $data = $request->validate([
             'selected_components' => ['nullable', 'array'],
         ]);
 
-        $selectedPayload = is_array($data['selected_components'] ?? null)
-            ? $data['selected_components']
-            : [];
+        $resolved = $this->configurator->resolveSelections(
+            $configuration,
+            is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
+        );
 
-        $selectedComponentsTotal = 0;
-        $normalizedSelections = [];
+        $this->configurator->ensurePurchasable($resolved['products']);
 
-        foreach ($slots as $slot) {
-            $slotKey = (string) $slot['slot_key'];
-            $selectedIdRaw = $selectedPayload[$slotKey] ?? $slot['default_product_id'];
-            $selectedId = filter_var(
-                $selectedIdRaw,
-                FILTER_VALIDATE_INT,
-                ['options' => ['min_range' => 1]],
-            );
+        $report = $this->configurator->compatibilityReport($resolved['products']);
 
-            if ($selectedId === false) {
-                throw ValidationException::withMessages([
-                    "selected_components.{$slotKey}" => 'Invalid component selection.',
-                ]);
-            }
-
-            $selectedProduct = collect($slot['products'])->first(
-                fn (array $product): bool => (int) $product['id'] === (int) $selectedId,
-            );
-
-            if ($selectedProduct === null) {
-                throw ValidationException::withMessages([
-                    "selected_components.{$slotKey}" => 'Selected component is not allowed for this slot.',
-                ]);
-            }
-
-            $selectedPrice = (int) $selectedProduct['price_in_cents'];
-            $selectedComponentsTotal += $selectedPrice;
-
-            $normalizedSelections[$slotKey] = [
-                'slot_label' => (string) $slot['slot_label'],
-                'component_type' => $slot['component_type'],
-                'category_id' => $slot['category_id'] !== null ? (int) $slot['category_id'] : null,
-                'category_name' => (string) $slot['category_name'],
-                'product_id' => (int) $selectedProduct['id'],
-                'product_name' => (string) $selectedProduct['name'],
-                'price_in_cents' => $selectedPrice,
-            ];
+        if ($report['has_errors']) {
+            throw ValidationException::withMessages([
+                'compatibility' => array_values(array_map(
+                    fn (array $violation): string => $violation['message'],
+                    array_filter(
+                        $report['violations'],
+                        fn (array $violation): bool => $violation['severity'] === 'error',
+                    ),
+                )),
+            ]);
         }
 
+        $selectedComponentsTotal = (int) $resolved['total_in_cents'];
+        $baseComponentsTotal = $this->configurator->baseComponentsTotal($configuration);
         $markupInCents = (int) $configuration->markup_in_cents;
         $finalPrice = max(0, $selectedComponentsTotal + $markupInCents);
 
@@ -198,7 +201,8 @@ class GamingPcController extends Controller
             $user,
             $configuration,
             $finalPrice,
-            $normalizedSelections,
+            $resolved,
+            $report,
             $selectedComponentsTotal,
             $baseComponentsTotal,
             $markupInCents,
@@ -214,11 +218,12 @@ class GamingPcController extends Controller
                 ),
                 'price' => $finalPrice,
                 'status' => 'cart',
-                'selected_components' => $normalizedSelections,
+                'selected_components' => $resolved['selections'],
                 'meta' => [
                     'selected_components_total_in_cents' => $selectedComponentsTotal,
                     'base_components_total_in_cents' => $baseComponentsTotal,
                     'markup_in_cents' => $markupInCents,
+                    'compatibility' => $report,
                 ],
             ]);
 
@@ -238,6 +243,51 @@ class GamingPcController extends Controller
             ->with('status', 'Custom configuration added to cart.');
     }
 
+    /**
+     * Save the current selection as a draft. Compatibility errors do not
+     * block drafts; the verdict is stored alongside for later display.
+     */
+    public function storeDraft(Request $request, Configuration $configuration): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null, 403);
+
+        $data = $request->validate([
+            'selected_components' => ['nullable', 'array'],
+            'name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $resolved = $this->configurator->resolveSelections(
+            $configuration,
+            is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
+        );
+        $report = $this->configurator->compatibilityReport($resolved['products']);
+
+        $selectedComponentsTotal = (int) $resolved['total_in_cents'];
+        $markupInCents = (int) $configuration->markup_in_cents;
+
+        UserConfiguration::query()->create([
+            'user_id' => (int) $user->id,
+            'base_configuration_id' => (int) $configuration->id,
+            'name' => filled($data['name'] ?? null)
+                ? (string) $data['name']
+                : "{$configuration->name} - Draft",
+            'description' => $configuration->description,
+            'image' => $configuration->image,
+            'price' => max(0, $selectedComponentsTotal + $markupInCents),
+            'status' => 'draft',
+            'selected_components' => $resolved['selections'],
+            'meta' => [
+                'selected_components_total_in_cents' => $selectedComponentsTotal,
+                'base_components_total_in_cents' => $this->configurator->baseComponentsTotal($configuration),
+                'markup_in_cents' => $markupInCents,
+                'compatibility' => $report,
+            ],
+        ]);
+
+        return back()->with('status', 'Configuration draft saved.');
+    }
+
     private function configurationRouteSlug(Configuration $configuration): string
     {
         return $configuration->slug ?? Str::slug($configuration->name).'-'.$configuration->id;
@@ -249,129 +299,46 @@ class GamingPcController extends Controller
     }
 
     /**
-     * Build the configurator payload from the configuration's slots.
+     * Selections stored on a draft (?draft=id), filtered down to slot keys
+     * and product ids that are still valid for the current slot layout.
      *
-     * Each slot unit becomes one selectable entry (slots with quantity > 1
-     * expand into "{id}:{unit}" keys). Options are all sellable components
-     * of the slot's component type; untyped slots fall back to the default
-     * product's category.
-     *
-     * @return array{
-     *     slots: Collection<int, array{
-     *         slot_key: string,
-     *         slot_label: string,
-     *         component_type: string|null,
-     *         category_id: int|null,
-     *         category_name: string,
-     *         default_product_id: int,
-     *         products: array<int, array<string, mixed>>
-     *     }>,
-     *     base_components_total_in_cents: int
-     * }
+     * @param  array<int, array<string, mixed>>  $slots
+     * @return array<string, int>|null
      */
-    private function buildBuilderData(Configuration $configuration): array
+    private function draftSelections(Request $request, Configuration $configuration, array $slots): ?array
     {
-        $configuration->load(['slots.defaultProduct.category:id,name']);
+        $draftId = (int) $request->query('draft', '0');
+        $user = $request->user();
 
-        $slots = $configuration->slots->filter(
-            fn (ConfigurationSlot $slot): bool => $slot->defaultProduct !== null,
-        )->values();
+        if ($draftId < 1 || $user === null) {
+            return null;
+        }
 
-        $componentTypes = $slots
-            ->map(fn (ConfigurationSlot $slot): ?string => $slot->component_type?->value)
-            ->filter()
-            ->unique()
-            ->values();
+        $draft = UserConfiguration::query()
+            ->whereKey($draftId)
+            ->where('user_id', (int) $user->id)
+            ->where('base_configuration_id', (int) $configuration->id)
+            ->where('status', 'draft')
+            ->first();
 
-        $fallbackCategoryIds = $slots
-            ->filter(fn (ConfigurationSlot $slot): bool => $slot->component_type === null)
-            ->map(fn (ConfigurationSlot $slot): ?int => $slot->defaultProduct?->category_id)
-            ->filter()
-            ->unique()
-            ->values();
+        if ($draft === null || ! is_array($draft->selected_components)) {
+            return null;
+        }
 
-        $optionColumns = [
-            'id', 'category_id', 'component_type', 'name', 'description',
-            'price_in_cents', 'color', 'specs',
-        ];
-
-        $optionsByType = $componentTypes->isEmpty()
-            ? collect()
-            : Product::query()
-                ->with(['category:id,name'])
-                ->where('is_component', true)
-                ->where('is_sellable', true)
-                ->whereIn('component_type', $componentTypes)
-                ->orderBy('price_in_cents')
-                ->orderBy('name')
-                ->get($optionColumns)
-                ->groupBy(fn (Product $product): string => (string) $product->component_type?->value);
-
-        $optionsByCategory = $fallbackCategoryIds->isEmpty()
-            ? collect()
-            : Product::query()
-                ->with(['category:id,name'])
-                ->where('is_component', true)
-                ->where('is_sellable', true)
-                ->whereNull('component_type')
-                ->whereIn('category_id', $fallbackCategoryIds)
-                ->orderBy('price_in_cents')
-                ->orderBy('name')
-                ->get($optionColumns)
-                ->groupBy('category_id');
-
-        $entries = $slots
-            ->flatMap(function (ConfigurationSlot $slot) use ($optionsByType, $optionsByCategory): array {
-                /** @var Product $default */
-                $default = $slot->defaultProduct;
-
-                /** @var Collection<int, Product> $options */
-                $options = $slot->component_type !== null
-                    ? ($optionsByType->get($slot->component_type->value) ?? collect())
-                    : ($optionsByCategory->get((int) $default->category_id) ?? collect());
-
-                if (! $options->contains(fn (Product $product): bool => (int) $product->id === (int) $default->id)) {
-                    $options = $options->concat([$default]);
-                }
-
-                $products = $options
-                    ->map(fn (Product $product): array => [
-                        'id' => (int) $product->id,
-                        'name' => $product->name,
-                        'description' => $product->description,
-                        'price_in_cents' => (int) $product->price_in_cents,
-                        'color' => $product->color,
-                        'category_name' => $product->category?->name,
-                        'component_type' => $product->component_type?->value,
-                        'specs' => $product->specs,
-                    ])
-                    ->values()
-                    ->all();
-
-                $quantity = max(1, (int) $slot->quantity);
-
-                return collect(range(1, $quantity))
-                    ->map(fn (int $unit): array => [
-                        'slot_key' => $quantity > 1 ? "{$slot->id}:{$unit}" : (string) $slot->id,
-                        'slot_label' => $quantity > 1 ? "{$slot->label} #{$unit}" : $slot->label,
-                        'component_type' => $slot->component_type?->value,
-                        'category_id' => $default->category_id !== null ? (int) $default->category_id : null,
-                        'category_name' => $default->category?->name ?? 'Uncategorized',
-                        'default_product_id' => (int) $slot->default_product_id,
-                        'products' => $products,
-                    ])
-                    ->all();
-            })
-            ->values();
-
-        $baseComponentsTotal = (int) $slots->sum(
-            fn (ConfigurationSlot $slot): int => (int) $slot->defaultProduct->price_in_cents
-                * max(1, (int) $slot->quantity),
+        $allowedBySlot = collect($slots)->keyBy('slot_key')->map(
+            fn (array $slot): array => array_column($slot['products'], 'id'),
         );
 
-        return [
-            'slots' => $entries,
-            'base_components_total_in_cents' => $baseComponentsTotal,
-        ];
+        $selections = [];
+
+        foreach ($draft->selected_components as $slotKey => $selection) {
+            $productId = (int) ($selection['product_id'] ?? 0);
+
+            if (in_array($productId, $allowedBySlot->get((string) $slotKey, []), true)) {
+                $selections[(string) $slotKey] = $productId;
+            }
+        }
+
+        return $selections === [] ? null : $selections;
     }
 }

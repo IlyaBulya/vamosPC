@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Cpu, Monitor, ShoppingCart } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import StoreLayout from '@/layouts/store-layout';
@@ -47,17 +47,25 @@ function formatPrice(priceInCents: number) {
 export default function ConfigurePcPage({
     configuration,
     slots,
+    initial_selections,
 }: {
     configuration: Configuration;
     slots: ComponentSlot[];
+    initial_selections?: Record<string, number> | null;
 }) {
     const [selectedBySlot, setSelectedBySlot] = useState<Record<string, number>>(
         () =>
             Object.fromEntries(
-                slots.map((slot) => [slot.slot_key, slot.default_product_id]),
+                slots.map((slot) => [
+                    slot.slot_key,
+                    initial_selections?.[slot.slot_key] ??
+                        slot.default_product_id,
+                ]),
             ),
     );
     const [isBuying, setIsBuying] = useState(false);
+    const { errors } = usePage().props;
+    const errorMessages = Object.values(errors ?? {});
 
     const selectedProducts = useMemo<SelectedProduct[]>(
         () =>
@@ -258,6 +266,14 @@ export default function ConfigurePcPage({
                                     </span>
                                 </p>
                             </div>
+
+                            {errorMessages.length > 0 && (
+                                <div className="mt-4 space-y-1 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+                                    {errorMessages.map((message, index) => (
+                                        <p key={index}>{message}</p>
+                                    ))}
+                                </div>
+                            )}
 
                             <button
                                 type="button"

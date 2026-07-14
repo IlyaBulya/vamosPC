@@ -26,6 +26,9 @@ Route::get('/gaming-pcs', [GamingPcController::class, 'index'])->name('gaming-pc
 Route::get('/gaming-pcs/{configuration}/configure', [GamingPcController::class, 'configure'])
     ->whereNumber('configuration')
     ->name('gaming-pcs.configure');
+Route::post('/gaming-pcs/{configuration}/check', [GamingPcController::class, 'check'])
+    ->whereNumber('configuration')
+    ->name('gaming-pcs.check');
 Route::get('/gaming-pcs/{configuration_slug}', [GamingPcController::class, 'show'])
     ->where('configuration_slug', '[a-z0-9-]+')
     ->name('gaming-pcs.show');
@@ -71,6 +74,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/gaming-pcs/{configuration}/buy', [GamingPcController::class, 'buy'])
         ->whereNumber('configuration')
         ->name('gaming-pcs.buy');
+    Route::post('/gaming-pcs/{configuration}/drafts', [GamingPcController::class, 'storeDraft'])
+        ->whereNumber('configuration')
+        ->name('gaming-pcs.drafts.store');
     Route::patch('/cart/items/{orderItem}', [CartItemController::class, 'update'])
         ->whereNumber('orderItem')
         ->name('cart.items.update');
