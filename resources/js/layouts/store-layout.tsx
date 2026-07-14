@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import MobilePullToRefresh from '@/components/mobile-pull-to-refresh';
 import StoreFooter from '@/components/store-footer';
 import StoreHeader from '@/components/store-header';
 import { cn } from '@/lib/utils';
@@ -20,6 +21,7 @@ export default function StoreLayout({
 }: StoreLayoutProps) {
     return (
         <div
+            data-store-layout-root
             className={cn(
                 'relative min-h-screen overflow-x-clip bg-[#030712] text-slate-100',
                 className,
@@ -28,6 +30,7 @@ export default function StoreLayout({
             <div className="store-performance-glow pointer-events-none absolute top-24 -left-16 h-72 w-72 rounded-full bg-[#00bd7d]/20 blur-3xl" />
             <div className="store-performance-glow pointer-events-none absolute top-44 right-0 h-80 w-80 rounded-full bg-[#00bd7d]/15 blur-3xl" />
 
+            <MobilePullToRefresh />
             <StoreHeader canRegister={canRegister} />
 
             <main
