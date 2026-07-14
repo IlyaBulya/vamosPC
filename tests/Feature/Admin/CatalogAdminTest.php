@@ -123,6 +123,38 @@ test('configuration store honors quantities in slots and markup', function () {
         ->and($configuration->slug)->toBe('qty-build-'.$configuration->id);
 });
 
+test('reordering configurations drives the storefront listing order', function () {
+    $category = catalogCategory('graphics-card');
+    $gpu = catalogProduct($category, ['name' => 'GPU', 'component_type' => 'gpu']);
+
+    $first = Configuration::query()->create(['name' => 'Build A', 'price' => 1000]);
+    $second = Configuration::query()->create(['name' => 'Build B', 'price' => 2000]);
+    $third = Configuration::query()->create(['name' => 'Build C', 'price' => 3000]);
+
+    foreach ([$first, $second, $third] as $configuration) {
+        $configuration->products()->sync([$gpu->id]);
+        ConfigurationSlots::rebuildFromProducts($configuration);
+    }
+
+    $this->actingAs(catalogAdmin())
+        ->put('/admin/configurations/reorder', [
+            'ids' => [$second->id, $third->id, $first->id],
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect((int) $second->fresh()->display_order)->toBe(1)
+        ->and((int) $third->fresh()->display_order)->toBe(2)
+        ->and((int) $first->fresh()->display_order)->toBe(3);
+
+    $this->get('/gaming-pcs')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('configurations.0.name', 'Build B')
+            ->where('configurations.1.name', 'Build C')
+            ->where('configurations.2.name', 'Build A'));
+});
+
 test('admin check endpoint reports violations for a broken selection', function () {
     $cpuCategory = catalogCategory('processor');
     $moboCategory = catalogCategory('motherboard');

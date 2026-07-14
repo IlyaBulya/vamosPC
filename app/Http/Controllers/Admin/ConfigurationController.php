@@ -29,6 +29,8 @@ class ConfigurationController extends Controller
         $configurations = Configuration::query()
             ->withCount(['products'])
             ->with(['products:id,name'])
+            ->orderByRaw('case when display_order is null then 1 else 0 end')
+            ->orderBy('display_order')
             ->orderBy('id', 'desc')
             ->get()
             ->map(fn (Configuration $configuration): array => [
@@ -219,6 +221,27 @@ class ConfigurationController extends Controller
         return redirect()
             ->route('admin.configurations.welcome')
             ->with('status', 'Welcome page order updated successfully.');
+    }
+
+    /**
+     * Persist the storefront arrangement: ids arrive in display order.
+     */
+    public function reorder(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'distinct', 'exists:configurations,id'],
+        ]);
+
+        DB::transaction(function () use ($data): void {
+            foreach (array_values($data['ids']) as $index => $configurationId) {
+                Configuration::query()
+                    ->whereKey((int) $configurationId)
+                    ->update(['display_order' => $index + 1]);
+            }
+        });
+
+        return back()->with('status', 'Display order updated.');
     }
 
     /**

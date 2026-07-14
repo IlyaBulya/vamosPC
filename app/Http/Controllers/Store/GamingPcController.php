@@ -30,6 +30,8 @@ class GamingPcController extends Controller
     {
         $configurations = Configuration::query()
             ->with(['slots.defaultProduct.category:id,name'])
+            ->orderByRaw('case when display_order is null then 1 else 0 end')
+            ->orderBy('display_order')
             ->orderBy('id', 'desc')
             ->get()
             ->map(fn (Configuration $configuration): array => [

@@ -116,6 +116,7 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/configurations', [AdminConfigurationController::class, 'index'])->name('configurations.index');
         Route::post('/configurations/check', [AdminConfigurationController::class, 'check'])->name('configurations.check');
+        Route::put('/configurations/reorder', [AdminConfigurationController::class, 'reorder'])->name('configurations.reorder');
         Route::get('/configurations/welcome', [AdminConfigurationController::class, 'welcome'])->name('configurations.welcome');
         Route::put('/configurations/welcome', [AdminConfigurationController::class, 'updateWelcome'])->name('configurations.welcome.update');
         Route::get('/configurations/create', [AdminConfigurationController::class, 'create'])->name('configurations.create');

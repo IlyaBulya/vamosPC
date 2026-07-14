@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, Cpu, Monitor, ShoppingCart } from 'lucide-react';
+import { Cpu, Monitor, ShoppingCart } from 'lucide-react';
 import FeaturePill from '@/components/store/feature-pill';
 import PageHero from '@/components/store/page-hero';
 import StoreLayout from '@/layouts/store-layout';
@@ -80,15 +80,6 @@ export default function GamingPcPage({
                     eyebrow="Gaming PCs"
                     title="Choose Your Gaming Series"
                     description="Pick a base build, review the profile, then configure it before checkout."
-                    actions={
-                        <Link
-                            href="/catalog/hardware"
-                            className="inline-flex items-center gap-2 rounded-full border border-[#00bd7d]/55 px-5 py-2.5 text-sm font-semibold text-[#9cf5d8] transition hover:bg-[#00bd7d]/10"
-                        >
-                            Open Hardware
-                            <ChevronRight className="h-4 w-4" />
-                        </Link>
-                    }
                     meta={
                         <FeaturePill>
                             <span className="font-semibold">

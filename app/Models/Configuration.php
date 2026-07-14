@@ -19,6 +19,7 @@ class Configuration extends Model
         'price',
         'markup_in_cents',
         'homepage_order',
+        'display_order',
     ];
 
     /**
@@ -30,6 +31,7 @@ class Configuration extends Model
             'price' => 'integer',
             'markup_in_cents' => 'integer',
             'homepage_order' => 'integer',
+            'display_order' => 'integer',
         ];
     }
 
