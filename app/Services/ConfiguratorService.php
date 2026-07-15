@@ -210,6 +210,24 @@ class ConfiguratorService
     }
 
     /**
+     * Retail price for a build: the configuration's headline price adjusted by
+     * how the current selection differs from its default parts.
+     *
+     * Anchoring on the live base components total keeps the default build equal
+     * to the catalog price even when component prices change after the stored
+     * `markup_in_cents` (a snapshot of `price − baseTotal` at save time) was
+     * captured. Using that stale snapshot instead drifts the price and, once it
+     * turns negative enough, collapses the total to €0.00 via the clamp below —
+     * so pricing must never read `markup_in_cents` directly.
+     */
+    public function finalPrice(Configuration $configuration, int $selectedComponentsTotal, ?int $baseComponentsTotal = null): int
+    {
+        $baseComponentsTotal ??= $this->baseComponentsTotal($configuration);
+
+        return max(0, (int) $configuration->price + ($selectedComponentsTotal - $baseComponentsTotal));
+    }
+
+    /**
      * Validate a selection payload against the allowed options and resolve
      * it to concrete products. Missing keys fall back to the slot default.
      *

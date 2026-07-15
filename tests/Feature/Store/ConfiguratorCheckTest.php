@@ -123,6 +123,34 @@ test('check endpoint reports a clean default build with price and wattage', func
         ->and($annotations[0]['messages'][0])->toContain('DDR4');
 });
 
+test('check endpoint prices the default build from the configuration price, ignoring a stale markup', function () {
+    ['configuration' => $configuration] = compatSetup();
+
+    // Simulate drift: the stored markup was captured when components cost far
+    // more, so it is now deeply negative. The old `selectedTotal + markup`
+    // formula would clamp to €0.00; pricing must anchor on the config price.
+    $configuration->forceFill(['markup_in_cents' => -65000])->save();
+
+    $this->postJson("/gaming-pcs/{$configuration->id}/check", [
+        'selected_components' => [],
+    ])
+        ->assertOk()
+        ->assertJsonPath('selected_total_in_cents', 65000)
+        ->assertJsonPath('final_price_in_cents', 75000);
+});
+
+test('buying the default build charges the configuration price despite a stale markup', function () {
+    ['configuration' => $configuration] = compatSetup();
+    $configuration->forceFill(['markup_in_cents' => -65000])->save();
+    $user = createUser();
+
+    $this->actingAs($user)
+        ->post("/gaming-pcs/{$configuration->id}/buy", ['selected_components' => []])
+        ->assertRedirect(route('cart'));
+
+    expect((int) UserConfiguration::query()->latest('id')->first()->price)->toBe(75000);
+});
+
 test('check endpoint flags an incompatible selection', function () {
     ['configuration' => $configuration, 'ddr4' => $ddr4] = compatSetup();
     $ramSlotKey = compatSlotKey($configuration, 'ram');

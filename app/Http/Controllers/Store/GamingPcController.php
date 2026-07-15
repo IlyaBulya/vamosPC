@@ -152,12 +152,11 @@ class GamingPcController extends Controller
             is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
         );
         $report = $this->configurator->compatibilityReport($resolved['products']);
-        $markupInCents = (int) $configuration->markup_in_cents;
 
         return response()->json([
             ...$report,
             'selected_total_in_cents' => (int) $resolved['total_in_cents'],
-            'final_price_in_cents' => max(0, (int) $resolved['total_in_cents'] + $markupInCents),
+            'final_price_in_cents' => $this->configurator->finalPrice($configuration, (int) $resolved['total_in_cents']),
             'option_annotations' => $this->configurator->optionAnnotations(
                 $configuration,
                 $resolved['products'],
@@ -215,8 +214,8 @@ class GamingPcController extends Controller
 
         $selectedComponentsTotal = (int) $resolved['total_in_cents'];
         $baseComponentsTotal = $this->configurator->baseComponentsTotal($configuration);
-        $markupInCents = (int) $configuration->markup_in_cents;
-        $finalPrice = max(0, $selectedComponentsTotal + $markupInCents);
+        $markupInCents = (int) $configuration->price - $baseComponentsTotal;
+        $finalPrice = $this->configurator->finalPrice($configuration, $selectedComponentsTotal, $baseComponentsTotal);
 
         DB::transaction(function () use (
             $user,
@@ -285,7 +284,8 @@ class GamingPcController extends Controller
         $report = $this->configurator->compatibilityReport($resolved['products']);
 
         $selectedComponentsTotal = (int) $resolved['total_in_cents'];
-        $markupInCents = (int) $configuration->markup_in_cents;
+        $baseComponentsTotal = $this->configurator->baseComponentsTotal($configuration);
+        $markupInCents = (int) $configuration->price - $baseComponentsTotal;
 
         UserConfiguration::query()->create([
             'user_id' => (int) $user->id,
@@ -295,12 +295,12 @@ class GamingPcController extends Controller
                 : "{$configuration->name} - Draft",
             'description' => $configuration->description,
             'image' => $configuration->image,
-            'price' => max(0, $selectedComponentsTotal + $markupInCents),
+            'price' => $this->configurator->finalPrice($configuration, $selectedComponentsTotal, $baseComponentsTotal),
             'status' => 'draft',
             'selected_components' => $resolved['selections'],
             'meta' => [
                 'selected_components_total_in_cents' => $selectedComponentsTotal,
-                'base_components_total_in_cents' => $this->configurator->baseComponentsTotal($configuration),
+                'base_components_total_in_cents' => $baseComponentsTotal,
                 'markup_in_cents' => $markupInCents,
                 'compatibility' => $report,
             ],

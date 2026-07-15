@@ -150,31 +150,40 @@ export default function ConfigurePcPage({
         () => selectedAccessoryEntries(accessories, selectedAccessoryIds),
         [accessories, selectedAccessoryIds],
     );
-    const previewPriceInCents = useMemo(
-        () =>
-            Math.max(
-                0,
-                selectedProducts.reduce(
-                    (sum, product) => sum + product.price_in_cents,
-                    0,
-                ) +
-                    configuration.markup_in_cents +
-                    selectedSoftware.reduce(
-                        (sum, entry) => sum + entry.price_in_cents,
-                        0,
-                    ) +
-                    selectedAccessories.reduce(
-                        (sum, entry) => sum + entry.price_in_cents,
-                        0,
-                    ),
-            ),
-        [
-            configuration.markup_in_cents,
-            selectedAccessories,
-            selectedProducts,
-            selectedSoftware,
-        ],
-    );
+    const previewPriceInCents = useMemo(() => {
+        const selectedComponentsTotal = selectedProducts.reduce(
+            (sum, product) => sum + product.price_in_cents,
+            0,
+        );
+        const softwareTotal = selectedSoftware.reduce(
+            (sum, entry) => sum + entry.price_in_cents,
+            0,
+        );
+        const accessoriesTotal = selectedAccessories.reduce(
+            (sum, entry) => sum + entry.price_in_cents,
+            0,
+        );
+
+        // Anchor on the configuration's headline price and adjust only by how
+        // the current selection differs from the (live-priced) default parts.
+        // The default build therefore always equals the catalog price, matching
+        // the server's finalPrice(). Using the stored markup_in_cents instead is
+        // a stale snapshot that can drift negative and collapse this to €0.00.
+        return Math.max(
+            0,
+            configuration.price_in_cents +
+                (selectedComponentsTotal -
+                    configuration.base_components_total_in_cents) +
+                softwareTotal +
+                accessoriesTotal,
+        );
+    }, [
+        configuration.price_in_cents,
+        configuration.base_components_total_in_cents,
+        selectedAccessories,
+        selectedProducts,
+        selectedSoftware,
+    ]);
     const hasCompatibilityErrors = check?.has_errors ?? false;
     const purchaseErrorMessage =
         serverErrors[0] ??
