@@ -53,7 +53,7 @@ export default function StoreFooter({ className = '' }: StoreFooterProps) {
         >
             <div className="mx-auto w-full max-w-[1540px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12">
                 <div className="grid gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-[1.3fr_1fr_1fr]">
-                    <div className="space-y-4 sm:col-span-2 lg:col-span-1">
+                    <div className="space-y-4 border-t border-white/10 pt-6 sm:col-span-2 sm:border-t-0 sm:pt-0 lg:col-span-1">
                         <Link
                             href="/"
                             aria-label="VamosPC home"
@@ -97,7 +97,7 @@ export default function StoreFooter({ className = '' }: StoreFooterProps) {
                         </div>
                     </div>
 
-                    <div className="space-y-3 border-t border-white/10 pt-6 sm:border-0 sm:pt-0">
+                    <div className="hidden space-y-3 sm:block">
                         <h3 className="text-sm font-semibold tracking-[0.12em] text-[#9cf5d8] uppercase">
                             Navigation
                         </h3>
@@ -117,7 +117,7 @@ export default function StoreFooter({ className = '' }: StoreFooterProps) {
                         </nav>
                     </div>
 
-                    <div className="space-y-4 border-t border-white/10 pt-6 sm:border-0 sm:pt-0">
+                    <div className="order-first space-y-4 sm:order-none">
                         <h3 className="text-sm font-semibold tracking-[0.12em] text-[#9cf5d8] uppercase">
                             Community
                         </h3>
