@@ -2,12 +2,13 @@ import { useEffect, useRef } from 'react';
 import type { ComponentSlot } from '@/lib/configurator';
 import { accessoryCategoryLabel } from '@/lib/configurator-accessories';
 import type { AccessoryCategory } from '@/lib/configurator-accessories';
-import { SOFTWARE_GROUPS } from '@/lib/configurator-software';
+import type { SoftwareGroup } from '@/lib/configurator-software';
 import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
 import { cn } from '@/lib/utils';
 
 type MobileSectionNavProps = {
     slots: ComponentSlot[];
+    softwareGroups: SoftwareGroup[];
     accessories: AccessoryCategory[];
     activeSectionId: string | null;
 };
@@ -23,6 +24,7 @@ function prefersReducedMotion(): boolean {
 
 export default function MobileSectionNav({
     slots,
+    softwareGroups,
     accessories,
     activeSectionId,
 }: MobileSectionNavProps) {
@@ -36,7 +38,7 @@ export default function MobileSectionNav({
                 ? COMPONENT_TYPE_LABELS[slot.component_type]
                 : slot.slot_label,
         })),
-        ...SOFTWARE_GROUPS.map((group) => ({
+        ...softwareGroups.map((group) => ({
             sectionId: `software-${group.key}`,
             label: group.label,
         })),

@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { postCheck, type CheckResult } from '@/lib/configurator';
+import { postCheck } from '@/lib/configurator';
+import type {
+    CheckResult,
+    ConfiguratorSelectionPayload,
+} from '@/lib/configurator';
+import type { SoftwareSelections } from '@/lib/configurator-software';
 
 /**
  * Debounced server-side compatibility check for the current selection.
@@ -9,11 +14,17 @@ import { postCheck, type CheckResult } from '@/lib/configurator';
 export function useCompatibility(
     configurationId: number,
     selections: Record<string, number>,
+    softwareSelections: SoftwareSelections,
+    accessoryIds: number[],
 ) {
     const [check, setCheck] = useState<CheckResult | null>(null);
     const [isChecking, setIsChecking] = useState(false);
 
-    const selectionsKey = JSON.stringify(selections);
+    const selectionsKey = JSON.stringify({
+        selected_components: selections,
+        selected_software: softwareSelections,
+        selected_accessory_ids: [...accessoryIds].sort((a, b) => a - b),
+    } satisfies ConfiguratorSelectionPayload);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -21,7 +32,7 @@ export function useCompatibility(
             setIsChecking(true);
             postCheck(
                 configurationId,
-                JSON.parse(selectionsKey) as Record<string, number>,
+                JSON.parse(selectionsKey) as ConfiguratorSelectionPayload,
                 controller.signal,
             )
                 .then((result) => {
@@ -29,7 +40,12 @@ export function useCompatibility(
                     setIsChecking(false);
                 })
                 .catch((error: unknown) => {
-                    if (!(error instanceof DOMException && error.name === 'AbortError')) {
+                    if (
+                        !(
+                            error instanceof DOMException &&
+                            error.name === 'AbortError'
+                        )
+                    ) {
                         console.error(error);
                         setIsChecking(false);
                     }

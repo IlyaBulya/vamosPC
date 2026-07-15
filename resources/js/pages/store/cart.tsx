@@ -4,6 +4,24 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import StoreLayout from '@/layouts/store-layout';
 
+type CartExtras = {
+    software: {
+        group_key: string;
+        group_label: string;
+        option_id: string;
+        name: string;
+        price_in_cents: number;
+    }[];
+    accessories: {
+        product_id: number;
+        category_slug: string;
+        category_label: string;
+        name: string;
+        price_in_cents: number;
+    }[];
+    total_in_cents: number;
+};
+
 type CartItem = {
     line_key: string;
     id: number;
@@ -15,6 +33,7 @@ type CartItem = {
     unit_price_in_cents: number;
     qty: number;
     href: string;
+    extras: CartExtras | null;
 };
 
 type AuthUser = {
@@ -29,6 +48,55 @@ const formatPrice = (priceInCents: number): string =>
         currency: 'EUR',
         minimumFractionDigits: 2,
     }).format(priceInCents / 100);
+
+function ExtrasSummary({ extras }: { extras: CartExtras }) {
+    const lines = [
+        ...extras.software.map((extra) => ({
+            key: `software-${extra.group_key}-${extra.option_id}`,
+            label: extra.group_label,
+            name: extra.name,
+            price_in_cents: extra.price_in_cents,
+        })),
+        ...extras.accessories.map((extra) => ({
+            key: `accessory-${extra.product_id}`,
+            label: extra.category_label,
+            name: extra.name,
+            price_in_cents: extra.price_in_cents,
+        })),
+    ];
+
+    return (
+        <div className="mt-3 rounded-xl border border-[#00bd7d]/20 bg-[#00bd7d]/[0.05] p-3">
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-bold tracking-[0.14em] text-[#9cf5d8] uppercase">
+                    Included extras
+                </p>
+                <p className="text-xs font-semibold text-[#9cf5d8]">
+                    +{formatPrice(extras.total_in_cents)}
+                </p>
+            </div>
+
+            <div className="mt-2 space-y-1.5">
+                {lines.map((line) => (
+                    <div
+                        key={line.key}
+                        className="flex items-start justify-between gap-3 text-xs"
+                    >
+                        <p className="text-slate-300">
+                            <span className="text-slate-500">
+                                {line.label}:{' '}
+                            </span>
+                            {line.name}
+                        </p>
+                        <span className="shrink-0 text-slate-400">
+                            +{formatPrice(line.price_in_cents)}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 export default function CartPage({ items }: { items: CartItem[] }) {
     const page = usePage<{ auth: { user: AuthUser | null } }>();
@@ -88,7 +156,9 @@ export default function CartPage({ items }: { items: CartItem[] }) {
     };
 
     const availabilityClass = (availability: CartItem['availability']) => {
-        return availability === 'In stock' ? 'text-[#9cf5d8]' : 'text-amber-300';
+        return availability === 'In stock'
+            ? 'text-[#9cf5d8]'
+            : 'text-amber-300';
     };
 
     return (
@@ -127,11 +197,19 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                 <col className="w-[6%]" />
                             </colgroup>
                             <thead className="border-b border-white/10 bg-[#111821]">
-                                <tr className="text-xs uppercase tracking-[0.14em] text-slate-400">
-                                    <th className="px-7 py-4 font-semibold">Product</th>
-                                    <th className="px-7 py-4 font-semibold">Availability</th>
-                                    <th className="px-7 py-4 font-semibold">Quantity</th>
-                                    <th className="px-7 py-4 text-right font-semibold">Price</th>
+                                <tr className="text-xs tracking-[0.14em] text-slate-400 uppercase">
+                                    <th className="px-7 py-4 font-semibold">
+                                        Product
+                                    </th>
+                                    <th className="px-7 py-4 font-semibold">
+                                        Availability
+                                    </th>
+                                    <th className="px-7 py-4 font-semibold">
+                                        Quantity
+                                    </th>
+                                    <th className="px-7 py-4 text-right font-semibold">
+                                        Price
+                                    </th>
                                     <th className="px-7 py-4 text-right font-semibold"></th>
                                 </tr>
                             </thead>
@@ -148,12 +226,16 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                         <div className="flex h-16 w-24 shrink-0 items-center justify-center">
                                                             {item.image ? (
                                                                 <img
-                                                                    src={item.image}
-                                                                    alt={item.name}
+                                                                    src={
+                                                                        item.image
+                                                                    }
+                                                                    alt={
+                                                                        item.name
+                                                                    }
                                                                     className="h-full w-full object-cover"
                                                                 />
                                                             ) : (
-                                                                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9cf5d8]/80">
+                                                                <span className="text-[10px] font-semibold tracking-[0.14em] text-[#9cf5d8]/80 uppercase">
                                                                     Photo
                                                                 </span>
                                                             )}
@@ -166,7 +248,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                         >
                                                             {item.name}
                                                         </Link>
-                                                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
+                                                        <p className="mt-1 text-xs tracking-[0.14em] text-slate-500 uppercase">
                                                             {item.item_type ===
                                                             'user_configuration'
                                                                 ? 'custom build'
@@ -176,6 +258,13 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                                             <p className="mt-1 text-sm text-slate-300">
                                                                 {item.subtitle}
                                                             </p>
+                                                        )}
+                                                        {item.extras && (
+                                                            <ExtrasSummary
+                                                                extras={
+                                                                    item.extras
+                                                                }
+                                                            />
                                                         )}
                                                     </div>
                                                 </div>
@@ -226,7 +315,9 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                                             <td className="px-7 py-5 text-right">
                                                 <button
                                                     type="button"
-                                                    onClick={() => removeItem(item)}
+                                                    onClick={() =>
+                                                        removeItem(item)
+                                                    }
                                                     className="inline-flex cursor-pointer rounded-md p-1.5 text-red-400 transition hover:bg-red-500/10"
                                                     aria-label="Remove item"
                                                 >
@@ -294,7 +385,7 @@ export default function CartPage({ items }: { items: CartItem[] }) {
                             type="button"
                             onClick={checkout}
                             disabled={!preparedItems.length}
-                            className="cursor-pointer min-w-[280px] rounded-full bg-[#00bd7d] px-8 py-3 font-semibold text-[#04120d] shadow-[0_0_24px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a] disabled:cursor-not-allowed disabled:bg-[#0d5a43] disabled:text-[#7fdabc] disabled:shadow-none"
+                            className="min-w-[280px] cursor-pointer rounded-full bg-[#00bd7d] px-8 py-3 font-semibold text-[#04120d] shadow-[0_0_24px_rgba(0,189,125,0.45)] transition hover:bg-[#18d99a] disabled:cursor-not-allowed disabled:bg-[#0d5a43] disabled:text-[#7fdabc] disabled:shadow-none"
                         >
                             Proceed to Checkout
                         </button>

@@ -11,6 +11,7 @@ use App\Services\Compatibility\CompatibilityChecker;
 use App\Services\Compatibility\PowerCalculator;
 use App\Services\Compatibility\Severity;
 use App\Services\Compatibility\Violation;
+use App\Support\ConfiguratorSoftware;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
@@ -196,6 +197,116 @@ class ConfiguratorService
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * Server-owned optional software catalog for the configurator UI.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function softwarePayload(): array
+    {
+        return ConfiguratorSoftware::payload();
+    }
+
+    /**
+     * Validate optional software/accessory ids and create price snapshots.
+     * Names and prices are always resolved server-side.
+     *
+     * @param  array<string, mixed>  $softwareSelections
+     * @param  array<int, mixed>  $accessoryIds
+     * @return array{
+     *     software: array<int, array<string, mixed>>,
+     *     accessories: array<int, array<string, mixed>>,
+     *     software_total_in_cents: int,
+     *     accessories_total_in_cents: int,
+     *     total_in_cents: int
+     * }
+     *
+     * @throws ValidationException
+     */
+    public function resolveExtras(array $softwareSelections, array $accessoryIds): array
+    {
+        $software = ConfiguratorSoftware::resolve($softwareSelections);
+        $normalizedAccessoryIds = [];
+
+        foreach ($accessoryIds as $index => $accessoryIdRaw) {
+            $accessoryId = filter_var(
+                $accessoryIdRaw,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 1]],
+            );
+
+            if ($accessoryId === false) {
+                throw ValidationException::withMessages([
+                    "selected_accessory_ids.{$index}" => 'Invalid accessory selection.',
+                ]);
+            }
+
+            if (in_array($accessoryId, $normalizedAccessoryIds, true)) {
+                throw ValidationException::withMessages([
+                    "selected_accessory_ids.{$index}" => 'The same accessory cannot be selected twice.',
+                ]);
+            }
+
+            $normalizedAccessoryIds[] = $accessoryId;
+        }
+
+        $accessoryProducts = $normalizedAccessoryIds === []
+            ? collect()
+            : Product::query()
+                ->with(['category:id,name,type'])
+                ->whereIn('id', $normalizedAccessoryIds)
+                ->get([
+                    'id', 'category_id', 'name', 'description', 'image',
+                    'price_in_cents', 'stock', 'is_sellable',
+                ])
+                ->keyBy('id');
+
+        $accessories = [];
+
+        foreach ($normalizedAccessoryIds as $index => $accessoryId) {
+            /** @var Product|null $product */
+            $product = $accessoryProducts->get($accessoryId);
+
+            if ($product === null || $product->category?->type !== 'accessory') {
+                throw ValidationException::withMessages([
+                    "selected_accessory_ids.{$index}" => 'Selected product is not an accessory.',
+                ]);
+            }
+
+            if (! $product->is_sellable) {
+                throw ValidationException::withMessages([
+                    "selected_accessory_ids.{$index}" => "{$product->name} is no longer available.",
+                ]);
+            }
+
+            $accessories[] = [
+                'product_id' => (int) $product->id,
+                'category_id' => (int) $product->category_id,
+                'category_slug' => (string) $product->category->name,
+                'category_label' => str((string) $product->category->name)
+                    ->replace('-', ' ')
+                    ->title()
+                    ->toString(),
+                'name' => $product->name,
+                'description' => $product->description,
+                'image' => $product->image,
+                'quantity' => 1,
+                'price_in_cents' => (int) $product->price_in_cents,
+            ];
+        }
+
+        $softwareTotal = (int) collect($software)->sum('price_in_cents');
+        $accessoriesTotal = (int) collect($accessories)->sum('price_in_cents');
+
+        return [
+            'software' => $software,
+            'accessories' => $accessories,
+            'software_total_in_cents' => $softwareTotal,
+            'accessories_total_in_cents' => $accessoriesTotal,
+            'total_in_cents' => $softwareTotal + $accessoriesTotal,
+        ];
     }
 
     public function baseComponentsTotal(Configuration $configuration): int

@@ -121,6 +121,9 @@ class GamingPcController extends Controller
     public function configure(Request $request, Configuration $configuration): Response
     {
         $builderData = $this->configurator->builderPayload($configuration);
+        $softwareGroups = $this->configurator->softwarePayload();
+        $accessories = $this->configurator->accessoriesPayload();
+        $draft = $this->requestedDraft($request, $configuration);
 
         return Inertia::render('store/configure-pc', [
             'configuration' => [
@@ -133,8 +136,11 @@ class GamingPcController extends Controller
                 'markup_in_cents' => (int) $configuration->markup_in_cents,
             ],
             'slots' => $builderData['slots'],
-            'accessories' => $this->configurator->accessoriesPayload(),
-            'initial_selections' => $this->draftSelections($request, $configuration, $builderData['slots']),
+            'software_groups' => $softwareGroups,
+            'accessories' => $accessories,
+            'initial_selections' => $this->draftSelections($draft, $builderData['slots']),
+            'initial_software_selections' => $this->draftSoftwareSelections($draft, $softwareGroups),
+            'initial_accessory_ids' => $this->draftAccessoryIds($draft, $accessories),
         ]);
     }
 
@@ -143,20 +149,26 @@ class GamingPcController extends Controller
      */
     public function check(Request $request, Configuration $configuration): JsonResponse
     {
-        $data = $request->validate([
-            'selected_components' => ['nullable', 'array'],
-        ]);
+        $data = $request->validate($this->selectionValidationRules());
 
         $resolved = $this->configurator->resolveSelections(
             $configuration,
             is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
         );
+        $extras = $this->configurator->resolveExtras(
+            is_array($data['selected_software'] ?? null) ? $data['selected_software'] : [],
+            is_array($data['selected_accessory_ids'] ?? null) ? $data['selected_accessory_ids'] : [],
+        );
         $report = $this->configurator->compatibilityReport($resolved['products']);
+        $buildPrice = $this->configurator->finalPrice($configuration, (int) $resolved['total_in_cents']);
 
         return response()->json([
             ...$report,
             'selected_total_in_cents' => (int) $resolved['total_in_cents'],
-            'final_price_in_cents' => $this->configurator->finalPrice($configuration, (int) $resolved['total_in_cents']),
+            'software_total_in_cents' => $extras['software_total_in_cents'],
+            'accessories_total_in_cents' => $extras['accessories_total_in_cents'],
+            'extras_total_in_cents' => $extras['total_in_cents'],
+            'final_price_in_cents' => $buildPrice + $extras['total_in_cents'],
             'option_annotations' => $this->configurator->optionAnnotations(
                 $configuration,
                 $resolved['products'],
@@ -187,13 +199,15 @@ class GamingPcController extends Controller
         $user = $request->user();
         abort_unless($user !== null, 403);
 
-        $data = $request->validate([
-            'selected_components' => ['nullable', 'array'],
-        ]);
+        $data = $request->validate($this->selectionValidationRules());
 
         $resolved = $this->configurator->resolveSelections(
             $configuration,
             is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
+        );
+        $extras = $this->configurator->resolveExtras(
+            is_array($data['selected_software'] ?? null) ? $data['selected_software'] : [],
+            is_array($data['selected_accessory_ids'] ?? null) ? $data['selected_accessory_ids'] : [],
         );
 
         $this->configurator->ensurePurchasable($resolved['products']);
@@ -215,7 +229,8 @@ class GamingPcController extends Controller
         $selectedComponentsTotal = (int) $resolved['total_in_cents'];
         $baseComponentsTotal = $this->configurator->baseComponentsTotal($configuration);
         $markupInCents = (int) $configuration->price - $baseComponentsTotal;
-        $finalPrice = $this->configurator->finalPrice($configuration, $selectedComponentsTotal, $baseComponentsTotal);
+        $buildPrice = $this->configurator->finalPrice($configuration, $selectedComponentsTotal, $baseComponentsTotal);
+        $finalPrice = $buildPrice + $extras['total_in_cents'];
 
         DB::transaction(function () use (
             $user,
@@ -226,6 +241,8 @@ class GamingPcController extends Controller
             $selectedComponentsTotal,
             $baseComponentsTotal,
             $markupInCents,
+            $buildPrice,
+            $extras,
         ): void {
             $userConfiguration = UserConfiguration::query()->create([
                 'user_id' => (int) $user->id,
@@ -240,9 +257,18 @@ class GamingPcController extends Controller
                 'status' => 'cart',
                 'selected_components' => $resolved['selections'],
                 'meta' => [
+                    'schema_version' => 2,
                     'selected_components_total_in_cents' => $selectedComponentsTotal,
                     'base_components_total_in_cents' => $baseComponentsTotal,
                     'markup_in_cents' => $markupInCents,
+                    'build_price_in_cents' => $buildPrice,
+                    'selected_software' => $extras['software'],
+                    'selected_accessories' => $extras['accessories'],
+                    'software_total_in_cents' => $extras['software_total_in_cents'],
+                    'accessories_total_in_cents' => $extras['accessories_total_in_cents'],
+                    'extras_total_in_cents' => $extras['total_in_cents'],
+                    'final_price_in_cents' => $finalPrice,
+                    'currency' => 'EUR',
                     'compatibility' => $report,
                 ],
             ]);
@@ -273,7 +299,7 @@ class GamingPcController extends Controller
         abort_unless($user !== null, 403);
 
         $data = $request->validate([
-            'selected_components' => ['nullable', 'array'],
+            ...$this->selectionValidationRules(),
             'name' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -281,11 +307,17 @@ class GamingPcController extends Controller
             $configuration,
             is_array($data['selected_components'] ?? null) ? $data['selected_components'] : [],
         );
+        $extras = $this->configurator->resolveExtras(
+            is_array($data['selected_software'] ?? null) ? $data['selected_software'] : [],
+            is_array($data['selected_accessory_ids'] ?? null) ? $data['selected_accessory_ids'] : [],
+        );
         $report = $this->configurator->compatibilityReport($resolved['products']);
 
         $selectedComponentsTotal = (int) $resolved['total_in_cents'];
         $baseComponentsTotal = $this->configurator->baseComponentsTotal($configuration);
         $markupInCents = (int) $configuration->price - $baseComponentsTotal;
+        $buildPrice = $this->configurator->finalPrice($configuration, $selectedComponentsTotal, $baseComponentsTotal);
+        $finalPrice = $buildPrice + $extras['total_in_cents'];
 
         UserConfiguration::query()->create([
             'user_id' => (int) $user->id,
@@ -295,13 +327,22 @@ class GamingPcController extends Controller
                 : "{$configuration->name} - Draft",
             'description' => $configuration->description,
             'image' => $configuration->image,
-            'price' => $this->configurator->finalPrice($configuration, $selectedComponentsTotal, $baseComponentsTotal),
+            'price' => $finalPrice,
             'status' => 'draft',
             'selected_components' => $resolved['selections'],
             'meta' => [
+                'schema_version' => 2,
                 'selected_components_total_in_cents' => $selectedComponentsTotal,
                 'base_components_total_in_cents' => $baseComponentsTotal,
                 'markup_in_cents' => $markupInCents,
+                'build_price_in_cents' => $buildPrice,
+                'selected_software' => $extras['software'],
+                'selected_accessories' => $extras['accessories'],
+                'software_total_in_cents' => $extras['software_total_in_cents'],
+                'accessories_total_in_cents' => $extras['accessories_total_in_cents'],
+                'extras_total_in_cents' => $extras['total_in_cents'],
+                'final_price_in_cents' => $finalPrice,
+                'currency' => 'EUR',
                 'compatibility' => $report,
             ],
         ]);
@@ -335,13 +376,20 @@ class GamingPcController extends Controller
     }
 
     /**
-     * Selections stored on a draft (?draft=id), filtered down to slot keys
-     * and product ids that are still valid for the current slot layout.
-     *
-     * @param  array<int, array<string, mixed>>  $slots
-     * @return array<string, int>|null
+     * @return array<string, array<int, string>>
      */
-    private function draftSelections(Request $request, Configuration $configuration, array $slots): ?array
+    private function selectionValidationRules(): array
+    {
+        return [
+            'selected_components' => ['nullable', 'array'],
+            'selected_software' => ['nullable', 'array:os,office,antivirus'],
+            'selected_software.*' => ['nullable', 'string', 'max:64'],
+            'selected_accessory_ids' => ['nullable', 'array', 'max:50'],
+            'selected_accessory_ids.*' => ['integer', 'distinct', 'min:1'],
+        ];
+    }
+
+    private function requestedDraft(Request $request, Configuration $configuration): ?UserConfiguration
     {
         $draftId = (int) $request->query('draft', '0');
         $user = $request->user();
@@ -350,13 +398,23 @@ class GamingPcController extends Controller
             return null;
         }
 
-        $draft = UserConfiguration::query()
+        return UserConfiguration::query()
             ->whereKey($draftId)
             ->where('user_id', (int) $user->id)
             ->where('base_configuration_id', (int) $configuration->id)
             ->where('status', 'draft')
             ->first();
+    }
 
+    /**
+     * Selections stored on a draft (?draft=id), filtered down to slot keys
+     * and product ids that are still valid for the current slot layout.
+     *
+     * @param  array<int, array<string, mixed>>  $slots
+     * @return array<string, int>|null
+     */
+    private function draftSelections(?UserConfiguration $draft, array $slots): ?array
+    {
         if ($draft === null || ! is_array($draft->selected_components)) {
             return null;
         }
@@ -376,5 +434,67 @@ class GamingPcController extends Controller
         }
 
         return $selections === [] ? null : $selections;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $softwareGroups
+     * @return array<string, string>|null
+     */
+    private function draftSoftwareSelections(?UserConfiguration $draft, array $softwareGroups): ?array
+    {
+        $snapshots = data_get($draft?->meta, 'selected_software', []);
+
+        if (! is_array($snapshots)) {
+            return null;
+        }
+
+        $allowedByGroup = collect($softwareGroups)->mapWithKeys(
+            fn (array $group): array => [
+                (string) $group['key'] => array_column($group['options'], 'id'),
+            ],
+        );
+        $selections = [];
+
+        foreach ($snapshots as $snapshot) {
+            if (! is_array($snapshot)) {
+                continue;
+            }
+
+            $groupKey = (string) ($snapshot['group_key'] ?? '');
+            $optionId = (string) ($snapshot['option_id'] ?? '');
+
+            if (in_array($optionId, $allowedByGroup->get($groupKey, []), true)) {
+                $selections[$groupKey] = $optionId;
+            }
+        }
+
+        return $selections === [] ? null : $selections;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $accessories
+     * @return array<int, int>|null
+     */
+    private function draftAccessoryIds(?UserConfiguration $draft, array $accessories): ?array
+    {
+        $snapshots = data_get($draft?->meta, 'selected_accessories', []);
+
+        if (! is_array($snapshots)) {
+            return null;
+        }
+
+        $allowedIds = collect($accessories)
+            ->flatMap(fn (array $category): array => array_column($category['products'], 'id'))
+            ->map(fn (mixed $productId): int => (int) $productId)
+            ->all();
+        $selectedIds = collect($snapshots)
+            ->filter(fn (mixed $snapshot): bool => is_array($snapshot))
+            ->map(fn (array $snapshot): int => (int) ($snapshot['product_id'] ?? 0))
+            ->filter(fn (int $productId): bool => in_array($productId, $allowedIds, true))
+            ->unique()
+            ->values()
+            ->all();
+
+        return $selectedIds === [] ? null : $selectedIds;
     }
 }
