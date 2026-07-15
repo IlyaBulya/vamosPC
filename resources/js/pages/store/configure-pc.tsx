@@ -311,17 +311,19 @@ export default function ConfigurePcPage({
                 className="pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-0"
                 footerClassName="mt-6"
             >
-                <div className="sticky top-0 z-40 -mx-4 border-b border-white/10 bg-[#030712]/95 backdrop-blur-md sm:-mx-8 md:bg-[#030712]/85 lg:-mx-12">
-                    <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-8 lg:px-12">
-                        <Link
-                            href="/gaming-pcs"
-                            className="shrink-0 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold whitespace-nowrap text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
-                        >
-                            Back to Gaming PCs
-                        </Link>
-                        <span className="shrink-0 text-xs tracking-[0.14em] text-slate-400 uppercase">
-                            Base #{configuration.id}
-                        </span>
+                <div className="sticky top-0 z-40 mx-[calc(50%-50vw)] w-screen border-b border-white/10 bg-[#030712]/95 backdrop-blur-md md:bg-[#030712]/85">
+                    <div className="mx-auto w-full max-w-[1540px] px-4 sm:px-8 lg:px-12">
+                        <div className="flex items-center justify-between gap-3 py-3">
+                            <Link
+                                href="/gaming-pcs"
+                                className="shrink-0 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold whitespace-nowrap text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
+                            >
+                                Back to Gaming PCs
+                            </Link>
+                            <span className="shrink-0 text-xs tracking-[0.14em] text-slate-400 uppercase">
+                                Base #{configuration.id}
+                            </span>
+                        </div>
                     </div>
 
                     <MobileSectionNav
