@@ -256,7 +256,7 @@ export default function ConfigurePcPage({
             <Head title={`Configure ${configuration.name}`} />
 
             <StoreLayout hideHeader footerClassName="mt-6">
-                <div className="flex items-center justify-between gap-3">
+                <div className="sticky top-0 z-40 -mx-4 flex items-center justify-between gap-3 border-b border-white/10 bg-[#030712]/85 px-4 py-3 backdrop-blur-md sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
                     <Link
                         href="/gaming-pcs"
                         className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"

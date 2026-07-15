@@ -140,6 +140,18 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    /* Tailwind 4 dropped the pointer cursor on buttons; restore it for
+       every enabled interactive control. */
+    button:not(:disabled),
+    [role='button']:not(:disabled),
+    [role='checkbox']:not(:disabled),
+    [role='radio']:not(:disabled),
+    label[for],
+    select:not(:disabled),
+    summary {
+        cursor: pointer;
+    }
 }
 
 @layer components {

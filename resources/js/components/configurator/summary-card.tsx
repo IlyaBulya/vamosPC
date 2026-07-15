@@ -74,7 +74,7 @@ export default function SummaryCard({
     const hasErrors = check?.has_errors ?? false;
 
     return (
-        <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-4 sm:p-5 lg:sticky lg:top-6 lg:h-fit">
+        <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-4 sm:p-5 lg:sticky lg:top-20 lg:h-fit">
             <div className="mb-4 flex items-center justify-between">
                 <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
                     Live Preview
