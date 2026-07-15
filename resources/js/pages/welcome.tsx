@@ -406,7 +406,7 @@ export default function Welcome({
                                     fetchPriority="high"
                                     decoding="async"
                                     draggable={false}
-                                    className="absolute top-[10%] -right-[54%] h-[82%] w-auto max-w-none object-contain opacity-55 drop-shadow-[0_0_42px_rgba(0,189,125,0.3)] saturate-125 min-[390px]:-right-[46%] min-[390px]:h-[78%] sm:-right-[24%] sm:h-[84%] lg:top-[52%] lg:right-0 lg:bottom-auto lg:h-[min(104dvh,66vw,70rem)] lg:-translate-y-1/2 lg:opacity-100 lg:drop-shadow-[0_32px_70px_rgba(0,0,0,0.55)] lg:saturate-100 xl:right-0 xl:h-[min(116dvh,72vw,82rem)]"
+                                    className="absolute top-[3%] -right-[54%] h-[108%] w-auto max-w-none object-contain opacity-55 drop-shadow-[0_0_42px_rgba(0,189,125,0.3)] saturate-125 min-[390px]:-right-[46%] sm:-right-[24%] md:top-[10%] md:h-[84%] lg:top-[52%] lg:-right-16 lg:bottom-auto lg:h-[min(104dvh,66vw,70rem)] lg:-translate-y-1/2 lg:opacity-100 lg:drop-shadow-[0_32px_70px_rgba(0,0,0,0.55)] lg:saturate-100 xl:h-[min(116dvh,72vw,82rem)]"
                                 />
 
                                 <div className="absolute inset-0 bg-[linear-gradient(90deg,#030712_0%,rgba(3,7,18,0.96)_38%,rgba(3,7,18,0.16)_100%)] lg:hidden" />
