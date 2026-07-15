@@ -10,6 +10,7 @@ interface StoreLayoutProps {
     className?: string;
     contentClassName?: string;
     footerClassName?: string;
+    hideHeader?: boolean;
 }
 
 export default function StoreLayout({
@@ -18,6 +19,7 @@ export default function StoreLayout({
     className,
     contentClassName,
     footerClassName,
+    hideHeader = false,
 }: StoreLayoutProps) {
     return (
         <div
@@ -31,7 +33,7 @@ export default function StoreLayout({
             <div className="store-performance-glow pointer-events-none absolute top-44 right-0 h-80 w-80 rounded-full bg-[#00bd7d]/15 blur-3xl" />
 
             <MobilePullToRefresh />
-            <StoreHeader canRegister={canRegister} />
+            {!hideHeader && <StoreHeader canRegister={canRegister} />}
 
             <main
                 className={cn(

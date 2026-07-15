@@ -1,18 +1,19 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import ConflictModal from '@/components/configurator/conflict-modal';
+import SideNav from '@/components/configurator/side-nav';
 import SlotSection from '@/components/configurator/slot-section';
 import SummaryCard from '@/components/configurator/summary-card';
 import { useCompatibility } from '@/hooks/use-compatibility';
-import {
-    postJson,
-    type ComponentSlot,
-    type ConfiguratorConfiguration,
-    type ResolveResult,
-    type SlotProduct,
-} from '@/lib/configurator';
-import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
+import { useScrollspy } from '@/hooks/use-scrollspy';
 import StoreLayout from '@/layouts/store-layout';
+import { postJson } from '@/lib/configurator';
+import type {
+    ComponentSlot,
+    ConfiguratorConfiguration,
+    ResolveResult,
+    SlotProduct,
+} from '@/lib/configurator';
 
 type SelectedEntry = SlotProduct & {
     slot_key: string;
@@ -43,12 +44,12 @@ export default function ConfigurePcPage({
         [slots],
     );
 
-    const [selectedBySlot, setSelectedBySlot] = useState<Record<string, number>>(
-        () => ({
-            ...defaultSelections,
-            ...(initial_selections ?? {}),
-        }),
-    );
+    const [selectedBySlot, setSelectedBySlot] = useState<
+        Record<string, number>
+    >(() => ({
+        ...defaultSelections,
+        ...(initial_selections ?? {}),
+    }));
     const [isBuying, setIsBuying] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [draftSaved, setDraftSaved] = useState(false);
@@ -63,6 +64,13 @@ export default function ConfigurePcPage({
         configuration.id,
         selectedBySlot,
     );
+
+    const slotSectionIds = useMemo(
+        () => slots.map((slot) => `slot-${slot.slot_key}`),
+        [slots],
+    );
+    const activeSectionId = useScrollspy(slotSectionIds);
+    const activeSlotKey = activeSectionId?.replace(/^slot-/, '') ?? null;
 
     const selectedProducts = useMemo<SelectedEntry[]>(
         () =>
@@ -88,7 +96,9 @@ export default function ConfigurePcPage({
                         slot_label: slot.slot_label,
                     };
                 })
-                .filter((product): product is SelectedEntry => product !== null),
+                .filter(
+                    (product): product is SelectedEntry => product !== null,
+                ),
         [selectedBySlot, slots],
     );
 
@@ -205,7 +215,7 @@ export default function ConfigurePcPage({
         <>
             <Head title={`Configure ${configuration.name}`} />
 
-            <StoreLayout footerClassName="mt-6">
+            <StoreLayout hideHeader footerClassName="mt-6">
                 <div className="flex items-center justify-between gap-3">
                     <Link
                         href="/gaming-pcs"
@@ -213,37 +223,20 @@ export default function ConfigurePcPage({
                     >
                         Back to Gaming PCs
                     </Link>
-                    <span className="text-xs uppercase tracking-[0.14em] text-slate-400">
+                    <span className="text-xs tracking-[0.14em] text-slate-400 uppercase">
                         Base #{configuration.id}
                     </span>
                 </div>
 
                 <section className="mt-6 grid gap-6 xl:grid-cols-[200px_1fr_minmax(340px,0.9fr)]">
-                    <nav className="hidden xl:block">
-                        <div className="sticky top-6 space-y-1">
-                            <p className="mb-3 text-xs uppercase tracking-[0.16em] text-[#9cf5d8]">
-                                Components
-                            </p>
-                            {slots.map((slot) => (
-                                <a
-                                    key={slot.slot_key}
-                                    href={`#slot-${slot.slot_key}`}
-                                    className="block rounded-lg px-3 py-1.5 text-sm text-slate-400 transition hover:bg-white/[0.04] hover:text-[#9cf5d8]"
-                                >
-                                    {slot.component_type
-                                        ? COMPONENT_TYPE_LABELS[
-                                              slot.component_type
-                                          ]
-                                        : slot.slot_label}
-                                </a>
-                            ))}
-                        </div>
+                    <nav className="hidden xl:block" aria-label="Components">
+                        <SideNav slots={slots} activeSlotKey={activeSlotKey} />
                     </nav>
 
                     <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-5 sm:p-6">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                                <p className="text-xs uppercase tracking-[0.16em] text-[#9cf5d8]">
+                                <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
                                     Configure
                                 </p>
                                 <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">
@@ -269,9 +262,7 @@ export default function ConfigurePcPage({
                                         slot.default_product_id
                                     }
                                     annotations={
-                                        check?.option_annotations[
-                                            slot.slot_key
-                                        ]
+                                        check?.option_annotations[slot.slot_key]
                                     }
                                     onSelect={setSelectedSlot}
                                 />
