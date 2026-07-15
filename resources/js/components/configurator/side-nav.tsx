@@ -1,17 +1,22 @@
 import {
+    AppWindow,
     CircuitBoard,
     Cpu,
     Fan,
+    FileText,
     HardDrive,
     MemoryStick,
     Microchip,
     PcCase,
+    ShieldCheck,
     Snowflake,
     Thermometer,
     Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ComponentSlot } from '@/lib/configurator';
+import { SOFTWARE_GROUPS } from '@/lib/configurator-software';
+import type { SoftwareGroupKey } from '@/lib/configurator-software';
 import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
 import type { ComponentType } from '@/lib/spec-schema';
 import { cn } from '@/lib/utils';
@@ -29,41 +34,50 @@ const SLOT_ICONS: Record<ComponentType, LucideIcon> = {
     thermal_paste: Thermometer,
 };
 
-export default function SideNav({
-    slots,
-    activeSlotKey,
+const SOFTWARE_ICONS: Record<SoftwareGroupKey, LucideIcon> = {
+    os: AppWindow,
+    office: FileText,
+    antivirus: ShieldCheck,
+};
+
+type NavItem = {
+    sectionId: string;
+    label: string;
+    icon: LucideIcon;
+};
+
+function NavGroup({
+    title,
+    items,
+    activeSectionId,
 }: {
-    slots: ComponentSlot[];
-    activeSlotKey: string | null;
+    title: string;
+    items: NavItem[];
+    activeSectionId: string | null;
 }) {
-    const scrollToSlot = (slotKey: string) => {
+    const scrollToSection = (sectionId: string) => {
         document
-            .getElementById(`slot-${slotKey}`)
+            .getElementById(sectionId)
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     return (
-        <div className="sticky top-6">
+        <div>
             <p className="flex items-center gap-2 text-xs font-bold tracking-[0.16em] text-white uppercase">
                 <span
                     aria-hidden
                     className="inline-block size-0 border-x-[6px] border-t-[8px] border-x-transparent border-t-[#00bd7d]"
                 />
-                Components
+                {title}
             </p>
 
             <ul className="mt-3 ml-[5px] space-y-0.5 border-l border-dashed border-white/15 pl-4">
-                {slots.map((slot) => {
-                    const isActive = slot.slot_key === activeSlotKey;
-                    const Icon = slot.component_type
-                        ? SLOT_ICONS[slot.component_type]
-                        : CircuitBoard;
-                    const label = slot.component_type
-                        ? COMPONENT_TYPE_LABELS[slot.component_type]
-                        : slot.slot_label;
+                {items.map((item) => {
+                    const isActive = item.sectionId === activeSectionId;
+                    const Icon = item.icon;
 
                     return (
-                        <li key={slot.slot_key} className="relative">
+                        <li key={item.sectionId} className="relative">
                             <span
                                 aria-hidden
                                 className={cn(
@@ -75,7 +89,7 @@ export default function SideNav({
                             />
                             <button
                                 type="button"
-                                onClick={() => scrollToSlot(slot.slot_key)}
+                                onClick={() => scrollToSection(item.sectionId)}
                                 aria-current={isActive ? 'true' : undefined}
                                 className={cn(
                                     'flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-left text-sm transition',
@@ -92,12 +106,51 @@ export default function SideNav({
                                             : 'text-slate-500',
                                     )}
                                 />
-                                {label}
+                                {item.label}
                             </button>
                         </li>
                     );
                 })}
             </ul>
+        </div>
+    );
+}
+
+export default function SideNav({
+    slots,
+    activeSectionId,
+}: {
+    slots: ComponentSlot[];
+    activeSectionId: string | null;
+}) {
+    const componentItems: NavItem[] = slots.map((slot) => ({
+        sectionId: `slot-${slot.slot_key}`,
+        label: slot.component_type
+            ? COMPONENT_TYPE_LABELS[slot.component_type]
+            : slot.slot_label,
+        icon: slot.component_type
+            ? SLOT_ICONS[slot.component_type]
+            : CircuitBoard,
+    }));
+
+    const softwareItems: NavItem[] = SOFTWARE_GROUPS.map((group) => ({
+        sectionId: `software-${group.key}`,
+        label: group.label,
+        icon: SOFTWARE_ICONS[group.key],
+    }));
+
+    return (
+        <div className="sticky top-6 space-y-5">
+            <NavGroup
+                title="Components"
+                items={componentItems}
+                activeSectionId={activeSectionId}
+            />
+            <NavGroup
+                title="Programs"
+                items={softwareItems}
+                activeSectionId={activeSectionId}
+            />
         </div>
     );
 }

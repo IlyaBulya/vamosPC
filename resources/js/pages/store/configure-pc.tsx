@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import ConflictModal from '@/components/configurator/conflict-modal';
 import SideNav from '@/components/configurator/side-nav';
 import SlotSection from '@/components/configurator/slot-section';
+import SoftwareSection from '@/components/configurator/software-section';
 import SummaryCard from '@/components/configurator/summary-card';
 import { useCompatibility } from '@/hooks/use-compatibility';
 import { useScrollspy } from '@/hooks/use-scrollspy';
@@ -14,6 +15,15 @@ import type {
     ResolveResult,
     SlotProduct,
 } from '@/lib/configurator';
+import {
+    EMPTY_SOFTWARE_SELECTIONS,
+    SOFTWARE_GROUPS,
+    selectedSoftwareEntries,
+} from '@/lib/configurator-software';
+import type {
+    SoftwareGroupKey,
+    SoftwareSelections,
+} from '@/lib/configurator-software';
 
 type SelectedEntry = SlotProduct & {
     slot_key: string;
@@ -56,6 +66,8 @@ export default function ConfigurePcPage({
     const [pendingConflict, setPendingConflict] =
         useState<PendingConflict | null>(null);
     const [isResolving, setIsResolving] = useState(false);
+    const [softwareSelections, setSoftwareSelections] =
+        useState<SoftwareSelections>(EMPTY_SOFTWARE_SELECTIONS);
 
     const { errors } = usePage().props;
     const serverErrors = Object.values(errors ?? {});
@@ -65,12 +77,21 @@ export default function ConfigurePcPage({
         selectedBySlot,
     );
 
-    const slotSectionIds = useMemo(
-        () => slots.map((slot) => `slot-${slot.slot_key}`),
+    const sectionIds = useMemo(
+        () => [
+            ...slots.map((slot) => `slot-${slot.slot_key}`),
+            ...SOFTWARE_GROUPS.map((group) => `software-${group.key}`),
+        ],
         [slots],
     );
-    const activeSectionId = useScrollspy(slotSectionIds);
-    const activeSlotKey = activeSectionId?.replace(/^slot-/, '') ?? null;
+    const activeSectionId = useScrollspy(sectionIds);
+
+    const toggleSoftware = (groupKey: SoftwareGroupKey, optionId: string) => {
+        setSoftwareSelections((current) => ({
+            ...current,
+            [groupKey]: current[groupKey] === optionId ? null : optionId,
+        }));
+    };
 
     const selectedProducts = useMemo<SelectedEntry[]>(
         () =>
@@ -209,6 +230,7 @@ export default function ConfigurePcPage({
     const resetSelections = () => {
         setDraftSaved(false);
         setSelectedBySlot(defaultSelections);
+        setSoftwareSelections(EMPTY_SOFTWARE_SELECTIONS);
     };
 
     return (
@@ -229,50 +251,95 @@ export default function ConfigurePcPage({
                 </div>
 
                 <section className="mt-6 grid gap-6 xl:grid-cols-[200px_1fr_minmax(340px,0.9fr)]">
-                    <nav className="hidden xl:block" aria-label="Components">
-                        <SideNav slots={slots} activeSlotKey={activeSlotKey} />
+                    <nav className="hidden xl:block" aria-label="Sections">
+                        <SideNav
+                            slots={slots}
+                            activeSectionId={activeSectionId}
+                        />
                     </nav>
 
-                    <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-5 sm:p-6">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                                <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
-                                    Configure
-                                </p>
-                                <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">
-                                    {configuration.name}
-                                </h1>
-                                <p className="mt-2 max-w-3xl text-sm text-slate-300">
-                                    {configuration.description ??
-                                        'Adjust your preferred components and review the preview before buying.'}
-                                </p>
+                    <div className="space-y-6">
+                        <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-5 sm:p-6">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
+                                        Configure
+                                    </p>
+                                    <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">
+                                        {configuration.name}
+                                    </h1>
+                                    <p className="mt-2 max-w-3xl text-sm text-slate-300">
+                                        {configuration.description ??
+                                            'Adjust your preferred components and review the preview before buying.'}
+                                    </p>
+                                </div>
+                                <span className="rounded-full border border-[#00bd7d]/40 bg-[#00bd7d]/10 px-3 py-1 text-xs font-semibold text-[#9cf5d8]">
+                                    {slots.length} slots
+                                </span>
                             </div>
-                            <span className="rounded-full border border-[#00bd7d]/40 bg-[#00bd7d]/10 px-3 py-1 text-xs font-semibold text-[#9cf5d8]">
-                                {slots.length} slots
-                            </span>
-                        </div>
 
-                        <div className="mt-5 space-y-4">
-                            {slots.map((slot) => (
-                                <SlotSection
-                                    key={slot.slot_key}
-                                    slot={slot}
-                                    selectedId={
-                                        selectedBySlot[slot.slot_key] ??
-                                        slot.default_product_id
-                                    }
-                                    annotations={
-                                        check?.option_annotations[slot.slot_key]
-                                    }
-                                    onSelect={setSelectedSlot}
-                                />
-                            ))}
-                        </div>
-                    </article>
+                            <div className="mt-5 space-y-4">
+                                {slots.map((slot) => (
+                                    <SlotSection
+                                        key={slot.slot_key}
+                                        slot={slot}
+                                        selectedId={
+                                            selectedBySlot[slot.slot_key] ??
+                                            slot.default_product_id
+                                        }
+                                        annotations={
+                                            check?.option_annotations[
+                                                slot.slot_key
+                                            ]
+                                        }
+                                        onSelect={setSelectedSlot}
+                                    />
+                                ))}
+                            </div>
+                        </article>
+
+                        <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-5 sm:p-6">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
+                                        Programs
+                                    </p>
+                                    <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">
+                                        Optional Software
+                                    </h2>
+                                    <p className="mt-2 max-w-3xl text-sm text-slate-300">
+                                        Pick an operating system, office suite
+                                        or antivirus — we install and activate
+                                        everything before shipping. Click a
+                                        selected item again to remove it.
+                                    </p>
+                                </div>
+                                <span className="rounded-full border border-[#00bd7d]/40 bg-[#00bd7d]/10 px-3 py-1 text-xs font-semibold text-[#9cf5d8]">
+                                    Optional
+                                </span>
+                            </div>
+
+                            <div className="mt-5 space-y-4">
+                                {SOFTWARE_GROUPS.map((group) => (
+                                    <SoftwareSection
+                                        key={group.key}
+                                        group={group}
+                                        selectedOptionId={
+                                            softwareSelections[group.key]
+                                        }
+                                        onToggle={toggleSoftware}
+                                    />
+                                ))}
+                            </div>
+                        </article>
+                    </div>
 
                     <SummaryCard
                         configuration={configuration}
                         selectedProducts={selectedProducts}
+                        selectedSoftware={selectedSoftwareEntries(
+                            softwareSelections,
+                        )}
                         check={check}
                         isChecking={isChecking}
                         serverErrors={serverErrors}

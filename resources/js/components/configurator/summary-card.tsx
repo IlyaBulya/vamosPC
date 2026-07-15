@@ -10,11 +10,13 @@ import {
     XCircle,
 } from 'lucide-react';
 import {
-    formatPrice,
-    type CheckResult,
-    type ConfiguratorConfiguration,
-    type SlotProduct,
+    formatPrice
+    
+    
+    
 } from '@/lib/configurator';
+import type {CheckResult, ConfiguratorConfiguration, SlotProduct} from '@/lib/configurator';
+import type { SelectedSoftwareEntry } from '@/lib/configurator-software';
 
 type SelectedEntry = SlotProduct & {
     slot_key: string;
@@ -24,6 +26,7 @@ type SelectedEntry = SlotProduct & {
 export default function SummaryCard({
     configuration,
     selectedProducts,
+    selectedSoftware,
     check,
     isChecking,
     serverErrors,
@@ -36,6 +39,7 @@ export default function SummaryCard({
 }: {
     configuration: ConfiguratorConfiguration;
     selectedProducts: SelectedEntry[];
+    selectedSoftware: SelectedSoftwareEntry[];
     check: CheckResult | null;
     isChecking: boolean;
     serverErrors: string[];
@@ -50,16 +54,22 @@ export default function SummaryCard({
         (sum, product) => sum + product.price_in_cents,
         0,
     );
+    const softwareTotalInCents = selectedSoftware.reduce(
+        (sum, entry) => sum + entry.price_in_cents,
+        0,
+    );
     const previewPriceInCents = Math.max(
         0,
-        selectedTotalInCents + configuration.markup_in_cents,
+        selectedTotalInCents +
+            configuration.markup_in_cents +
+            softwareTotalInCents,
     );
     const hasErrors = check?.has_errors ?? false;
 
     return (
         <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-4 sm:p-5 lg:sticky lg:top-6 lg:h-fit">
             <div className="mb-4 flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.16em] text-[#9cf5d8]">
+                <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
                     Live Preview
                 </p>
                 {isChecking && (
@@ -86,7 +96,7 @@ export default function SummaryCard({
                     </div>
                 </div>
 
-                <h2 className="mt-4 text-center text-3xl font-black uppercase tracking-[0.02em] text-white">
+                <h2 className="mt-4 text-center text-3xl font-black tracking-[0.02em] text-white uppercase">
                     {configuration.name}
                 </h2>
 
@@ -146,7 +156,9 @@ export default function SummaryCard({
                     <button
                         type="button"
                         onClick={onSaveDraft}
-                        disabled={isSavingDraft || selectedProducts.length === 0}
+                        disabled={
+                            isSavingDraft || selectedProducts.length === 0
+                        }
                         className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/20 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {draftSaved ? (
@@ -176,7 +188,7 @@ export default function SummaryCard({
                             key={product.slot_key}
                             className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2"
                         >
-                            <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
+                            <p className="text-xs tracking-[0.12em] text-slate-500 uppercase">
                                 {product.slot_label}
                             </p>
                             <p className="mt-1 text-sm text-slate-200">
@@ -185,6 +197,32 @@ export default function SummaryCard({
                         </div>
                     ))}
                 </div>
+
+                {selectedSoftware.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                        <p className="text-xs tracking-[0.14em] text-[#9cf5d8] uppercase">
+                            Software
+                        </p>
+                        {selectedSoftware.map((entry) => (
+                            <div
+                                key={entry.group_key}
+                                className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2"
+                            >
+                                <p className="text-xs tracking-[0.12em] text-slate-500 uppercase">
+                                    {entry.group_label}
+                                </p>
+                                <div className="mt-1 flex items-center justify-between gap-2">
+                                    <p className="text-sm text-slate-200">
+                                        {entry.name}
+                                    </p>
+                                    <p className="shrink-0 text-xs font-semibold text-[#9cf5d8]">
+                                        {formatPrice(entry.price_in_cents)}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
                     <Cpu className="h-3.5 w-3.5" />
