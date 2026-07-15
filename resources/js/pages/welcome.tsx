@@ -342,9 +342,9 @@ export default function Welcome({
 
                         <section
                             ref={heroContentRef}
-                            className="homepage-hero-content relative grid h-full w-full grid-cols-1 items-center gap-8 px-4 py-6 sm:px-8 sm:py-8 lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:px-16 lg:py-12 [@media(min-width:768px)_and_(max-height:500px)]:py-3"
+                            className="homepage-hero-content relative isolate grid h-full w-full grid-cols-1 items-start gap-8 overflow-hidden px-4 pt-[clamp(3rem,14svh,8rem)] pb-6 sm:px-8 sm:py-8 md:items-center lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:overflow-visible lg:px-16 lg:py-12 [@media(min-width:768px)_and_(max-height:500px)]:py-3"
                         >
-                            <div className="max-w-[700px]">
+                            <div className="relative z-[1] max-w-[700px]">
                                 <h1 className="text-[2.6rem] leading-none font-black tracking-tight min-[390px]:text-5xl sm:text-6xl lg:text-[98px] lg:leading-[0.96]">
                                     <span className="bg-gradient-to-r from-white to-[#b8ffe8] bg-clip-text text-transparent">
                                         VAMOS PC
@@ -372,7 +372,7 @@ export default function Welcome({
                                     </button>
                                 </div>
 
-                                <div className="mt-5 flex flex-wrap gap-2 sm:mt-6 sm:gap-3 lg:mt-8 [@media(min-width:768px)_and_(max-height:500px)]:hidden">
+                                <div className="mt-4 flex flex-nowrap gap-1.5 sm:mt-6 sm:flex-wrap sm:gap-3 lg:mt-8 [@media(min-width:768px)_and_(max-height:500px)]:hidden">
                                     {[
                                         'Fast Build',
                                         'Warranty',
@@ -380,13 +380,38 @@ export default function Welcome({
                                     ].map((item) => (
                                         <FeaturePill
                                             key={item}
-                                            className="px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-lg"
+                                            className="min-w-0 gap-1.5 px-2 py-1 text-[0.65rem] whitespace-nowrap min-[390px]:px-2.5 min-[390px]:text-xs sm:gap-2 sm:px-4 sm:py-2 sm:text-lg"
+                                            dotClassName="h-1.5 w-1.5 shrink-0 sm:h-2.5 sm:w-2.5"
                                         >
                                             {item}
                                         </FeaturePill>
                                     ))}
                                 </div>
                             </div>
+
+                            <figure
+                                aria-hidden="true"
+                                className="pointer-events-none absolute inset-0 z-0 overflow-hidden lg:relative lg:inset-auto lg:h-full lg:min-h-0 lg:overflow-visible"
+                            >
+                                <div className="absolute right-[-12%] bottom-[4%] h-[46%] w-[74%] rounded-full bg-[#00bd7d]/20 blur-[72px] lg:top-1/2 lg:right-[-5%] lg:bottom-auto lg:h-[54%] lg:w-[76%] lg:-translate-y-1/2 lg:bg-[#00bd7d]/24 lg:blur-[96px]" />
+
+                                <img
+                                    src="/images/hero-1600.webp"
+                                    srcSet="/images/hero-960.webp 960w, /images/hero-1600.webp 1600w"
+                                    sizes="(min-width: 1024px) min(50vw, 58rem), 112vw"
+                                    alt=""
+                                    width={1600}
+                                    height={1600}
+                                    loading="eager"
+                                    fetchPriority="high"
+                                    decoding="async"
+                                    draggable={false}
+                                    className="absolute -right-[28%] bottom-[-2%] h-[62%] w-auto max-w-none object-contain opacity-65 drop-shadow-[0_0_42px_rgba(0,189,125,0.3)] saturate-125 min-[390px]:h-[58%] lg:top-[53%] lg:-right-16 lg:bottom-auto lg:h-[min(78dvh,50vw,58rem)] lg:-translate-y-1/2 lg:opacity-100 lg:drop-shadow-[0_32px_70px_rgba(0,0,0,0.55)] lg:saturate-100"
+                                />
+
+                                <div className="absolute inset-0 bg-[linear-gradient(90deg,#030712_0%,rgba(3,7,18,0.96)_38%,rgba(3,7,18,0.16)_100%)] lg:hidden" />
+                                <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_72%,#030712_100%)] lg:hidden" />
+                            </figure>
                         </section>
 
                         <div
