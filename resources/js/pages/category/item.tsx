@@ -50,7 +50,8 @@ function formatMonthly(priceInCents: number) {
 }
 
 function shortDescription(description: string | null) {
-    const fallback = 'Tuned and tested product for smooth daily and creative work.';
+    const fallback =
+        'Tuned and tested product for smooth daily and creative work.';
     const text = (description ?? fallback).trim();
 
     if (text.length <= 96) {
@@ -90,8 +91,12 @@ export default function CategoryItemPage({
         <>
             <Head title={title} />
 
-            <StoreLayout contentClassName="mx-auto w-full max-w-[1540px] px-4 py-8 sm:px-8 lg:px-12" footerClassName="mt-6">
+            <StoreLayout
+                contentClassName="mx-auto w-full max-w-[1540px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12"
+                footerClassName="mt-6"
+            >
                 <PageHero
+                    compactOnMobile
                     backHref={backHref}
                     backLabel={`Back to ${typeLabel}`}
                     eyebrow="Category"
@@ -110,7 +115,7 @@ export default function CategoryItemPage({
 
                 {category.products.length > 0 ? (
                     <section className="mt-7">
-                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
                             {category.products.map((product) => {
                                 const productHref = `${productBasePath}/${product.slug}`;
 
@@ -119,9 +124,13 @@ export default function CategoryItemPage({
                                         key={product.id}
                                         href={productHref}
                                         name={product.name}
-                                        description={shortDescription(product.description)}
+                                        description={shortDescription(
+                                            product.description,
+                                        )}
                                         image={product.image}
-                                        price={formatPrice(product.price_in_cents)}
+                                        price={formatPrice(
+                                            product.price_in_cents,
+                                        )}
                                         note={`from ${formatMonthly(product.price_in_cents)}`}
                                         availability={
                                             product.stock > 0
@@ -129,14 +138,12 @@ export default function CategoryItemPage({
                                                 : 'Pre-order'
                                         }
                                         color={product.color}
-                                        action={
-                                            {
-                                                label: 'Buy',
-                                                kind: 'buy',
-                                                onClick: () =>
-                                                    addToCart(product.id),
-                                            }
-                                        }
+                                        action={{
+                                            label: 'Buy',
+                                            kind: 'buy',
+                                            onClick: () =>
+                                                addToCart(product.id),
+                                        }}
                                     />
                                 );
                             })}

@@ -14,6 +14,7 @@ type PageHeroProps = {
     aside?: ReactNode;
     children?: ReactNode;
     className?: string;
+    compactOnMobile?: boolean;
 };
 
 export default function PageHero({
@@ -27,11 +28,23 @@ export default function PageHero({
     aside,
     children,
     className,
+    compactOnMobile = false,
 }: PageHeroProps) {
+    const eyebrowClassName = compactOnMobile
+        ? 'text-[0.68rem] uppercase tracking-[0.16em] text-[#9cf5d8] sm:text-xs sm:tracking-[0.18em]'
+        : 'text-xs uppercase tracking-[0.18em] text-[#9cf5d8]';
+    const titleClassName = compactOnMobile
+        ? 'mt-2 text-3xl leading-[1.05] font-black text-white sm:mt-3 sm:text-5xl sm:leading-tight'
+        : 'mt-3 text-4xl leading-tight font-black text-white sm:text-5xl';
+    const descriptionClassName = compactOnMobile
+        ? 'mt-3 max-w-3xl text-sm leading-relaxed text-slate-300 sm:mt-4 sm:text-lg sm:leading-normal'
+        : 'mt-4 max-w-3xl text-base text-slate-300 sm:text-lg';
+
     return (
         <section
             className={cn(
-                'rounded-3xl border border-white/10 bg-[#08101c]/85 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.45)] sm:p-10',
+                'rounded-3xl border border-white/10 bg-[#08101c]/85 shadow-[0_18px_60px_rgba(0,0,0,0.45)]',
+                compactOnMobile ? 'p-5 sm:p-10' : 'p-7 sm:p-10',
                 className,
             )}
         >
@@ -45,20 +58,22 @@ export default function PageHero({
                 </Link>
             ) : null}
 
-            <div className={cn(backHref ? 'mt-4' : '')}>
+            <div
+                className={cn(
+                    backHref ? (compactOnMobile ? 'mt-3 sm:mt-4' : 'mt-4') : '',
+                )}
+            >
                 {aside ? (
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
                             {eyebrow ? (
-                                <div className="text-xs uppercase tracking-[0.18em] text-[#9cf5d8]">
+                                <div className={eyebrowClassName}>
                                     {eyebrow}
                                 </div>
                             ) : null}
-                            <h1 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">
-                                {title}
-                            </h1>
+                            <h1 className={titleClassName}>{title}</h1>
                             {description ? (
-                                <p className="mt-4 max-w-3xl text-base text-slate-300 sm:text-lg">
+                                <p className={descriptionClassName}>
                                     {description}
                                 </p>
                             ) : null}
@@ -68,15 +83,11 @@ export default function PageHero({
                 ) : (
                     <>
                         {eyebrow ? (
-                            <div className="text-xs uppercase tracking-[0.18em] text-[#9cf5d8]">
-                                {eyebrow}
-                            </div>
+                            <div className={eyebrowClassName}>{eyebrow}</div>
                         ) : null}
-                        <h1 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">
-                            {title}
-                        </h1>
+                        <h1 className={titleClassName}>{title}</h1>
                         {description ? (
-                            <p className="mt-4 max-w-3xl text-base text-slate-300 sm:text-lg">
+                            <p className={descriptionClassName}>
                                 {description}
                             </p>
                         ) : null}
@@ -84,9 +95,26 @@ export default function PageHero({
                 )}
             </div>
 
-            {actions ? <div className="mt-7 flex flex-wrap gap-3">{actions}</div> : null}
-            {meta ? <div className="mt-6">{meta}</div> : null}
-            {children ? <div className="mt-8">{children}</div> : null}
+            {actions ? (
+                <div
+                    className={cn(
+                        'flex flex-wrap gap-3',
+                        compactOnMobile ? 'mt-5 sm:mt-7' : 'mt-7',
+                    )}
+                >
+                    {actions}
+                </div>
+            ) : null}
+            {meta ? (
+                <div className={compactOnMobile ? 'mt-4 sm:mt-6' : 'mt-6'}>
+                    {meta}
+                </div>
+            ) : null}
+            {children ? (
+                <div className={compactOnMobile ? 'mt-6 sm:mt-8' : 'mt-8'}>
+                    {children}
+                </div>
+            ) : null}
         </section>
     );
 }
