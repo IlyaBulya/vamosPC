@@ -23,7 +23,7 @@ export default function AccessorySection({
     return (
         <section
             id={`accessory-${category.slug}`}
-            className="scroll-mt-24 rounded-2xl border border-white/10 bg-[#0b1321] p-4"
+            className="scroll-mt-[8.25rem] rounded-2xl border border-white/10 bg-[#0b1321] p-4 md:scroll-mt-24"
             aria-label={label}
         >
             <div className="flex flex-wrap items-center justify-between gap-2">

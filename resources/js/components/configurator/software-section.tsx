@@ -20,7 +20,7 @@ export default function SoftwareSection({
     return (
         <section
             id={`software-${group.key}`}
-            className="scroll-mt-24 rounded-2xl border border-white/10 bg-[#0b1321] p-4"
+            className="scroll-mt-[8.25rem] rounded-2xl border border-white/10 bg-[#0b1321] p-4 md:scroll-mt-24"
             aria-label={group.label}
         >
             <div className="flex flex-wrap items-center justify-between gap-2">

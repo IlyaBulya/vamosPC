@@ -2,6 +2,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AccessorySection from '@/components/configurator/accessory-section';
 import ConflictModal from '@/components/configurator/conflict-modal';
+import MobilePurchaseBar from '@/components/configurator/mobile-purchase-bar';
+import MobileSectionNav from '@/components/configurator/mobile-section-nav';
 import SideNav from '@/components/configurator/side-nav';
 import SlotSection from '@/components/configurator/slot-section';
 import SoftwareSection from '@/components/configurator/software-section';
@@ -140,6 +142,46 @@ export default function ConfigurePcPage({
         [selectedBySlot, slots],
     );
 
+    const selectedSoftware = useMemo(
+        () => selectedSoftwareEntries(softwareSelections),
+        [softwareSelections],
+    );
+    const selectedAccessories = useMemo(
+        () => selectedAccessoryEntries(accessories, selectedAccessoryIds),
+        [accessories, selectedAccessoryIds],
+    );
+    const previewPriceInCents = useMemo(
+        () =>
+            Math.max(
+                0,
+                selectedProducts.reduce(
+                    (sum, product) => sum + product.price_in_cents,
+                    0,
+                ) +
+                    configuration.markup_in_cents +
+                    selectedSoftware.reduce(
+                        (sum, entry) => sum + entry.price_in_cents,
+                        0,
+                    ) +
+                    selectedAccessories.reduce(
+                        (sum, entry) => sum + entry.price_in_cents,
+                        0,
+                    ),
+            ),
+        [
+            configuration.markup_in_cents,
+            selectedAccessories,
+            selectedProducts,
+            selectedSoftware,
+        ],
+    );
+    const hasCompatibilityErrors = check?.has_errors ?? false;
+    const purchaseErrorMessage =
+        serverErrors[0] ??
+        check?.violations.find((violation) => violation.severity === 'error')
+            ?.message ??
+        null;
+
     const applySelections = (changes: Record<string, number>) => {
         setDraftSaved(false);
         setSelectedBySlot((current) => ({
@@ -255,17 +297,29 @@ export default function ConfigurePcPage({
         <>
             <Head title={`Configure ${configuration.name}`} />
 
-            <StoreLayout hideHeader footerClassName="mt-6">
-                <div className="sticky top-0 z-40 -mx-4 flex items-center justify-between gap-3 border-b border-white/10 bg-[#030712]/85 px-4 py-3 backdrop-blur-md sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
-                    <Link
-                        href="/gaming-pcs"
-                        className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
-                    >
-                        Back to Gaming PCs
-                    </Link>
-                    <span className="text-xs tracking-[0.14em] text-slate-400 uppercase">
-                        Base #{configuration.id}
-                    </span>
+            <StoreLayout
+                hideHeader
+                className="pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-0"
+                footerClassName="mt-6"
+            >
+                <div className="sticky top-0 z-40 -mx-4 border-b border-white/10 bg-[#030712]/95 backdrop-blur-md sm:-mx-8 md:bg-[#030712]/85 lg:-mx-12">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-8 lg:px-12">
+                        <Link
+                            href="/gaming-pcs"
+                            className="shrink-0 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold whitespace-nowrap text-slate-200 transition hover:border-[#00bd7d]/55 hover:text-[#9cf5d8]"
+                        >
+                            Back to Gaming PCs
+                        </Link>
+                        <span className="shrink-0 text-xs tracking-[0.14em] text-slate-400 uppercase">
+                            Base #{configuration.id}
+                        </span>
+                    </div>
+
+                    <MobileSectionNav
+                        slots={slots}
+                        accessories={accessories}
+                        activeSectionId={activeSectionId}
+                    />
                 </div>
 
                 <section className="mt-6 grid gap-6 xl:grid-cols-[200px_1fr_minmax(340px,0.9fr)]">
@@ -391,13 +445,9 @@ export default function ConfigurePcPage({
                     <SummaryCard
                         configuration={configuration}
                         selectedProducts={selectedProducts}
-                        selectedSoftware={selectedSoftwareEntries(
-                            softwareSelections,
-                        )}
-                        selectedAccessories={selectedAccessoryEntries(
-                            accessories,
-                            selectedAccessoryIds,
-                        )}
+                        selectedSoftware={selectedSoftware}
+                        selectedAccessories={selectedAccessories}
+                        previewPriceInCents={previewPriceInCents}
                         check={check}
                         isChecking={isChecking}
                         serverErrors={serverErrors}
@@ -409,6 +459,20 @@ export default function ConfigurePcPage({
                         onReset={resetSelections}
                     />
                 </section>
+
+                <MobilePurchaseBar
+                    previewPriceInCents={previewPriceInCents}
+                    isChecking={isChecking}
+                    isBuying={isBuying}
+                    hasErrors={hasCompatibilityErrors}
+                    isDisabled={
+                        selectedProducts.length === 0 ||
+                        isBuying ||
+                        hasCompatibilityErrors
+                    }
+                    errorMessage={purchaseErrorMessage}
+                    onBuy={buyBuild}
+                />
 
                 {pendingConflict && (
                     <ConflictModal

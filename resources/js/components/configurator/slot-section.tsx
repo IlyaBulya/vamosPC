@@ -1,5 +1,5 @@
 import OptionRow from '@/components/configurator/option-row';
-import type {ComponentSlot, OptionAnnotation} from '@/lib/configurator';
+import type { ComponentSlot, OptionAnnotation } from '@/lib/configurator';
 import { componentImage } from '@/lib/configurator-images';
 import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
 
@@ -24,7 +24,7 @@ export default function SlotSection({
     return (
         <section
             id={`slot-${slot.slot_key}`}
-            className="scroll-mt-24 rounded-2xl border border-white/10 bg-[#0b1321] p-4"
+            className="scroll-mt-[8.25rem] rounded-2xl border border-white/10 bg-[#0b1321] p-4 md:scroll-mt-24"
             role="radiogroup"
             aria-label={title}
         >

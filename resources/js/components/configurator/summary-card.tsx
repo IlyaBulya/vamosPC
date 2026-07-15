@@ -28,6 +28,7 @@ export default function SummaryCard({
     selectedProducts,
     selectedSoftware,
     selectedAccessories,
+    previewPriceInCents,
     check,
     isChecking,
     serverErrors,
@@ -42,6 +43,7 @@ export default function SummaryCard({
     selectedProducts: SelectedEntry[];
     selectedSoftware: SelectedSoftwareEntry[];
     selectedAccessories: SelectedAccessoryEntry[];
+    previewPriceInCents: number;
     check: CheckResult | null;
     isChecking: boolean;
     serverErrors: string[];
@@ -52,29 +54,10 @@ export default function SummaryCard({
     onSaveDraft: () => void;
     onReset: () => void;
 }) {
-    const selectedTotalInCents = selectedProducts.reduce(
-        (sum, product) => sum + product.price_in_cents,
-        0,
-    );
-    const softwareTotalInCents = selectedSoftware.reduce(
-        (sum, entry) => sum + entry.price_in_cents,
-        0,
-    );
-    const accessoriesTotalInCents = selectedAccessories.reduce(
-        (sum, entry) => sum + entry.price_in_cents,
-        0,
-    );
-    const previewPriceInCents = Math.max(
-        0,
-        selectedTotalInCents +
-            configuration.markup_in_cents +
-            softwareTotalInCents +
-            accessoriesTotalInCents,
-    );
     const hasErrors = check?.has_errors ?? false;
 
     return (
-        <aside className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-4 sm:p-5 lg:sticky lg:top-20 lg:h-fit">
+        <aside className="hidden rounded-3xl border border-white/10 bg-[#08101c]/85 p-4 md:block md:p-5 lg:sticky lg:top-20 lg:h-fit">
             <div className="mb-4 flex items-center justify-between">
                 <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
                     Live Preview
