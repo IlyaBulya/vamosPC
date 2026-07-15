@@ -323,6 +323,7 @@
         height: calc(100vh - 4rem);
         height: calc(100svh - 4rem);
         position: relative;
+        top: 0;
     }
 
     .mobile-configuration-card {
@@ -358,6 +359,7 @@
         .homepage-hero-stage {
             height: calc(100dvh - 4rem);
             position: sticky;
+            top: 4rem;
         }
 
         .homepage-hero-content {
@@ -391,6 +393,7 @@
         .homepage-hero-stage {
             height: calc(100svh - 4rem);
             position: relative;
+            top: 0;
         }
 
         .homepage-hero-content {

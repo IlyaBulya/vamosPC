@@ -337,21 +337,21 @@ export default function Welcome({
                 <div className="store-performance-glow pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#00bd7d]/25 blur-3xl" />
 
                 <div className="relative">
-                    <div className="homepage-hero-stage top-16 z-10 w-full">
+                    <div className="homepage-hero-stage z-10 w-full">
                         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_73%_52%,rgba(0,189,125,0.22),transparent_40%)]" />
 
                         <section
                             ref={heroContentRef}
-                            className="homepage-hero-content relative isolate grid h-full w-full grid-cols-1 items-start gap-8 overflow-hidden px-4 pt-[clamp(3rem,14svh,8rem)] pb-6 sm:px-8 sm:py-8 md:items-center lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:overflow-visible lg:px-16 lg:py-12 [@media(min-width:768px)_and_(max-height:500px)]:py-3"
+                            className="homepage-hero-content relative isolate grid h-full w-full grid-cols-1 items-start gap-8 overflow-hidden px-4 pt-[clamp(2.5rem,10svh,6rem)] pb-6 sm:px-8 sm:py-8 md:items-center lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:overflow-visible lg:px-16 lg:py-12 [@media(min-width:768px)_and_(max-height:500px)]:py-3"
                         >
                             <div className="relative z-[1] max-w-[700px]">
-                                <h1 className="text-[2.6rem] leading-none font-black tracking-tight min-[390px]:text-5xl sm:text-6xl lg:text-[98px] lg:leading-[0.96]">
+                                <h1 className="text-[2.6rem] leading-none font-black tracking-tight min-[390px]:text-5xl sm:text-6xl lg:text-[clamp(4.25rem,6.8vw,6.125rem)] lg:leading-[0.96] lg:whitespace-nowrap">
                                     <span className="bg-gradient-to-r from-white to-[#b8ffe8] bg-clip-text text-transparent">
                                         VAMOS PC
                                     </span>
                                 </h1>
 
-                                <p className="mt-3 max-w-[620px] text-[1.55rem] leading-[1.12] font-semibold text-white min-[360px]:text-[1.75rem] min-[390px]:text-3xl sm:mt-5 sm:text-5xl lg:text-[62px] lg:leading-[1.03] [@media(min-width:768px)_and_(max-height:500px)]:mt-2">
+                                <p className="mt-3 max-w-[620px] text-[1.55rem] leading-[1.12] font-semibold text-white min-[360px]:text-[1.75rem] min-[390px]:text-3xl sm:mt-5 sm:text-5xl lg:text-[clamp(2.75rem,4.3vw,3.875rem)] lg:leading-[1.03] [@media(min-width:768px)_and_(max-height:500px)]:mt-2">
                                     custom high-performance
                                     <br />
                                     PC builds
@@ -398,7 +398,7 @@ export default function Welcome({
                                 <img
                                     src="/images/hero-1600.webp"
                                     srcSet="/images/hero-960.webp 960w, /images/hero-1600.webp 1600w"
-                                    sizes="(min-width: 1024px) min(50vw, 58rem), 112vw"
+                                    sizes="(min-width: 1280px) min(70vw, 78rem), (min-width: 1024px) min(60vw, 64rem), 112vw"
                                     alt=""
                                     width={1600}
                                     height={1600}
@@ -406,7 +406,7 @@ export default function Welcome({
                                     fetchPriority="high"
                                     decoding="async"
                                     draggable={false}
-                                    className="absolute -right-[28%] bottom-[-2%] h-[62%] w-auto max-w-none object-contain opacity-65 drop-shadow-[0_0_42px_rgba(0,189,125,0.3)] saturate-125 min-[390px]:h-[58%] lg:top-[53%] lg:-right-16 lg:bottom-auto lg:h-[min(78dvh,50vw,58rem)] lg:-translate-y-1/2 lg:opacity-100 lg:drop-shadow-[0_32px_70px_rgba(0,0,0,0.55)] lg:saturate-100"
+                                    className="absolute -right-[28%] bottom-[-2%] h-[62%] w-auto max-w-none object-contain opacity-65 drop-shadow-[0_0_42px_rgba(0,189,125,0.3)] saturate-125 min-[390px]:h-[58%] lg:top-[52%] lg:-right-32 lg:bottom-auto lg:h-[min(92dvh,60vw,64rem)] lg:-translate-y-1/2 lg:opacity-100 lg:drop-shadow-[0_32px_70px_rgba(0,0,0,0.55)] lg:saturate-100 xl:-right-48 xl:h-[min(110dvh,70vw,78rem)]"
                                 />
 
                                 <div className="absolute inset-0 bg-[linear-gradient(90deg,#030712_0%,rgba(3,7,18,0.96)_38%,rgba(3,7,18,0.16)_100%)] lg:hidden" />
