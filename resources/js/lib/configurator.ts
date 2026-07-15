@@ -4,6 +4,7 @@ export type SlotProduct = {
     id: number;
     name: string;
     description: string | null;
+    image: string | null;
     price_in_cents: number;
     color: string | null;
     category_name: string | null;
@@ -109,7 +110,12 @@ export function specChips(product: SlotProduct, max = 3): string[] {
 
         const value = product.specs[field.key];
 
-        if (value === null || value === undefined || value === '' || typeof value === 'boolean') {
+        if (
+            value === null ||
+            value === undefined ||
+            value === '' ||
+            typeof value === 'boolean'
+        ) {
             continue;
         }
 

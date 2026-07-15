@@ -145,6 +145,7 @@ class ConfiguratorService
                         'id' => (int) $product->id,
                         'name' => $product->name,
                         'description' => $product->description,
+                        'image' => $product->image,
                         'price_in_cents' => (int) $product->price_in_cents,
                         'color' => $product->color,
                         'category_name' => $product->category?->name,
