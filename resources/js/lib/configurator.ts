@@ -1,4 +1,6 @@
-import { SPEC_SCHEMA, type ComponentType } from '@/lib/spec-schema';
+import type { SoftwareSelections } from '@/lib/configurator-software';
+import { SPEC_SCHEMA } from '@/lib/spec-schema';
+import type { ComponentType } from '@/lib/spec-schema';
 
 export type SlotProduct = {
     id: number;
@@ -49,8 +51,17 @@ export type CheckResult = {
     has_errors: boolean;
     load_watts: number | null;
     selected_total_in_cents: number;
+    software_total_in_cents: number;
+    accessories_total_in_cents: number;
+    extras_total_in_cents: number;
     final_price_in_cents: number;
     option_annotations: Record<string, OptionAnnotation[]>;
+};
+
+export type ConfiguratorSelectionPayload = {
+    selected_components: Record<string, number>;
+    selected_software: SoftwareSelections;
+    selected_accessory_ids: number[];
 };
 
 export type ConflictItem = {
@@ -165,12 +176,12 @@ export async function postJson<T>(
 
 export async function postCheck(
     configurationId: number,
-    selections: Record<string, number>,
+    selections: ConfiguratorSelectionPayload,
     signal?: AbortSignal,
 ): Promise<CheckResult> {
     return postJson<CheckResult>(
         `/gaming-pcs/${configurationId}/check`,
-        { selected_components: selections },
+        selections,
         signal,
     );
 }

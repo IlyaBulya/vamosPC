@@ -22,10 +22,10 @@ import { selectedAccessoryEntries } from '@/lib/configurator-accessories';
 import type { AccessoryCategory } from '@/lib/configurator-accessories';
 import {
     EMPTY_SOFTWARE_SELECTIONS,
-    SOFTWARE_GROUPS,
     selectedSoftwareEntries,
 } from '@/lib/configurator-software';
 import type {
+    SoftwareGroup,
     SoftwareGroupKey,
     SoftwareSelections,
 } from '@/lib/configurator-software';
@@ -45,13 +45,19 @@ type PendingConflict = {
 export default function ConfigurePcPage({
     configuration,
     slots,
+    software_groups,
     accessories,
     initial_selections,
+    initial_software_selections,
+    initial_accessory_ids,
 }: {
     configuration: ConfiguratorConfiguration;
     slots: ComponentSlot[];
+    software_groups: SoftwareGroup[];
     accessories: AccessoryCategory[];
     initial_selections?: Record<string, number> | null;
+    initial_software_selections?: Partial<SoftwareSelections> | null;
+    initial_accessory_ids?: number[] | null;
 }) {
     const defaultSelections = useMemo(
         () =>
@@ -74,9 +80,12 @@ export default function ConfigurePcPage({
         useState<PendingConflict | null>(null);
     const [isResolving, setIsResolving] = useState(false);
     const [softwareSelections, setSoftwareSelections] =
-        useState<SoftwareSelections>(EMPTY_SOFTWARE_SELECTIONS);
+        useState<SoftwareSelections>(() => ({
+            ...EMPTY_SOFTWARE_SELECTIONS,
+            ...(initial_software_selections ?? {}),
+        }));
     const [selectedAccessoryIds, setSelectedAccessoryIds] = useState<number[]>(
-        [],
+        () => initial_accessory_ids ?? [],
     );
 
     const { errors } = usePage().props;
@@ -85,19 +94,22 @@ export default function ConfigurePcPage({
     const { check, isChecking } = useCompatibility(
         configuration.id,
         selectedBySlot,
+        softwareSelections,
+        selectedAccessoryIds,
     );
 
     const sectionIds = useMemo(
         () => [
             ...slots.map((slot) => `slot-${slot.slot_key}`),
-            ...SOFTWARE_GROUPS.map((group) => `software-${group.key}`),
+            ...software_groups.map((group) => `software-${group.key}`),
             ...accessories.map((category) => `accessory-${category.slug}`),
         ],
-        [slots, accessories],
+        [slots, software_groups, accessories],
     );
     const activeSectionId = useScrollspy(sectionIds);
 
     const toggleSoftware = (groupKey: SoftwareGroupKey, optionId: string) => {
+        setDraftSaved(false);
         setSoftwareSelections((current) => ({
             ...current,
             [groupKey]: current[groupKey] === optionId ? null : optionId,
@@ -105,6 +117,7 @@ export default function ConfigurePcPage({
     };
 
     const toggleAccessory = (productId: number) => {
+        setDraftSaved(false);
         setSelectedAccessoryIds((current) =>
             current.includes(productId)
                 ? current.filter((id) => id !== productId)
@@ -143,8 +156,8 @@ export default function ConfigurePcPage({
     );
 
     const selectedSoftware = useMemo(
-        () => selectedSoftwareEntries(softwareSelections),
-        [softwareSelections],
+        () => selectedSoftwareEntries(softwareSelections, software_groups),
+        [softwareSelections, software_groups],
     );
     const selectedAccessories = useMemo(
         () => selectedAccessoryEntries(accessories, selectedAccessoryIds),
@@ -270,7 +283,11 @@ export default function ConfigurePcPage({
 
         router.post(
             `/gaming-pcs/${configuration.id}/buy`,
-            { selected_components: selectedBySlot },
+            {
+                selected_components: selectedBySlot,
+                selected_software: softwareSelections,
+                selected_accessory_ids: selectedAccessoryIds,
+            },
             {
                 onStart: () => setIsBuying(true),
                 onFinish: () => setIsBuying(false),
@@ -285,7 +302,11 @@ export default function ConfigurePcPage({
 
         router.post(
             `/gaming-pcs/${configuration.id}/drafts`,
-            { selected_components: selectedBySlot },
+            {
+                selected_components: selectedBySlot,
+                selected_software: softwareSelections,
+                selected_accessory_ids: selectedAccessoryIds,
+            },
             {
                 preserveScroll: true,
                 onStart: () => setIsSavingDraft(true),
@@ -326,6 +347,7 @@ export default function ConfigurePcPage({
 
                     <MobileSectionNav
                         slots={slots}
+                        softwareGroups={software_groups}
                         accessories={accessories}
                         activeSectionId={activeSectionId}
                     />
@@ -335,6 +357,7 @@ export default function ConfigurePcPage({
                     <nav className="hidden xl:block" aria-label="Sections">
                         <SideNav
                             slots={slots}
+                            softwareGroups={software_groups}
                             accessories={accessories}
                             activeSectionId={activeSectionId}
                         />
@@ -402,7 +425,7 @@ export default function ConfigurePcPage({
                             </div>
 
                             <div className="mt-5 space-y-4">
-                                {SOFTWARE_GROUPS.map((group) => (
+                                {software_groups.map((group) => (
                                     <SoftwareSection
                                         key={group.key}
                                         group={group}

@@ -25,8 +25,10 @@ import { useState } from 'react';
 import type { ComponentSlot } from '@/lib/configurator';
 import { accessoryCategoryLabel } from '@/lib/configurator-accessories';
 import type { AccessoryCategory } from '@/lib/configurator-accessories';
-import { SOFTWARE_GROUPS } from '@/lib/configurator-software';
-import type { SoftwareGroupKey } from '@/lib/configurator-software';
+import type {
+    SoftwareGroup,
+    SoftwareGroupKey,
+} from '@/lib/configurator-software';
 import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
 import type { ComponentType } from '@/lib/spec-schema';
 import { cn } from '@/lib/utils';
@@ -158,10 +160,12 @@ function NavGroup({
 
 export default function SideNav({
     slots,
+    softwareGroups,
     accessories,
     activeSectionId,
 }: {
     slots: ComponentSlot[];
+    softwareGroups: SoftwareGroup[];
     accessories: AccessoryCategory[];
     activeSectionId: string | null;
 }) {
@@ -175,7 +179,7 @@ export default function SideNav({
             : CircuitBoard,
     }));
 
-    const softwareItems: NavItem[] = SOFTWARE_GROUPS.map((group) => ({
+    const softwareItems: NavItem[] = softwareGroups.map((group) => ({
         sectionId: `software-${group.key}`,
         label: group.label,
         icon: SOFTWARE_ICONS[group.key],

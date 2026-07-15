@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\UserConfiguration;
 use App\Support\CartOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -24,7 +25,7 @@ class CartController extends Controller
             ->with([
                 'items.product:id,category_id,name,description,image,price_in_cents,stock',
                 'items.product.category:id,name,type',
-                'items.userConfiguration:id,base_configuration_id,name,description,image,price',
+                'items.userConfiguration:id,base_configuration_id,name,description,image,price,meta',
             ])
             ->latest('id')
             ->first();
@@ -41,6 +42,7 @@ class CartController extends Controller
 
                     if ($category === null) {
                         $invalidOrderItemIds[] = $orderItem->id;
+
                         return null;
                     }
 
@@ -61,6 +63,7 @@ class CartController extends Controller
                         'unit_price_in_cents' => (int) $orderItem->price,
                         'qty' => (int) $orderItem->qty,
                         'href' => $href,
+                        'extras' => null,
                     ];
                 }
 
@@ -81,6 +84,7 @@ class CartController extends Controller
                         'unit_price_in_cents' => (int) $orderItem->price,
                         'qty' => (int) $orderItem->qty,
                         'href' => $href,
+                        'extras' => $this->configurationExtras($userConfiguration),
                     ];
                 }
 
@@ -115,5 +119,55 @@ class CartController extends Controller
     private function productRouteSlug(Product $product): string
     {
         return Str::slug($product->name).'-'.$product->id;
+    }
+
+    /**
+     * Return only the safe add-on snapshot fields needed by the cart UI.
+     *
+     * @return array{
+     *     software: array<int, array<string, mixed>>,
+     *     accessories: array<int, array<string, mixed>>,
+     *     total_in_cents: int
+     * }|null
+     */
+    private function configurationExtras(UserConfiguration $configuration): ?array
+    {
+        $softwareSnapshots = data_get($configuration->meta, 'selected_software', []);
+        $accessorySnapshots = data_get($configuration->meta, 'selected_accessories', []);
+
+        $software = collect(is_array($softwareSnapshots) ? $softwareSnapshots : [])
+            ->filter(fn (mixed $snapshot): bool => is_array($snapshot))
+            ->map(fn (array $snapshot): array => [
+                'group_key' => (string) ($snapshot['group_key'] ?? ''),
+                'group_label' => (string) ($snapshot['group_label'] ?? 'Software'),
+                'option_id' => (string) ($snapshot['option_id'] ?? ''),
+                'name' => (string) ($snapshot['name'] ?? 'Software'),
+                'price_in_cents' => max(0, (int) ($snapshot['price_in_cents'] ?? 0)),
+            ])
+            ->filter(fn (array $snapshot): bool => $snapshot['option_id'] !== '')
+            ->values();
+
+        $accessories = collect(is_array($accessorySnapshots) ? $accessorySnapshots : [])
+            ->filter(fn (mixed $snapshot): bool => is_array($snapshot))
+            ->map(fn (array $snapshot): array => [
+                'product_id' => (int) ($snapshot['product_id'] ?? 0),
+                'category_slug' => (string) ($snapshot['category_slug'] ?? ''),
+                'category_label' => (string) ($snapshot['category_label'] ?? 'Accessory'),
+                'name' => (string) ($snapshot['name'] ?? 'Accessory'),
+                'price_in_cents' => max(0, (int) ($snapshot['price_in_cents'] ?? 0)),
+            ])
+            ->filter(fn (array $snapshot): bool => $snapshot['product_id'] > 0)
+            ->values();
+
+        if ($software->isEmpty() && $accessories->isEmpty()) {
+            return null;
+        }
+
+        return [
+            'software' => $software->all(),
+            'accessories' => $accessories->all(),
+            'total_in_cents' => (int) $software->sum('price_in_cents')
+                + (int) $accessories->sum('price_in_cents'),
+        ];
     }
 }
