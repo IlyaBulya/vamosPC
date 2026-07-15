@@ -4,17 +4,26 @@ import {
     Cpu,
     Fan,
     FileText,
+    Gamepad2,
     HardDrive,
+    Headphones,
+    Keyboard,
     MemoryStick,
+    Mic,
     Microchip,
+    Monitor,
+    Mouse,
     PcCase,
     ShieldCheck,
     Snowflake,
+    SquareDashedMousePointer,
     Thermometer,
     Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ComponentSlot } from '@/lib/configurator';
+import { accessoryCategoryLabel } from '@/lib/configurator-accessories';
+import type { AccessoryCategory } from '@/lib/configurator-accessories';
 import { SOFTWARE_GROUPS } from '@/lib/configurator-software';
 import type { SoftwareGroupKey } from '@/lib/configurator-software';
 import { COMPONENT_TYPE_LABELS } from '@/lib/spec-schema';
@@ -38,6 +47,15 @@ const SOFTWARE_ICONS: Record<SoftwareGroupKey, LucideIcon> = {
     os: AppWindow,
     office: FileText,
     antivirus: ShieldCheck,
+};
+
+const ACCESSORY_ICONS: Record<string, LucideIcon> = {
+    monitor: Monitor,
+    keyboard: Keyboard,
+    mouse: Mouse,
+    headset: Headphones,
+    'mouse-pad': SquareDashedMousePointer,
+    microphone: Mic,
 };
 
 type NavItem = {
@@ -118,9 +136,11 @@ function NavGroup({
 
 export default function SideNav({
     slots,
+    accessories,
     activeSectionId,
 }: {
     slots: ComponentSlot[];
+    accessories: AccessoryCategory[];
     activeSectionId: string | null;
 }) {
     const componentItems: NavItem[] = slots.map((slot) => ({
@@ -139,6 +159,12 @@ export default function SideNav({
         icon: SOFTWARE_ICONS[group.key],
     }));
 
+    const accessoryItems: NavItem[] = accessories.map((category) => ({
+        sectionId: `accessory-${category.slug}`,
+        label: accessoryCategoryLabel(category.slug),
+        icon: ACCESSORY_ICONS[category.slug] ?? Gamepad2,
+    }));
+
     return (
         <div className="sticky top-6 space-y-5">
             <NavGroup
@@ -151,6 +177,13 @@ export default function SideNav({
                 items={softwareItems}
                 activeSectionId={activeSectionId}
             />
+            {accessoryItems.length > 0 && (
+                <NavGroup
+                    title="Accessories"
+                    items={accessoryItems}
+                    activeSectionId={activeSectionId}
+                />
+            )}
         </div>
     );
 }

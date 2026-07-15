@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
+import AccessorySection from '@/components/configurator/accessory-section';
 import ConflictModal from '@/components/configurator/conflict-modal';
 import SideNav from '@/components/configurator/side-nav';
 import SlotSection from '@/components/configurator/slot-section';
@@ -15,6 +16,8 @@ import type {
     ResolveResult,
     SlotProduct,
 } from '@/lib/configurator';
+import { selectedAccessoryEntries } from '@/lib/configurator-accessories';
+import type { AccessoryCategory } from '@/lib/configurator-accessories';
 import {
     EMPTY_SOFTWARE_SELECTIONS,
     SOFTWARE_GROUPS,
@@ -40,10 +43,12 @@ type PendingConflict = {
 export default function ConfigurePcPage({
     configuration,
     slots,
+    accessories,
     initial_selections,
 }: {
     configuration: ConfiguratorConfiguration;
     slots: ComponentSlot[];
+    accessories: AccessoryCategory[];
     initial_selections?: Record<string, number> | null;
 }) {
     const defaultSelections = useMemo(
@@ -68,6 +73,9 @@ export default function ConfigurePcPage({
     const [isResolving, setIsResolving] = useState(false);
     const [softwareSelections, setSoftwareSelections] =
         useState<SoftwareSelections>(EMPTY_SOFTWARE_SELECTIONS);
+    const [selectedAccessoryIds, setSelectedAccessoryIds] = useState<number[]>(
+        [],
+    );
 
     const { errors } = usePage().props;
     const serverErrors = Object.values(errors ?? {});
@@ -81,8 +89,9 @@ export default function ConfigurePcPage({
         () => [
             ...slots.map((slot) => `slot-${slot.slot_key}`),
             ...SOFTWARE_GROUPS.map((group) => `software-${group.key}`),
+            ...accessories.map((category) => `accessory-${category.slug}`),
         ],
-        [slots],
+        [slots, accessories],
     );
     const activeSectionId = useScrollspy(sectionIds);
 
@@ -91,6 +100,14 @@ export default function ConfigurePcPage({
             ...current,
             [groupKey]: current[groupKey] === optionId ? null : optionId,
         }));
+    };
+
+    const toggleAccessory = (productId: number) => {
+        setSelectedAccessoryIds((current) =>
+            current.includes(productId)
+                ? current.filter((id) => id !== productId)
+                : [...current, productId],
+        );
     };
 
     const selectedProducts = useMemo<SelectedEntry[]>(
@@ -231,6 +248,7 @@ export default function ConfigurePcPage({
         setDraftSaved(false);
         setSelectedBySlot(defaultSelections);
         setSoftwareSelections(EMPTY_SOFTWARE_SELECTIONS);
+        setSelectedAccessoryIds([]);
     };
 
     return (
@@ -254,6 +272,7 @@ export default function ConfigurePcPage({
                     <nav className="hidden xl:block" aria-label="Sections">
                         <SideNav
                             slots={slots}
+                            accessories={accessories}
                             activeSectionId={activeSectionId}
                         />
                     </nav>
@@ -332,6 +351,41 @@ export default function ConfigurePcPage({
                                 ))}
                             </div>
                         </article>
+
+                        {accessories.length > 0 && (
+                            <article className="rounded-3xl border border-white/10 bg-[#08101c]/85 p-5 sm:p-6">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs tracking-[0.16em] text-[#9cf5d8] uppercase">
+                                            Accessories
+                                        </p>
+                                        <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">
+                                            Complete Your Setup
+                                        </h2>
+                                        <p className="mt-2 max-w-3xl text-sm text-slate-300">
+                                            Add monitors, keyboards, mice and
+                                            more to your build — as many as you
+                                            like. Click an added item again to
+                                            remove it.
+                                        </p>
+                                    </div>
+                                    <span className="rounded-full border border-[#00bd7d]/40 bg-[#00bd7d]/10 px-3 py-1 text-xs font-semibold text-[#9cf5d8]">
+                                        Optional
+                                    </span>
+                                </div>
+
+                                <div className="mt-5 space-y-4">
+                                    {accessories.map((category) => (
+                                        <AccessorySection
+                                            key={category.slug}
+                                            category={category}
+                                            selectedIds={selectedAccessoryIds}
+                                            onToggle={toggleAccessory}
+                                        />
+                                    ))}
+                                </div>
+                            </article>
+                        )}
                     </div>
 
                     <SummaryCard
@@ -339,6 +393,10 @@ export default function ConfigurePcPage({
                         selectedProducts={selectedProducts}
                         selectedSoftware={selectedSoftwareEntries(
                             softwareSelections,
+                        )}
+                        selectedAccessories={selectedAccessoryEntries(
+                            accessories,
+                            selectedAccessoryIds,
                         )}
                         check={check}
                         isChecking={isChecking}

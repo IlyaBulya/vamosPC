@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Category;
 use App\Models\Configuration;
 use App\Models\ConfigurationSlot;
 use App\Models\Product;
@@ -162,6 +163,39 @@ class ConfiguratorService
             'slots' => $slots,
             'base_components_total_in_cents' => $this->baseComponentsTotal($configuration),
         ];
+    }
+
+    /**
+     * Sellable accessories grouped by accessory category, for the optional
+     * add-ons step of the configurator.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function accessoriesPayload(): array
+    {
+        return Category::query()
+            ->where('type', 'accessory')
+            ->orderBy('name')
+            ->with(['products' => fn ($query) => $query
+                ->where('is_sellable', true)
+                ->orderBy('price_in_cents')])
+            ->get()
+            ->filter(fn (Category $category): bool => $category->products->isNotEmpty())
+            ->map(fn (Category $category): array => [
+                'slug' => (string) $category->name,
+                'products' => $category->products
+                    ->map(fn (Product $product): array => [
+                        'id' => (int) $product->id,
+                        'name' => $product->name,
+                        'description' => $product->description,
+                        'image' => $product->image,
+                        'price_in_cents' => (int) $product->price_in_cents,
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->values()
+            ->all();
     }
 
     public function baseComponentsTotal(Configuration $configuration): int

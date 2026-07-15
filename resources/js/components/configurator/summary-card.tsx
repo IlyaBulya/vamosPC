@@ -9,13 +9,13 @@ import {
     ShoppingCart,
     XCircle,
 } from 'lucide-react';
-import {
-    formatPrice
-    
-    
-    
+import { formatPrice } from '@/lib/configurator';
+import type {
+    CheckResult,
+    ConfiguratorConfiguration,
+    SlotProduct,
 } from '@/lib/configurator';
-import type {CheckResult, ConfiguratorConfiguration, SlotProduct} from '@/lib/configurator';
+import type { SelectedAccessoryEntry } from '@/lib/configurator-accessories';
 import type { SelectedSoftwareEntry } from '@/lib/configurator-software';
 
 type SelectedEntry = SlotProduct & {
@@ -27,6 +27,7 @@ export default function SummaryCard({
     configuration,
     selectedProducts,
     selectedSoftware,
+    selectedAccessories,
     check,
     isChecking,
     serverErrors,
@@ -40,6 +41,7 @@ export default function SummaryCard({
     configuration: ConfiguratorConfiguration;
     selectedProducts: SelectedEntry[];
     selectedSoftware: SelectedSoftwareEntry[];
+    selectedAccessories: SelectedAccessoryEntry[];
     check: CheckResult | null;
     isChecking: boolean;
     serverErrors: string[];
@@ -58,11 +60,16 @@ export default function SummaryCard({
         (sum, entry) => sum + entry.price_in_cents,
         0,
     );
+    const accessoriesTotalInCents = selectedAccessories.reduce(
+        (sum, entry) => sum + entry.price_in_cents,
+        0,
+    );
     const previewPriceInCents = Math.max(
         0,
         selectedTotalInCents +
             configuration.markup_in_cents +
-            softwareTotalInCents,
+            softwareTotalInCents +
+            accessoriesTotalInCents,
     );
     const hasErrors = check?.has_errors ?? false;
 
@@ -210,6 +217,32 @@ export default function SummaryCard({
                             >
                                 <p className="text-xs tracking-[0.12em] text-slate-500 uppercase">
                                     {entry.group_label}
+                                </p>
+                                <div className="mt-1 flex items-center justify-between gap-2">
+                                    <p className="text-sm text-slate-200">
+                                        {entry.name}
+                                    </p>
+                                    <p className="shrink-0 text-xs font-semibold text-[#9cf5d8]">
+                                        {formatPrice(entry.price_in_cents)}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {selectedAccessories.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                        <p className="text-xs tracking-[0.14em] text-[#9cf5d8] uppercase">
+                            Accessories
+                        </p>
+                        {selectedAccessories.map((entry) => (
+                            <div
+                                key={entry.id}
+                                className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2"
+                            >
+                                <p className="text-xs tracking-[0.12em] text-slate-500 uppercase">
+                                    {entry.category_label}
                                 </p>
                                 <div className="mt-1 flex items-center justify-between gap-2">
                                     <p className="text-sm text-slate-200">

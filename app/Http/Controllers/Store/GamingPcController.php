@@ -133,6 +133,7 @@ class GamingPcController extends Controller
                 'markup_in_cents' => (int) $configuration->markup_in_cents,
             ],
             'slots' => $builderData['slots'],
+            'accessories' => $this->configurator->accessoriesPayload(),
             'initial_selections' => $this->draftSelections($request, $configuration, $builderData['slots']),
         ]);
     }
