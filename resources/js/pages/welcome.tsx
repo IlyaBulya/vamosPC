@@ -342,7 +342,7 @@ export default function Welcome({
 
                         <section
                             ref={heroContentRef}
-                            className="homepage-hero-content relative isolate grid h-full w-full grid-cols-1 items-start gap-8 overflow-hidden px-4 pt-[clamp(2.5rem,10svh,6rem)] pb-6 sm:px-8 sm:py-8 md:items-center lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:overflow-visible lg:px-16 lg:py-12 [@media(min-width:768px)_and_(max-height:500px)]:py-3"
+                            className="homepage-hero-content relative isolate grid h-auto w-full grid-cols-1 items-start gap-8 overflow-hidden px-4 pt-[clamp(2.5rem,10svh,6rem)] pb-0 sm:px-8 sm:pt-8 md:h-full md:items-center md:pb-8 lg:grid-cols-[1.04fr_0.96fr] lg:gap-10 lg:overflow-visible lg:px-16 lg:py-12 [@media(min-width:768px)_and_(max-height:500px)]:py-3"
                         >
                             <div className="relative z-[1] max-w-[700px]">
                                 <h1 className="text-[2.6rem] leading-none font-black tracking-tight min-[390px]:text-5xl sm:text-6xl lg:text-[clamp(4.25rem,6.8vw,6.125rem)] lg:leading-[0.96] lg:whitespace-nowrap">
@@ -406,7 +406,7 @@ export default function Welcome({
                                     fetchPriority="high"
                                     decoding="async"
                                     draggable={false}
-                                    className="absolute top-[3%] -right-[54%] h-[108%] w-auto max-w-none object-contain opacity-55 drop-shadow-[0_0_42px_rgba(0,189,125,0.3)] saturate-125 min-[390px]:-right-[46%] sm:-right-[24%] md:top-[10%] md:h-[84%] lg:top-[52%] lg:-right-16 lg:bottom-auto lg:h-[min(104dvh,66vw,70rem)] lg:-translate-y-1/2 lg:opacity-100 lg:drop-shadow-[0_32px_70px_rgba(0,0,0,0.55)] lg:saturate-100 xl:h-[min(116dvh,72vw,82rem)]"
+                                    className="absolute -top-[10%] -right-[15%] h-auto w-[150%] max-w-none object-contain opacity-55 drop-shadow-[0_0_42px_rgba(0,189,125,0.3)] saturate-125 sm:-right-[10%] sm:w-[120%] md:top-[10%] md:-right-[24%] md:h-[84%] md:w-auto lg:-top-12 lg:-right-16 lg:bottom-auto lg:h-[min(104dvh,66vw,70rem)] lg:-translate-y-[11%] lg:opacity-100 lg:drop-shadow-[0_32px_70px_rgba(0,0,0,0.55)] lg:saturate-100 xl:h-[min(116dvh,72vw,82rem)]"
                                 />
 
                                 <div className="absolute inset-0 bg-[linear-gradient(90deg,#030712_0%,rgba(3,7,18,0.96)_38%,rgba(3,7,18,0.16)_100%)] lg:hidden" />

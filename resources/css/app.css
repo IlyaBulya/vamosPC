@@ -320,8 +320,7 @@
     }
 
     .homepage-hero-stage {
-        height: calc(100vh - 4rem);
-        height: calc(100svh - 4rem);
+        height: auto;
         position: relative;
         top: 0;
     }
