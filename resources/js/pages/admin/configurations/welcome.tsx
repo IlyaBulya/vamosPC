@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import AdminLayout from '@/layouts/admin-layout';
+import { formatPrice } from '@/lib/price';
 
 type WelcomeConfiguration = {
     id: number;
@@ -18,14 +19,6 @@ type WelcomeFormData = {
         homepage_order: string;
     }>;
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function AdminConfigurationsWelcomePage({
     configurations,

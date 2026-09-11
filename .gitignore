@@ -29,3 +29,4 @@ yarn-error.log
 /presentation/
 .env.example
 CLAUDE.md
+SITE_AUDIT.md

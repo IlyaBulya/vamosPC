@@ -3,6 +3,7 @@ import { AlertTriangle, Lock, Package, ShieldCheck, Trash2, Wrench } from 'lucid
 import InfoCard from '@/components/store/info-card';
 import PageHero from '@/components/store/page-hero';
 import StoreLayout from '@/layouts/store-layout';
+import { formatPrice } from '@/lib/price';
 import { logout } from '@/routes';
 
 type AuthUser = {
@@ -32,14 +33,6 @@ type AccountDraft = {
     configure_href: string;
     updated_at: string | null;
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function AccountPage() {
     const page = usePage<{

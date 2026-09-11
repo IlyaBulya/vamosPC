@@ -4,6 +4,7 @@ import BackLinkRow from '@/components/store/back-link-row';
 import InfoCard from '@/components/store/info-card';
 import ProductMediaBlock from '@/components/store/product-media-block';
 import StoreLayout from '@/layouts/store-layout';
+import { formatPrice } from '@/lib/price';
 
 type ProductDetails = {
     id: number;
@@ -31,14 +32,6 @@ interface ProductShowPageProps {
     product: ProductDetails;
     category: ProductCategory;
     navigation: ProductNavigation;
-}
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
 }
 
 export default function ProductShowPage({

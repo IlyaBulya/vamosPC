@@ -1,6 +1,9 @@
 import type { SoftwareSelections } from '@/lib/configurator-software';
+import { formatPrice } from '@/lib/price';
 import { SPEC_SCHEMA } from '@/lib/spec-schema';
 import type { ComponentType } from '@/lib/spec-schema';
+
+export { formatPrice } from '@/lib/price';
 
 export type SlotProduct = {
     id: number;
@@ -85,14 +88,6 @@ export type ResolveResult = {
     resolved: boolean;
     messages: string[];
 };
-
-export function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 /**
  * "+€50.00" / "−€30.00" relative price against the current selection.

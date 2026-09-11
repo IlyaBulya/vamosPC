@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import AdminLayout from '@/layouts/admin-layout';
+import { formatPrice } from '@/lib/price';
 
 type DashboardStats = {
     users: number;
@@ -16,14 +17,6 @@ type RecentOrder = {
     total_in_cents: number;
     created_at: string | null;
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function AdminDashboardPage({
     stats,

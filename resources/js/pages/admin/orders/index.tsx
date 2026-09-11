@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AdminLayout from '@/layouts/admin-layout';
+import { formatPrice } from '@/lib/price';
 
 type OrderItem = {
     id: number;
@@ -20,14 +21,6 @@ type OrderRow = {
     created_at: string | null;
     items: OrderItem[];
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function AdminOrdersPage({
     orders,

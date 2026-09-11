@@ -4,6 +4,7 @@ import BackLinkRow from '@/components/store/back-link-row';
 import InfoCard from '@/components/store/info-card';
 import ProductMediaBlock from '@/components/store/product-media-block';
 import StoreLayout from '@/layouts/store-layout';
+import { formatPrice } from '@/lib/price';
 
 type ConfigurationComponent = {
     id: number;
@@ -32,14 +33,6 @@ type ConfigurationNavigation = {
 interface GamingPcShowPageProps {
     configuration: ConfigurationDetails;
     navigation: ConfigurationNavigation;
-}
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
 }
 
 function shortDescription(description: string | null) {

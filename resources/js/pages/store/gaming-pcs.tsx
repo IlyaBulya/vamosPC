@@ -3,6 +3,7 @@ import { Cpu, Monitor, ShoppingCart } from 'lucide-react';
 import FeaturePill from '@/components/store/feature-pill';
 import PageHero from '@/components/store/page-hero';
 import StoreLayout from '@/layouts/store-layout';
+import { formatPrice } from '@/lib/price';
 
 type ConfigurationComponent = {
     id: number;
@@ -28,15 +29,6 @@ const FALLBACK_DESCRIPTIONS = [
     'High airflow and strong power for demanding titles and multitasking.',
     'Premium build profile tuned for top-tier frame rates and visuals.',
 ];
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(priceInCents / 100);
-}
 
 function formatInstallment(priceInCents: number) {
     const installmentInCents = Math.ceil(priceInCents / INSTALLMENT_MONTHS);

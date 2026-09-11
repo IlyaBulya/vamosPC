@@ -4,6 +4,7 @@ import FeaturePill from '@/components/store/feature-pill';
 import PageHero from '@/components/store/page-hero';
 import ProductCard from '@/components/store/product-card';
 import StoreLayout from '@/layouts/store-layout';
+import { formatPrice } from '@/lib/price';
 
 type ProductItem = {
     id: number;
@@ -35,18 +36,10 @@ interface CategoryItemPageProps {
     category: CategoryItem;
 }
 
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
-
 function formatMonthly(priceInCents: number) {
     const monthly = Math.max(1, Math.round(priceInCents / 100 / 24));
 
-    return `${monthly.toLocaleString('en-US')} EUR/month`;
+    return `${formatPrice(monthly * 100)}/month`;
 }
 
 function shortDescription(description: string | null) {

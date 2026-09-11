@@ -3,6 +3,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import StoreLayout from '@/layouts/store-layout';
+import { formatPrice } from '@/lib/price';
 
 type CartExtras = {
     software: {
@@ -41,13 +42,6 @@ type AuthUser = {
     name: string;
     email: string;
 };
-
-const formatPrice = (priceInCents: number): string =>
-    new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
 
 function ExtrasSummary({ extras }: { extras: CartExtras }) {
     const lines = [

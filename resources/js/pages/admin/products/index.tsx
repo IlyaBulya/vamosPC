@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/admin-layout';
+import { formatPrice } from '@/lib/price';
 
 type ProductRow = {
     id: number;
@@ -14,14 +15,6 @@ type ProductRow = {
     is_sellable: boolean;
     order_items_count: number;
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function AdminProductsPage({
     products,

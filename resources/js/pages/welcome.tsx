@@ -5,6 +5,7 @@ import BuildCard from '@/components/store/build-card';
 import FeaturePill from '@/components/store/feature-pill';
 import ProductMediaBlock from '@/components/store/product-media-block';
 import StoreLayout from '@/layouts/store-layout';
+import { formatPrice } from '@/lib/price';
 
 type ConfigurationCard = {
     id: number;
@@ -17,14 +18,6 @@ type ConfigurationCard = {
 const CARDS_PER_VIEW = 3;
 const CARD_GAP_PX = 20;
 const MIN_CARD_WIDTH_PX = 280;
-
-const formatPrice = (priceInCents: number): string =>
-    new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(priceInCents / 100);
 
 const splitDescriptionLines = (
     description: string,

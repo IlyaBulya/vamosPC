@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { GripVertical, Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import AdminLayout from '@/layouts/admin-layout';
+import { formatPrice } from '@/lib/price';
 
 type ConfigurationRow = {
     id: number;
@@ -16,14 +17,6 @@ type ConfigurationRow = {
     }>;
     updated_at: string | null;
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function AdminConfigurationsPage({
     configurations,

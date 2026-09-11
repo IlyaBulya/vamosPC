@@ -17,7 +17,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useImagePreview } from '@/hooks/use-image-preview';
 import AdminLayout from '@/layouts/admin-layout';
-import { postJson, type Violation } from '@/lib/configurator';
+import { postJson } from '@/lib/configurator';
+import type { Violation } from '@/lib/configurator';
+import { formatPrice } from '@/lib/price';
 
 type ComponentOption = {
     id: number;
@@ -45,14 +47,6 @@ type AdminCheckResult = {
     load_watts: number | null;
     components_total_in_cents: number;
 };
-
-function formatPrice(priceInCents: number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-    }).format(priceInCents / 100);
-}
 
 export default function AdminConfigurationFormPage({
     mode,
