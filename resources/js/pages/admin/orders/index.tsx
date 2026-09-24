@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AdminLayout from '@/layouts/admin-layout';
 import { formatPrice } from '@/lib/price';
+import { destroy } from '@/routes/admin/orders';
 
 type OrderItem = {
     id: number;
@@ -38,6 +39,24 @@ export default function AdminOrdersPage({
     );
 
     const [selectedStatuses, setSelectedStatuses] = useState(initialStatuses);
+    const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null);
+
+    const destroyOrder = (orderId: number) => {
+        if (
+            deletingOrderId !== null ||
+            !window.confirm(
+                `Удалить заказ #${orderId}? Заказ и все его позиции будут удалены без возможности восстановления.`,
+            )
+        ) {
+            return;
+        }
+
+        router.delete(destroy.url(orderId), {
+            preserveScroll: true,
+            onStart: () => setDeletingOrderId(orderId),
+            onFinish: () => setDeletingOrderId(null),
+        });
+    };
 
     const updateStatus = (orderId: number) => {
         router.patch(`/admin/orders/${orderId}`, {
@@ -66,10 +85,12 @@ export default function AdminOrdersPage({
                                             Order #{order.id}
                                         </h2>
                                         <p className="mt-1 text-sm text-slate-300">
-                                            {order.user_name} • {order.user_email}
+                                            {order.user_name} •{' '}
+                                            {order.user_email}
                                         </p>
                                         <p className="mt-1 text-sm text-slate-500">
-                                            {order.created_at ?? 'No date available'}
+                                            {order.created_at ??
+                                                'No date available'}
                                         </p>
                                     </div>
 
@@ -79,12 +100,23 @@ export default function AdminOrdersPage({
                                         </p>
                                         <div className="flex flex-wrap items-center gap-2">
                                             <select
-                                                value={selectedStatuses[order.id] ?? order.status}
+                                                disabled={
+                                                    deletingOrderId !== null
+                                                }
+                                                value={
+                                                    selectedStatuses[
+                                                        order.id
+                                                    ] ?? order.status
+                                                }
                                                 onChange={(event) =>
-                                                    setSelectedStatuses((current) => ({
-                                                        ...current,
-                                                        [order.id]: event.target.value,
-                                                    }))
+                                                    setSelectedStatuses(
+                                                        (current) => ({
+                                                            ...current,
+                                                            [order.id]:
+                                                                event.target
+                                                                    .value,
+                                                        }),
+                                                    )
                                                 }
                                                 className="h-10 rounded-xl border border-white/15 bg-[#0b1321] px-3 text-sm text-slate-100"
                                             >
@@ -100,10 +132,30 @@ export default function AdminOrdersPage({
                                             </select>
                                             <button
                                                 type="button"
-                                                onClick={() => updateStatus(order.id)}
+                                                onClick={() =>
+                                                    updateStatus(order.id)
+                                                }
+                                                disabled={
+                                                    deletingOrderId !== null
+                                                }
                                                 className="rounded-full bg-[#00bd7d] px-4 py-2 text-sm font-semibold text-[#04120d] transition hover:bg-[#18d99a]"
                                             >
                                                 Save Status
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    destroyOrder(order.id)
+                                                }
+                                                disabled={
+                                                    deletingOrderId !== null
+                                                }
+                                                aria-label={`Удалить заказ #${order.id}`}
+                                                className="rounded-full border border-red-500/45 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                {deletingOrderId === order.id
+                                                    ? 'Удаление…'
+                                                    : 'Удалить'}
                                             </button>
                                         </div>
                                     </div>
@@ -113,9 +165,15 @@ export default function AdminOrdersPage({
                                     <table className="w-full text-left text-sm">
                                         <thead className="border-b border-white/10 bg-[#0b1321] text-slate-400">
                                             <tr>
-                                                <th className="px-4 py-3 font-medium">Item</th>
-                                                <th className="px-4 py-3 font-medium">Kind</th>
-                                                <th className="px-4 py-3 font-medium">Qty</th>
+                                                <th className="px-4 py-3 font-medium">
+                                                    Item
+                                                </th>
+                                                <th className="px-4 py-3 font-medium">
+                                                    Kind
+                                                </th>
+                                                <th className="px-4 py-3 font-medium">
+                                                    Qty
+                                                </th>
                                                 <th className="px-4 py-3 text-right font-medium">
                                                     Price
                                                 </th>
@@ -137,7 +195,9 @@ export default function AdminOrdersPage({
                                                         {item.qty}
                                                     </td>
                                                     <td className="px-4 py-3 text-right text-white">
-                                                        {formatPrice(item.price_in_cents)}
+                                                        {formatPrice(
+                                                            item.price_in_cents,
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Support\CartOrder;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -68,5 +69,25 @@ class OrderController extends Controller
         ]);
 
         return back()->with('status', 'Order status updated successfully.');
+    }
+
+    public function destroy(Order $order): RedirectResponse
+    {
+        abort_if($order->status === CartOrder::STATUS, 404);
+
+        try {
+            // The orderitems foreign key cascades within the same transaction.
+            $order->deleteOrFail();
+        } catch (QueryException $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('admin.orders.index')
+                ->with('error', "Не удалось удалить заказ #{$order->id}. Попробуйте ещё раз.");
+        }
+
+        return redirect()
+            ->route('admin.orders.index')
+            ->with('status', "Заказ #{$order->id} удалён.");
     }
 }

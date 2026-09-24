@@ -130,6 +130,7 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
         Route::patch('/orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
+        Route::delete('/orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
