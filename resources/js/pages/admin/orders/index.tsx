@@ -150,12 +150,12 @@ export default function AdminOrdersPage({
                                                 disabled={
                                                     deletingOrderId !== null
                                                 }
-                                                aria-label={`Удалить заказ #${order.id}`}
+                                                aria-label={`Delete order #${order.id}`}
                                                 className="rounded-full border border-red-500/45 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 {deletingOrderId === order.id
-                                                    ? 'Удаление…'
-                                                    : 'Удалить'}
+                                                    ? 'Deleting…'
+                                                    : 'Delete'}
                                             </button>
                                         </div>
                                     </div>
